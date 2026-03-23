@@ -3,7 +3,7 @@
 ## Overview
 This project was developed as part of the PIDEV – 2nd Year Engineering Program at Esprit School of Engineering (Academic Year 2025–2026).
 
-CareerStrand is a web platform that helps users discover their digital work potential through a WorkDNA system. It analyzes skills, generates a personalized profile, and recommends suitable opportunities and career paths.
+CareerStrand is a web platform that helps users discover their digital work potential through a DNA system. It analyzes skills, generates a personalized profile, and recommends suitable opportunities and career paths.
 
 ---
 
