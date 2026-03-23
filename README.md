@@ -42,7 +42,7 @@ The system is divided into 5 main modules:
 ---
 
 ## Contributors
-- May Miiadie – User Module
+- May Miaadi – User Module
 - Elaa manoubie – Skills Module
 - Firas ben abdallah – WorkDNA Module
 - Rabii youssef ben alie – Opportunities Module
