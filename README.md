@@ -10,7 +10,7 @@ CareerStrand is a web platform that helps users discover their digital work pote
 ## Features
 - User registration and profile management
 - Skill selection and questionnaire system
-- WorkDNA generation (skill analysis)
+- DNA generation (skill analysis)
 - Personalized recommendations
 - Opportunity matching system
 - Application workflow (pending / accepted / rejected)
