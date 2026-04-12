@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CareerStrand Admin Opportunities</title>
+  <link rel="stylesheet" href="assets/css/admin.css" />
+</head>
+<body>
+  <div class="admin-shell">
+    <aside class="admin-sidebar">
+<div class="brand">
+        <img src="images/Capture%20d%27%C3%A9cran%202026-04-12%20131757.png" alt="CareerStrand" style="height:48px;width:auto;display:block;">
+      </div>      <div class="side-label">Main Menu</div>
+      <nav class="nav-list">
+        <a class="nav-item" href="dashboard.php"><span>Dashboard</span><span>Home</span></a>
+        <a class="nav-item" href="admin-users.php"><span>Users</span><span>1.2k</span></a>
+        <a class="nav-item" href="admin-profiles.php"><span>Profiles</span><span>842</span></a>
+        <a class="nav-item" href="admin-courses.html"><span>Courses</span><span>24</span></a>
+        <a class="nav-item" href="admin-skills.html"><span>Challenges</span><span>18</span></a>
+        <a class="nav-item active" href="admin-opportunities.html"><span>Opportunities</span><span>36</span></a>
+        <a class="nav-item" href="admin-applications.html"><span>Applications</span><span>128</span></a>
+        <a class="nav-item" href="admin-analytics.html"><span>ADN Analytics</span><span>Live</span></a>
+        <a class="nav-item" href="admin-feedback.html"><span>Events</span><span>12</span></a>
+        <a class="nav-item" href="admin-settings.html"><span>Settings</span><span>New</span></a>
+      </nav>
+    </aside>
+    <main class="admin-main">
+      <header class="page-header">
+        <div><h2>Opportunities</h2><p>Connect platform progression to real outcomes by managing internships, junior roles, and starter freelance tasks that users can access when they are ready.</p></div>
+        <div class="header-actions"><button class="btn btn-soft">Published only</button><button class="btn btn-main">Create opportunity</button></div>
+      </header>
+      <section class="detail-grid">
+        <article class="panel">
+          <div class="panel-header"><div class="panel-title"><h3>Opportunity library</h3><p>Every opportunity includes title, description, category, skill required, level required, deadline, and status.</p></div></div>
+          <table>
+            <thead><tr><th>Title</th><th>Category</th><th>Skills required</th><th>Level</th><th>Deadline</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody>
+              <tr><td><strong>UI/UX Designer</strong></td><td><span class="category-chip">Creativity</span></td><td>Figma, Canva</td><td>Intermediate</td><td>May 12</td><td><span class="status-chip status-published">Published</span></td><td class="table-actions"><span class="link-btn">Edit</span><span class="link-btn">Unpublish</span></td></tr>
+              <tr><td><strong>Frontend Intern</strong></td><td><span class="category-chip">Technical</span></td><td>HTML, CSS, JS</td><td>Beginner</td><td>May 19</td><td><span class="status-chip status-published">Published</span></td><td class="table-actions"><span class="link-btn">Edit</span><span class="link-btn">Archive</span></td></tr>
+              <tr><td><strong>Growth Operations Associate</strong></td><td><span class="category-chip">Business</span></td><td>Analysis, communication</td><td>Intermediate</td><td>May 23</td><td><span class="status-chip status-draft">Draft</span></td><td class="table-actions"><span class="link-btn">Edit</span><span class="link-btn">Publish</span></td></tr>
+            </tbody>
+          </table>
+        </article>
+        <aside class="detail-card">
+          <h4>Create opportunity</h4>
+          <div class="field-grid">
+            <div class="field"><label>Title</label><input type="text" placeholder="Enter opportunity title" /></div>
+            <div class="field"><label>Category</label><select><option>Creativity</option><option>Communication</option><option>Technical</option><option>Leadership</option><option>Business</option></select></div>
+            <div class="field"><label>Required skill</label><input type="text" placeholder="e.g. Canva, HTML" /></div>
+            <div class="field"><label>Level required</label><select><option>Beginner</option><option>Intermediate</option><option>Advanced</option></select></div>
+            <div class="field"><label>Deadline</label><input type="text" placeholder="e.g. May 19" /></div>
+          </div>
+        </aside>
+      </section>
+    </main>
+  </div>
+  <script src="assets/js/admin.js"></script>
+</body>
+</html>
+
+
+
+
+
+
