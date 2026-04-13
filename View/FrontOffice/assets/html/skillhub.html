@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CareerStrand | Skill Hub Directory</title>
+  <link rel="stylesheet" href="assets/css/skillhub.css" />
+</head>
+<body>
+  <div class="page-shell">
+    <header class="site-header">
+      <div class="container header-inner">
+        <a class="brand" href="index.php">
+          <img class="brand-logo" src="images/CareerStrand_logo.png" alt="CareerStrand logo" />
+          <div>
+            <div class="brand-title">CareerStrand</div>
+            <div class="brand-subtitle">Hub directory</div>
+          </div>
+        </a>
+
+        <nav class="main-nav" aria-label="Primary">
+          <a href="#">Profile</a>
+          <a href="#">Education</a>
+          <a href="skillhub.php" class="active">Skill Hub</a>
+          <a href="#">Events</a>
+          <a href="#">Opportunities</a>
+        </nav>
+
+        <div class="header-actions">
+          <button class="ghost-btn" type="button">Friends</button>
+          <a class="primary-btn" href="hub.php">Open current hub</a>
+        </div>
+      </div>
+    </header>
+
+    <main class="main-area">
+      <div class="container">
+        <section class="hero-panel">
+          <div class="hero-copy">
+            <div class="eyebrow">Skill Hub Directory</div>
+            <h1>Find the communities where your work, questions, and momentum belong.</h1>
+            
+          </div>
+          <div class="hero-stats">
+            <div class="hero-stat">
+              <strong>06</strong>
+              <span>Joined hubs</span>
+            </div>
+            <div class="hero-stat">
+              <strong>14</strong>
+              <span>Friends active today</span>
+            </div>
+            <div class="hero-stat">
+              <strong>09</strong>
+              <span>Suggested hubs</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="directory-shell">
+          <aside class="left-rail">
+            <section class="glass-panel">
+              <div class="panel-title">Your circles</div>
+              <div class="friend-stack">
+                <div class="friend-row">
+                  <div class="avatar manager">MN</div>
+                  <div>
+                    <strong>Maya Nwosu</strong>
+                    <p>Active in Frontend Systems</p>
+                  </div>
+                </div>
+                <div class="friend-row">
+                  <div class="avatar user">FK</div>
+                  <div>
+                    <strong>Fatima Kone</strong>
+                    <p>Posting in UI/UX Studio</p>
+                  </div>
+                </div>
+                <div class="friend-row">
+                  <div class="avatar user">OD</div>
+                  <div>
+                    <strong>Ola Dairo</strong>
+                    <p>Running prompts in Storytelling Lab</p>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section class="glass-panel">
+              <div class="panel-title">Browse by theme</div>
+              <div class="chip-grid">
+                <button class="filter-chip active" type="button" data-filter="all">All hubs</button>
+                <button class="filter-chip" type="button" data-filter="frontend">Frontend</button>
+                <button class="filter-chip" type="button" data-filter="design">Design</button>
+                <button class="filter-chip" type="button" data-filter="communication">Communication</button>
+                <button class="filter-chip" type="button" data-filter="business">Business</button>
+              </div>
+            </section>
+          </aside>
+
+          <section class="directory-column">
+            <section class="glass-panel search-panel">
+              <div class="search-row">
+                <input id="hubSearch" class="search-input" type="text" placeholder="Search hubs, mentors, themes, or workspaces..." />
+                <button class="ghost-btn" type="button">Explore</button>
+              </div>
+            </section>
+
+            <section class="section-block">
+              <div class="section-head">
+                <div>
+                  <div class="panel-title">My hubs</div>
+                  <h2>Spaces you already belong to</h2>
+                </div>
+                <a class="section-link" href="hub.php">Go to current hub</a>
+              </div>
+
+              <div class="hub-grid">
+                <article class="hub-card joined" data-category="frontend" data-search="frontend systems coding interface reviews maya">
+                  <div class="hub-card-top">
+                    <div>
+                      <div class="hub-kicker">Joined hub</div>
+                      <h3>Frontend Systems</h3>
+                    </div>
+                    <span class="hub-badge">2.8k members</span>
+                  </div>
+                  <p>Challenge-driven workspace for front-end builds, critique, UI systems, and manager-led briefs.</p>
+                  <div class="hub-meta">
+                    <span>03 tasks open</span>
+                    <span>12 new replies</span>
+                    <span>Review today</span>
+                  </div>
+                  <div class="hub-card-actions">
+                    <a class="primary-btn" href="hub.php">Open hub</a>
+                    <button class="ghost-btn" type="button">Invite friends</button>
+                  </div>
+                </article>
+
+                <article class="hub-card joined" data-category="design" data-search="ui ux studio design prototyping critique fatima">
+                  <div class="hub-card-top">
+                    <div>
+                      <div class="hub-kicker">Joined hub</div>
+                      <h3>UI/UX Studio</h3>
+                    </div>
+                    <span class="hub-badge">1.9k members</span>
+                  </div>
+                  <p>For interface critique, flow thinking, clean layout systems, and product-minded design discussion.</p>
+                  <div class="hub-meta">
+                    <span>02 critiques live</span>
+                    <span>08 friends active</span>
+                    <span>Workshop tomorrow</span>
+                  </div>
+                  <div class="hub-card-actions">
+                    <a class="primary-btn" href="hub.php">Open hub</a>
+                    <button class="ghost-btn" type="button">Manage alerts</button>
+                  </div>
+                </article>
+
+                <article class="hub-card joined" data-category="communication" data-search="storytelling lab writing launch copy ola">
+                  <div class="hub-card-top">
+                    <div>
+                      <div class="hub-kicker">Joined hub</div>
+                      <h3>Storytelling Lab</h3>
+                    </div>
+                    <span class="hub-badge">1.2k members</span>
+                  </div>
+                  <p>Built for launch posts, communication clarity, narrative structure, and audience-aware writing practice.</p>
+                  <div class="hub-meta">
+                    <span>07 prompts open</span>
+                    <span>Community challenge live</span>
+                    <span>Reply streak: 4 days</span>
+                  </div>
+                  <div class="hub-card-actions">
+                    <a class="primary-btn" href="hub.php">Open hub</a>
+                    <button class="ghost-btn" type="button">View friends</button>
+                  </div>
+                </article>
+              </div>
+            </section>
+
+            <section class="section-block section-frame">
+              <div class="section-head">
+                <div>
+                  <div class="panel-title">Suggested hubs</div>
+                  <h2>Recommended from your ADN and friend activity</h2>
+                </div>
+              </div>
+
+              <div class="hub-grid">
+                <article class="hub-card suggested" data-category="business" data-search="startup thinking validation product strategy founder business">
+                  <div class="hub-card-top">
+                    <div>
+                      <div class="hub-kicker">Suggested</div>
+                      <h3>Startup Thinking</h3>
+                    </div>
+                    <span class="hub-badge warm">Good ADN fit</span>
+                  </div>
+                  <p>Ideal if you want more product judgment, opportunity thinking, and practical startup-side execution.</p>
+                  <div class="hub-meta">
+                    <span>5 project briefs</span>
+                    <span>2 friends joined</span>
+                    <span>New member-friendly</span>
+                  </div>
+                  <div class="hub-card-actions">
+                    <button class="primary-btn join-btn" type="button">Join hub</button>
+                    <a class="ghost-btn" href="hub.php">Preview</a>
+                  </div>
+                </article>
+
+                <article class="hub-card suggested" data-category="design" data-search="motion lab animation interface polish motion design">
+                  <div class="hub-card-top">
+                    <div>
+                      <div class="hub-kicker">Suggested</div>
+                      <h3>Motion Lab</h3>
+                    </div>
+                    <span class="hub-badge blue">Fresh this week</span>
+                  </div>
+                  <p>For transitions, rhythm, interaction feel, and the small motion details that make interfaces feel alive.</p>
+                  <div class="hub-meta">
+                    <span>Workshop Friday</span>
+                    <span>17 active posts</span>
+                    <span>Mentor Q&amp;A open</span>
+                  </div>
+                  <div class="hub-card-actions">
+                    <button class="primary-btn join-btn" type="button">Join hub</button>
+                    <a class="ghost-btn" href="hub.php">Preview</a>
+                  </div>
+                </article>
+
+                <article class="hub-card suggested" data-category="frontend" data-search="creative ops systems canva content visuals">
+                  <div class="hub-card-top">
+                    <div>
+                      <div class="hub-kicker">Suggested</div>
+                      <h3>Creative Ops</h3>
+                    </div>
+                    <span class="hub-badge">Friends here</span>
+                  </div>
+                  <p>Useful for content workflows, Canva-based production, design delivery, and team collaboration patterns.</p>
+                  <div class="hub-meta">
+                    <span>3 friends active</span>
+                    <span>09 resources today</span>
+                    <span>Fast-growing</span>
+                  </div>
+                  <div class="hub-card-actions">
+                    <button class="primary-btn join-btn" type="button">Join hub</button>
+                    <a class="ghost-btn" href="hub.php">Preview</a>
+                  </div>
+                </article>
+              </div>
+            </section>
+          </section>
+
+          <aside class="right-rail">
+            <section class="glass-panel">
+              <div class="panel-title">Friends to add</div>
+              <div class="friend-stack compact">
+                <div class="friend-row">
+                  <div class="avatar user">SB</div>
+                  <div>
+                    <strong>Samuel Bassey</strong>
+                    <p>Frontend Systems</p>
+                  </div>
+                </div>
+                <div class="friend-row">
+                  <div class="avatar user">AM</div>
+                  <div>
+                    <strong>Amira Bello</strong>
+                    <p>Motion Lab</p>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+          </aside>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script src="assets/js/skillhub.js"></script>
+</body>
+</html>

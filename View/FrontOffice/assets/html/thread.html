@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CareerStrand | Thread</title>
+  <link rel="stylesheet" href="assets/css/thread.css" />
+</head>
+<body>
+  <div class="page-shell">
+    <header class="site-header">
+      <div class="container header-inner">
+        <a class="brand" href="index.php">
+          <img class="brand-logo" src="images/CareerStrand_logo.png" alt="CareerStrand logo" />
+          <div>
+            <div class="brand-title">CareerStrand</div>
+            <div class="brand-subtitle">Thread workspace</div>
+          </div>
+        </a>
+
+        <nav class="main-nav" aria-label="Primary">
+          <a href="#">Profile</a>
+          <a href="#">Education</a>
+          <a href="skillhub.php" class="active">Skill Hub</a>
+          <a href="#">Events</a>
+          <a href="#">Opportunities</a>
+        </nav>
+
+        <div class="header-actions">
+          <button class="primary-btn" type="button">Open hub</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="main-area">
+      <div class="container page-grid">
+        <section class="thread-column">
+          <section class="hero-panel">
+            <div class="hero-top">
+              <div>
+                <div class="eyebrow">Frontend Systems / Task Thread</div>
+                <h1>Rebuild a premium hero section from a reference and explain every design decision.</h1>
+                <p class="hero-copy">
+                  This page combines the task brief and its discussion space, so users can understand the work, track requirements, and talk inside the same context.
+                </p>
+              </div>
+              <div class="hero-badge">ADN impact: High</div>
+            </div>
+
+            <div class="hero-meta-grid">
+              <div class="meta-card">
+                <span class="meta-label">Difficulty</span>
+                <strong>Intermediate</strong>
+                <span class="meta-copy">Best for learners already building real interfaces.</span>
+              </div>
+              <div class="meta-card">
+                <span class="meta-label">Expected time</span>
+                <strong>3 hours</strong>
+                <span class="meta-copy">Enough time for a solid first version and rationale note.</span>
+              </div>
+              <div class="meta-card">
+                <span class="meta-label">Deadline</span>
+                <strong>Today / 6:00 PM</strong>
+                <span class="meta-copy">Manager review starts right after submission closes.</span>
+              </div>
+            </div>
+
+            <div class="hero-actions">
+              <button class="primary-btn" type="button">Start task</button>
+              <button class="ghost-btn" type="button" id="joinDiscussionBtn">Join discussion</button>
+            </div>
+          </section>
+
+          <section class="view-switcher" aria-label="Thread view switcher">
+            <button class="view-chip active" type="button" data-view="overview">
+              <span class="view-chip-title">Overview</span>
+              <span class="view-chip-copy">Brief, deliverables, timeline</span>
+            </button>
+            <button class="view-chip" type="button" data-view="discussion">
+              <span class="view-chip-title">Discussion</span>
+              <span class="view-chip-copy">Replies, questions, resources</span>
+            </button>
+          </section>
+
+          <section class="thread-view" id="overviewView">
+            <div class="content-grid">
+              <article class="panel">
+                <div class="panel-title">Task brief</div>
+                <h2>What the task asks for</h2>
+                <p>
+                  Build a premium front-end hero section inspired by a reference, but do not copy it mechanically. Your submission should show hierarchy, motion restraint, spacing logic, and a short written explanation of why each design decision supports the experience.
+                </p>
+                <div class="stack-list">
+                  <div class="stack-item">
+                    <strong>Main outcome</strong>
+                    <span>A finished hero implementation with responsive behavior and polished visual hierarchy.</span>
+                  </div>
+                  <div class="stack-item">
+                    <strong>Required note</strong>
+                    <span>A short reasoning summary explaining typography, spacing, contrast, and call-to-action choices.</span>
+                  </div>
+                  <div class="stack-item">
+                    <strong>One more step</strong>
+                    <span>Include the improvement you would still make if you had more time.</span>
+                  </div>
+                </div>
+              </article>
+
+              <article class="panel">
+                <div class="panel-title">Deliverables</div>
+                <div class="check-list">
+                  <div class="check-item">
+                    <span class="check-dot"></span>
+                    <div>
+                      <strong>Responsive hero layout</strong>
+                      <p>Desktop and mobile versions should both feel intentional, not collapsed.</p>
+                    </div>
+                  </div>
+                  <div class="check-item">
+                    <span class="check-dot"></span>
+                    <div>
+                      <strong>Design rationale</strong>
+                      <p>Explain why the structure feels premium and what visual problems you solved.</p>
+                    </div>
+                  </div>
+                  <div class="check-item">
+                    <span class="check-dot"></span>
+                    <div>
+                      <strong>Improvement note</strong>
+                      <p>Name the next refinement you would push if you had a second iteration.</p>
+                    </div>
+                  </div>
+                </div>
+              </article>
+
+              <article class="panel wide">
+                <div class="panel-title">Timeline</div>
+                <div class="timeline">
+                  <div class="timeline-step">
+                    <span class="timeline-time">Now</span>
+                    <div>
+                      <strong>Task open</strong>
+                      <p>Reference and briefing are available to all hub members.</p>
+                    </div>
+                  </div>
+                  <div class="timeline-step current">
+                    <span class="timeline-time">Today / 6:00 PM</span>
+                    <div>
+                      <strong>Submission closes</strong>
+                      <p>All entries move into review and discussion remains open for critique.</p>
+                    </div>
+                  </div>
+                  <div class="timeline-step">
+                    <span class="timeline-time">Tomorrow / 11:00 AM</span>
+                    <div>
+                      <strong>Manager review session</strong>
+                      <p>Maya reviews selected submissions live inside the hub calendar session.</p>
+                    </div>
+                  </div>
+                </div>
+              </article>
+
+              <article class="panel">
+                <div class="panel-title">Related items</div>
+                <div class="link-stack">
+                  <a href="#" class="related-link">
+                    <strong>Responsive systems workshop</strong>
+                    <span>Live session on layout decisions and spacing patterns</span>
+                  </a>
+                  <a href="#" class="related-link">
+                    <strong>Hero critique archive</strong>
+                    <span>Past discussion with examples of strong and weak decisions</span>
+                  </a>
+                  <a href="#" class="related-link">
+                    <strong>Landing page spotlight project</strong>
+                    <span>Longer-form project that builds on this same design skill</span>
+                  </a>
+                </div>
+              </article>
+
+              <article class="panel">
+                <div class="panel-title">Submission status</div>
+                <div class="submission-card">
+                  <div class="submission-row">
+                    <span>Status</span>
+                    <strong>Not submitted yet</strong>
+                  </div>
+                  <div class="submission-row">
+                    <span>Saved to board</span>
+                    <strong>Yes</strong>
+                  </div>
+                  <div class="submission-row">
+                    <span>Discussion activity</span>
+                    <strong>12 new replies</strong>
+                  </div>
+                  <button class="primary-btn full" type="button">Submit work</button>
+                </div>
+              </article>
+            </div>
+          </section>
+
+          <section class="thread-view is-hidden" id="discussionView">
+            <section class="discussion-composer">
+              <div class="composer-avatar">AY</div>
+              <div class="discussion-composer-body">
+                <div class="discussion-heading">
+                  <strong>Reply inside this thread</strong>
+                  <span>Ask a question, share an insight, or respond to someone already here.</span>
+                </div>
+                <label class="discussion-input" for="discussionComposer">
+                  <strong>What do you want to add to this task discussion?</strong>
+                  <span>Keep it tied to this task: feedback, clarifications, blockers, references, or review comments.</span>
+                  <textarea id="discussionComposer" rows="4" placeholder="Write your reply, question, or resource note here..."></textarea>
+                </label>
+                <div class="discussion-actions">
+                  <button class="tool-chip" type="button">Add image</button>
+                  <button class="primary-btn" type="button" id="postReplyBtn">Post reply</button>
+                </div>
+              </div>
+            </section>
+
+            <section class="discussion-list" id="discussionList">
+              <article class="discussion-card featured-reply thread-item" data-thread-id="maya-guidance" data-thread-kind="Guidance">
+                <div class="discussion-head">
+                  <div class="author-line">
+                    <div class="avatar manager">MN</div>
+                    <div>
+                      <div class="author-name">Maya Nwosu</div>
+                      <div class="author-meta">Manager / 28 min ago</div>
+                    </div>
+                  </div>
+                  <span class="tag-pill">Pinned guidance</span>
+                </div>
+                <h3>Focus on hierarchy before decoration.</h3>
+                <p>
+                  The strongest submissions usually solve clarity first: what users see first, where the eye moves second, and why the call-to-action feels earned. Start there before polishing effects.
+                </p>
+                <div class="reply-meta">
+                  <span>19 replies</span>
+                  <span>Saved by 42 users</span>
+                </div>
+                <div class="reply-actions">
+                  <button class="link-btn open-thread-btn" type="button">Open thread</button>
+                  <button class="link-btn" type="button">Reply</button>
+                </div>
+              </article>
+
+              <article class="discussion-card thread-item" data-thread-id="fatima-question" data-thread-kind="Question">
+                <div class="discussion-head">
+                  <div class="author-line">
+                    <div class="avatar user">FK</div>
+                    <div>
+                      <div class="author-name">Fatima Kone</div>
+                      <div class="author-meta">1 hour ago</div>
+                    </div>
+                  </div>
+                </div>
+                <h3>How far can we stylize the hero before it stops feeling professional?</h3>
+                <p>
+                  I'm trying to make it premium without drifting into "concept shot" territory. Curious how others are deciding where to stop.
+                </p>
+                <div class="reply-meta">
+                  <span>28 replies</span>
+                  <span>91 reactions</span>
+                </div>
+                <div class="reply-actions">
+                  <button class="link-btn open-thread-btn" type="button">Open thread</button>
+                  <button class="link-btn" type="button">Reply</button>
+                </div>
+              </article>
+
+              <article class="discussion-card thread-item" data-thread-id="samuel-resource" data-thread-kind="Resource">
+                <div class="discussion-head">
+                  <div class="author-line">
+                    <div class="avatar user">SB</div>
+                    <div>
+                      <div class="author-name">Samuel Bassey</div>
+                      <div class="author-meta">2 hours ago</div>
+                    </div>
+                  </div>
+                </div>
+                <h3>Useful reference for cleaner CTA spacing</h3>
+                <p>
+                  I found a strong breakdown on button prominence and spacing rhythm. It helped me simplify my first attempt a lot.
+                </p>
+                <div class="resource-preview">
+                  <strong>Spacing systems for premium hero sections</strong>
+                  <span>Shared resource / 8 saves</span>
+                </div>
+                <div class="reply-actions">
+                  <button class="link-btn open-thread-btn" type="button">Open thread</button>
+                  <button class="link-btn" type="button">Open</button>
+                  <button class="link-btn" type="button">Reply</button>
+                </div>
+              </article>
+            </section>
+          </section>
+        </section>
+
+        <aside class="side-column">
+          <section class="panel">
+            <div class="panel-title">Thread status</div>
+            <div class="status-list">
+              <div class="status-row">
+                <span>Open discussion</span>
+                <strong>Yes</strong>
+              </div>
+              <div class="status-row">
+                <span>Participants</span>
+                <strong>48 active</strong>
+              </div>
+              <div class="status-row">
+                <span>Replies today</span>
+                <strong>32</strong>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-title">People in this thread</div>
+            <div class="people-list">
+              <div class="person-row">
+                <div class="avatar manager">MN</div>
+                <div>
+                  <strong>Maya Nwosu</strong>
+                  <p>Frontend mentor</p>
+                </div>
+              </div>
+              <div class="person-row">
+                <div class="avatar user">FK</div>
+                <div>
+                  <strong>Fatima Kone</strong>
+                  <p>Top contributor</p>
+                </div>
+              </div>
+              <div class="person-row">
+                <div class="avatar user">SB</div>
+                <div>
+                  <strong>Samuel Bassey</strong>
+                  <p>Active participant</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-title">Quick links</div>
+            <div class="link-stack">
+              <a href="hub.php" class="related-link">
+                <strong>Back to current hub</strong>
+                <span>Return to the community feed</span>
+              </a>
+              <a href="skillhub.php" class="related-link">
+                <strong>Browse all hubs</strong>
+                <span>Explore more communities and suggestions</span>
+              </a>
+              <a href="#" class="related-link">
+                <strong>Open hub calendar</strong>
+                <span>See reviews, workshops, and deadlines</span>
+              </a>
+            </div>
+          </section>
+        </aside>
+      </div>
+    </main>
+  </div>
+
+  <div class="thread-overlay is-hidden" id="threadOverlay"></div>
+  <aside class="thread-detail is-hidden" id="threadDetail">
+    <div class="thread-detail-header">
+      <div class="thread-detail-nav">
+        <button class="thread-back-btn" type="button" id="closeThreadDetail" aria-label="Back to discussion">&larr;</button>
+        <div class="thread-detail-context">
+          <div class="panel-title">Frontend Systems</div>
+          <div class="thread-detail-submeta" id="threadDetailMeta">Just now</div>
+        </div>
+      </div>
+      <button class="thread-more-btn" type="button" aria-label="More actions">&bull;&bull;&bull;</button>
+    </div>
+
+    <article class="thread-detail-main">
+      <div class="thread-post-shell">
+        <div class="thread-vote-rail">
+          <button class="vote-btn" type="button" aria-label="Upvote">&#9650;</button>
+          <span class="vote-count">Thread</span>
+          <button class="vote-btn" type="button" aria-label="Downvote">&#9660;</button>
+        </div>
+        <div class="thread-post-content">
+          <div class="thread-post-meta">
+            <div class="author-line">
+              <div class="avatar user" id="threadDetailAvatar">AY</div>
+              <div>
+                <div class="author-name" id="threadDetailAuthor">CareerStrand Member</div>
+                <div class="author-meta" id="threadDetailKind">Discussion</div>
+              </div>
+            </div>
+            <span class="tag-pill" id="threadDetailBadge">Open thread</span>
+          </div>
+          <h2 id="threadDetailTitle">Thread detail</h2>
+          <p class="thread-detail-copy" id="threadDetailBody">
+            Open a discussion card to read the full conversation, see replies, and add your own comment.
+          </p>
+          <div class="thread-post-actions">
+            <button class="link-btn" type="button">Reply</button>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <section class="thread-comments">
+      <div class="thread-comments-header">
+        <div class="thread-comments-title">
+          <strong>Comments</strong>
+          <span id="threadCommentCount">0 comments</span>
+        </div>
+        <div class="thread-comments-tools">
+          <button class="sort-chip" type="button">Best</button>
+          <button class="sort-chip" type="button">Newest</button>
+        </div>
+      </div>
+      <div class="thread-comments-list" id="threadCommentsList"></div>
+    </section>
+
+    <section class="thread-comment-composer">
+      <div class="thread-comment-entry">
+        <div class="avatar user">AY</div>
+        <div class="thread-comment-box">
+          <label class="discussion-input thread-inline-input" for="threadCommentInput">
+            <strong>Join the conversation</strong>
+            <span>Respond inside this thread so the discussion stays with the task.</span>
+            <textarea id="threadCommentInput" rows="4" placeholder="Write a comment..."></textarea>
+          </label>
+          <div class="discussion-actions thread-comment-actions">
+            <button class="primary-btn" type="button" id="postThreadCommentBtn">Comment</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </aside>
+
+  <script src="assets/js/thread.js"></script>
+</body>
+</html>

@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CareerStrand Admin Skill Hub</title>
+  <link rel="stylesheet" href="assets/css/admin.css" />
+</head>
+<body>
+  <div class="admin-shell">
+    <aside class="admin-sidebar">
+      <div class="brand">
+        <div class="brand-badge"></div>
+        <div>
+          <h1>CareerStrand Admin</h1>
+          <p>Back office console</p>
+        </div>
+      </div>
+
+      <div class="side-label">Main Menu</div>
+      <nav class="nav-list">
+        <a class="nav-item" href="admin-dashboard.php"><span>Dashboard</span><span>Home</span></a>
+        <a class="nav-item" href="admin-users.php"><span>Users</span><span>1.2k</span></a>
+        <a class="nav-item" href="admin-profiles.php"><span>Profiles</span><span>842</span></a>
+        <a class="nav-item" href="admin-questions.php"><span>Courses</span><span>24</span></a>
+        <a class="nav-item active" href="admin-skills.php"><span>Skill Hub</span><span>09</span></a>
+        <a class="nav-item" href="admin-opportunities.php"><span>Opportunities</span><span>36</span></a>
+        <a class="nav-item" href="admin-applications.php"><span>Applications</span><span>128</span></a>
+        <a class="nav-item" href="admin-analytics.php"><span>ADN Analytics</span><span>Live</span></a>
+        <a class="nav-item" href="admin-feedback.php"><span>Events</span><span>12</span></a>
+        <a class="nav-item" href="admin-settings.php"><span>Settings</span><span>New</span></a>
+      </nav>
+
+      <div class="sidebar-card">
+        <h3>Access rule</h3>
+        <p>Only admins and managers can create hubs, publish tasks, publish projects, and moderate hub discussions. Users can join hubs, discuss, save work, and build visible progression.</p>
+      </div>
+    </aside>
+
+    <main class="admin-main">
+      <header class="page-header">
+        <div>
+          <h2>Skill Hub Control Center</h2>
+        </div>
+      </header>
+
+      <section class="tile-grid">
+        <article class="metric-tile">
+          <div class="metric-label">Live Hubs</div>
+          <div class="metric-value">09</div>
+          <div class="metric-sub">Communities open to members</div>
+        </article>
+        <article class="metric-tile">
+          <div class="metric-label">Active Managers</div>
+          <div class="metric-value">14</div>
+          <div class="metric-sub">Publishing and moderating this week</div>
+        </article>
+        <article class="metric-tile">
+          <div class="metric-label">Open Work Items</div>
+          <div class="metric-value">37</div>
+          <div class="metric-sub">Tasks and projects currently live</div>
+        </article>
+        <article class="metric-tile">
+          <div class="metric-label">Open Threads</div>
+          <div class="metric-value">412</div>
+          <div class="metric-sub">Hub-wide and work-specific discussions</div>
+        </article>
+      </section>
+
+      <section class="split-grid" style="margin-top: 24px;">
+        <article class="panel">
+          <div class="panel-header">
+            <div class="panel-title">
+              <h3>Hub directory</h3>
+              <p>All communities created by admins and managers</p>
+            </div>
+            <div class="filters">
+              <span class="filter">All hubs</span>
+              <span class="filter">Managers only</span>
+            </div>
+          </div>
+          <table>
+            <thead>
+              <tr><th>Hub</th><th>Owner</th><th>Members</th><th>Live work</th><th>Threads</th><th>Actions</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>Frontend Systems</strong></td><td>Maya Nwosu</td><td>2.8k</td><td>8 items</td><td>124</td><td class="table-actions"><span class="link-btn">Open</span><span class="link-btn">Moderate</span></td></tr>
+              <tr><td><strong>UI/UX Studio</strong></td><td>Fatima Kone</td><td>1.9k</td><td>5 items</td><td>87</td><td class="table-actions"><span class="link-btn">Open</span><span class="link-btn">Edit</span></td></tr>
+              <tr><td><strong>Storytelling Lab</strong></td><td>Ola Dairo</td><td>1.2k</td><td>11 items</td><td>94</td><td class="table-actions"><span class="link-btn">Open</span><span class="link-btn">Moderate</span></td></tr>
+              <tr><td><strong>Startup Thinking</strong></td><td>CareerStrand Admin</td><td>980</td><td>13 items</td><td>56</td><td class="table-actions"><span class="link-btn">Open</span><span class="link-btn">Assign</span></td></tr>
+            </tbody>
+          </table>
+        </article>
+
+        <article class="panel">
+          <div class="panel-header">
+            <div class="panel-title">
+              <h3>Create hub</h3>
+              <p>Admins and managers open new communities from here.</p>
+            </div>
+          </div>
+          <div class="detail-grid">
+            <div class="field">
+              <label>Hub title</label>
+              <input type="text" placeholder="Frontend Systems" />
+            </div>
+            <div class="field">
+              <label>Category</label>
+              <select>
+                <option>Frontend</option>
+                <option>Design</option>
+                <option>Communication</option>
+                <option>Business</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Owner / manager</label>
+              <select>
+                <option>Maya Nwosu</option>
+                <option>Fatima Kone</option>
+                <option>Ola Dairo</option>
+                <option>CareerStrand Admin</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Visibility</label>
+              <select>
+                <option>Public</option>
+                <option>Private</option>
+              </select>
+            </div>
+            <div class="field" style="grid-column: 1 / -1;">
+              <label>Description</label>
+              <textarea placeholder="Describe what this hub is for, the kind of work it hosts, and what members should expect."></textarea>
+            </div>
+            <div class="field" style="grid-column: 1 / -1;">
+              <label>Moderator notes</label>
+              <input type="text" placeholder="Posting rules, moderation priorities, pinned guidance policy..." />
+            </div>
+          </div>
+          <div class="table-foot">
+            <span>Only admins and managers can create hubs.</span>
+            <div class="header-actions">
+              <button class="btn btn-soft">Save draft</button>
+              <button class="btn btn-main">Publish hub</button>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <section class="split-grid" style="margin-top: 24px;">
+        <article class="panel">
+          <div class="panel-header">
+            <div class="panel-title">
+              <h3>Tasks and projects board</h3>
+              <p>Everything managers and admins have published inside hubs</p>
+            </div>
+          </div>
+          <table>
+            <thead>
+              <tr><th>Work item</th><th>Hub</th><th>Type</th><th>Discussion</th><th>Status</th><th>Actions</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>Premium hero rebuild</strong></td><td>Frontend Systems</td><td><span class="category-chip">Task</span></td><td>Task thread live</td><td><span class="status-chip status-published">Open</span></td><td class="table-actions"><span class="link-btn">Edit</span><span class="link-btn">Open thread</span></td></tr>
+              <tr><td><strong>Startup validation board</strong></td><td>Startup Thinking</td><td><span class="category-chip">Project</span></td><td>Project discussion live</td><td><span class="status-chip status-published">Open</span></td><td class="table-actions"><span class="link-btn">Edit</span><span class="link-btn">Review</span></td></tr>
+              <tr><td><strong>Community challenge launch copy</strong></td><td>Storytelling Lab</td><td><span class="category-chip">Task</span></td><td>Task thread live</td><td><span class="status-chip status-review">Reviewing</span></td><td class="table-actions"><span class="link-btn">Edit</span><span class="link-btn">Moderate</span></td></tr>
+            </tbody>
+          </table>
+        </article>
+
+        <article class="panel">
+          <div class="panel-header">
+            <div class="panel-title">
+              <h3>Publish task or project</h3>
+              <p>Create the work items that appear inside hubs and open their dedicated thread pages.</p>
+            </div>
+          </div>
+          <div class="chip-row" style="margin-bottom: 18px;">
+            <span class="status-chip is-selected">Task</span>
+            <span class="status-chip">Project</span>
+          </div>
+          <div class="detail-grid">
+            <div class="field">
+              <label>Title</label>
+              <input type="text" placeholder="Premium hero rebuild" />
+            </div>
+            <div class="field">
+              <label>Hub</label>
+              <select>
+                <option>Frontend Systems</option>
+                <option>UI/UX Studio</option>
+                <option>Storytelling Lab</option>
+                <option>Startup Thinking</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Type</label>
+              <select>
+                <option>Task</option>
+                <option>Project</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Status</label>
+              <select>
+                <option>Published</option>
+                <option>Draft</option>
+                <option>Closed</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Difficulty / scope</label>
+              <select>
+                <option>Intermediate</option>
+                <option>Beginner</option>
+                <option>Advanced</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>ADN impact</label>
+              <select>
+                <option>High</option>
+                <option>Medium</option>
+                <option>Low</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Estimated duration</label>
+              <input type="text" placeholder="3 hours" />
+            </div>
+            <div class="field">
+              <label>Deadline</label>
+              <input type="text" placeholder="2026-04-12 18:00" />
+            </div>
+            <div class="field" style="grid-column: 1 / -1;">
+              <label>Brief</label>
+              <textarea placeholder="Explain what the user should build, submit, or discuss inside this work item."></textarea>
+            </div>
+            <div class="field" style="grid-column: 1 / -1;">
+              <label>Deliverables</label>
+              <textarea placeholder="List the expected output, review note, submission format, and anything required for completion."></textarea>
+            </div>
+          </div>
+          <div class="table-foot">
+            <span>Publishing creates the work item and its dedicated discussion thread.</span>
+            <div class="header-actions">
+              <button class="btn btn-soft">Save draft</button>
+              <button class="btn btn-main">Publish item</button>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <section class="split-grid" style="margin-top: 24px;">
+        <article class="panel">
+          <div class="panel-header">
+            <div class="panel-title">
+              <h3>Moderation queue</h3>
+              <p>Threads and comments needing admin or manager attention</p>
+            </div>
+          </div>
+          <table>
+            <thead>
+              <tr><th>Item</th><th>Hub</th><th>Type</th><th>Reported by</th><th>Action</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>Hero rebuild comment chain</strong></td><td>Frontend Systems</td><td>Task thread</td><td>3 users</td><td class="table-actions"><span class="link-btn">Inspect</span><span class="link-btn">Resolve</span></td></tr>
+              <tr><td><strong>Question duplication</strong></td><td>UI/UX Studio</td><td>Hub discussion</td><td>Manager</td><td class="table-actions"><span class="link-btn">Merge</span><span class="link-btn">Close</span></td></tr>
+              <tr><td><strong>Off-topic resource post</strong></td><td>Storytelling Lab</td><td>Hub discussion</td><td>2 users</td><td class="table-actions"><span class="link-btn">Inspect</span><span class="link-btn">Archive</span></td></tr>
+            </tbody>
+          </table>
+        </article>
+
+        <article class="panel">
+          <div class="panel-header">
+            <div class="panel-title">
+              <h3>Manager roster</h3>
+              <p>Who owns the communities and publishing rights</p>
+            </div>
+          </div>
+          <div class="list">
+            <div class="list-item"><strong>Maya Nwosu</strong><p class="subtle">Frontend Systems / can publish tasks, projects, and pinned guidance</p></div>
+            <div class="list-item"><strong>Fatima Kone</strong><p class="subtle">UI/UX Studio / moderates critique threads and review prompts</p></div>
+            <div class="list-item"><strong>Ola Dairo</strong><p class="subtle">Storytelling Lab / manages challenge prompts and forum rhythm</p></div>
+            <div class="list-item"><strong>CareerStrand Admin</strong><p class="subtle">Global override / creates hubs, assigns owners, archives spaces</p></div>
+          </div>
+        </article>
+      </section>
+
+      <div class="footer-note">Skill Hub back office now covers hub creation, manager permissions, tasks, projects, thread discussions, and moderation in one admin view.</div>
+    </main>
+  </div>
+  <script src="assets/js/admin.js"></script>
+</body>
+</html>
+
