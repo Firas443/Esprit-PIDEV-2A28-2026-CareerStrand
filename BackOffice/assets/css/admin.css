@@ -741,3 +741,12 @@ td strong {
   box-shadow: 0 10px 24px rgba(255, 110, 69, 0.12);
 }
 
+/* Add this to your admin.css or the <style> block in admin-opportunities.php */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

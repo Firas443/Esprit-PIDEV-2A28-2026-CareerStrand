@@ -1,4 +1,4 @@
-﻿    /* =========================
+﻿/* =========================
        FULLSCREEN BACKGROUND DNA
        FIXED: rotates in place
     ========================= */
@@ -17,10 +17,10 @@
       height: window.innerHeight
     };
 
-    const camera = new THREE.PerspectiveCamera(46, sizes.width / sizes.height, 0.1, 100);
-    camera.position.set(-2.6, 6.2, 27.5);
-    camera.lookAt(3.4, 10, 0);
-    camera.rotateZ(Math.PI / 8.5);
+    const camera = new THREE.PerspectiveCamera(18, sizes.width / sizes.height, 0.1, 100);
+    camera.position.set(0, 8, 14);
+    camera.lookAt(0, 8, 0);
+    camera.rotateZ(Math.PI / 12);
     scene.add(camera);
 
     const renderer = new THREE.WebGLRenderer({
@@ -48,14 +48,14 @@
     const edgeGeometry = new THREE.BoxGeometry(edgeSize, edgeSize, edgeSize);
     const bladeGeometry = new THREE.BoxGeometry(edgeSize * 0.8, edgeSize * 0.8, radiusEdges);
     const materialA = new THREE.MeshBasicMaterial({
-      color: new THREE.Color("rgb(111, 143, 216)"),
+      color: new THREE.Color("rgb(80, 110, 180)"),
       transparent: true,
-      opacity: 0.95
+      opacity: 0.35
     });
     const materialB = new THREE.MeshBasicMaterial({
-      color: new THREE.Color("rgb(255, 110, 69)"),
+      color: new THREE.Color("rgb(200, 80, 50)"),
       transparent: true,
-      opacity: 0.95
+      opacity: 0.28
     });
 
     function createDNAFragment(hasBlade, index) {
@@ -124,8 +124,8 @@
     const dnaCenterOffset = ((dnaHeight - 1) * verticalSeparation) / 2;
     dnaCore.position.y = -dnaCenterOffset;
 
-    DNA.position.set(14.5, -14 + dnaCenterOffset, -2.3);
-    DNA.scale.setScalar(lowMotionMode ? 1.7 : 1.82);
+    DNA.position.set(2, -14 + dnaCenterOffset, -2.3);
+    DNA.scale.setScalar(lowMotionMode ? 1.2 : 1.32);
     const baseRotationX = -0.66;
     const baseRotationZ = 1.05;
     DNA.rotation.set(baseRotationX, 0, baseRotationZ);
@@ -142,7 +142,7 @@
 
       lastBackgroundFrame = time;
       const t = time * 0.001;
-      const spinAngle = t * (lowMotionMode ? 0.48 : 0.55);
+      const spinAngle = t * (lowMotionMode ? 0.12 : 0.18);
 
       DNA.rotation.x = baseRotationX;
       DNA.rotation.y = 0;
@@ -187,28 +187,31 @@
     ========================= */
     const helix = document.getElementById("helix");
     const helixRows = [];
-    const helixCount = lowMotionMode ? 16 : 18;
 
-    for (let row = 0; row < helixCount; row++) {
-      const wrapper = document.createElement("div");
-      wrapper.className = "helix-row";
-      wrapper.style.top = (44 + row * 28) + "px";
+    if (helix) {
+      const helixCount = lowMotionMode ? 16 : 18;
 
-      const leftNode = document.createElement("div");
-      leftNode.className = "node left";
+      for (let row = 0; row < helixCount; row++) {
+        const wrapper = document.createElement("div");
+        wrapper.className = "helix-row";
+        wrapper.style.top = (44 + row * 28) + "px";
 
-      const rightNode = document.createElement("div");
-      rightNode.className = "node right";
+        const leftNode = document.createElement("div");
+        leftNode.className = "node left";
 
-      const bar = document.createElement("div");
-      bar.className = "bar";
+        const rightNode = document.createElement("div");
+        rightNode.className = "node right";
 
-      wrapper.appendChild(leftNode);
-      wrapper.appendChild(rightNode);
-      wrapper.appendChild(bar);
-      helix.appendChild(wrapper);
+        const bar = document.createElement("div");
+        bar.className = "bar";
 
-      helixRows.push({ row, leftNode, rightNode, bar });
+        wrapper.appendChild(leftNode);
+        wrapper.appendChild(rightNode);
+        wrapper.appendChild(bar);
+        helix.appendChild(wrapper);
+
+        helixRows.push({ row, leftNode, rightNode, bar });
+      }
     }
 
     let lastHelixFrame = 0;
@@ -273,46 +276,48 @@
     requestAnimationFrame(animateHelix);
 
     /* =========================
-       MATCH PREVIEW
+       MATCH PREVIEW (index only)
     ========================= */
-    const matchItems = document.querySelectorAll(".match-item");
-    const previewCompany = document.getElementById("preview-company");
-    const previewRole = document.getElementById("preview-role");
-    const previewVibe = document.getElementById("preview-vibe");
-    const previewScoreLabel = document.getElementById("preview-score-label");
     const previewBar = document.getElementById("preview-bar");
-    const previewPoints = document.getElementById("preview-points");
+    if (previewBar) {
+      const matchItems = document.querySelectorAll(".match-item");
+      const previewCompany = document.getElementById("preview-company");
+      const previewRole = document.getElementById("preview-role");
+      const previewVibe = document.getElementById("preview-vibe");
+      const previewScoreLabel = document.getElementById("preview-score-label");
+      const previewPoints = document.getElementById("preview-points");
 
-    function updatePreview(button) {
-      matchItems.forEach(item => item.classList.remove("active"));
-      button.classList.add("active");
+      function updatePreview(button) {
+        matchItems.forEach(item => item.classList.remove("active"));
+        button.classList.add("active");
 
-      const company = button.dataset.company;
-      const role = button.dataset.role;
-      const match = button.dataset.match;
-      const vibe = button.dataset.vibe;
-      const points = JSON.parse(button.dataset.points);
+        const company = button.dataset.company;
+        const role = button.dataset.role;
+        const match = button.dataset.match;
+        const vibe = button.dataset.vibe;
+        const points = JSON.parse(button.dataset.points);
 
-      previewCompany.textContent = company;
-      previewRole.textContent = role;
-      previewVibe.textContent = vibe;
-      previewScoreLabel.textContent = match + "%";
-      previewBar.style.width = match + "%";
+        previewCompany.textContent = company;
+        previewRole.textContent = role;
+        previewVibe.textContent = vibe;
+        previewScoreLabel.textContent = match + "%";
+        previewBar.style.width = match + "%";
 
-      previewPoints.innerHTML = "";
-      points.forEach(text => {
-        const div = document.createElement("div");
-        div.className = "point";
-        div.textContent = text;
-        previewPoints.appendChild(div);
+        previewPoints.innerHTML = "";
+        points.forEach(text => {
+          const div = document.createElement("div");
+          div.className = "point";
+          div.textContent = text;
+          previewPoints.appendChild(div);
+        });
+      }
+
+      matchItems.forEach(item => {
+        item.addEventListener("click", () => updatePreview(item));
       });
+
+      previewBar.style.width = "98%";
     }
-
-    matchItems.forEach(item => {
-      item.addEventListener("click", () => updatePreview(item));
-    });
-
-    previewBar.style.width = "98%";
 
     /* =========================
        FADE IN ON SCROLL

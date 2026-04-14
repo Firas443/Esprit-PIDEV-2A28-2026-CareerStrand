@@ -1,4 +1,4 @@
-﻿    :root {
+﻿:root {
       --bg: #040816;
       --bg-2: #071126;
       --panel: rgba(65, 100, 184, 0.12);
@@ -36,10 +36,10 @@
       min-height: 100vh;
       overflow-x: hidden;
       background:
-        radial-gradient(circle at 15% 20%, rgba(111, 143, 216, 0.12), transparent 26%),
-        radial-gradient(circle at 85% 18%, rgba(255, 110, 69, 0.1), transparent 24%),
-        radial-gradient(circle at 55% 78%, rgba(149, 171, 235, 0.08), transparent 28%),
-        linear-gradient(120deg, #030712 0%, #071126 45%, #090514 100%);
+        radial-gradient(circle at 15% 20%, rgba(111, 143, 216, 0.05), transparent 26%),
+        radial-gradient(circle at 85% 18%, rgba(255, 110, 69, 0.04), transparent 24%),
+        radial-gradient(circle at 55% 78%, rgba(149, 171, 235, 0.03), transparent 28%),
+        linear-gradient(120deg, #020610 0%, #050e1f 45%, #060412 100%);
     }
 
     body::before {
@@ -49,10 +49,10 @@
       pointer-events: none;
       z-index: 0;
       background:
-        radial-gradient(circle at 18% 24%, rgba(255, 110, 69, 0.12), transparent 22%),
-        radial-gradient(circle at 72% 18%, rgba(111, 143, 216, 0.14), transparent 24%),
-        linear-gradient(180deg, rgba(255,255,255,0.03), transparent 18%);
-      opacity: 0.9;
+        radial-gradient(circle at 18% 24%, rgba(255, 110, 69, 0.04), transparent 22%),
+        radial-gradient(circle at 72% 18%, rgba(111, 143, 216, 0.05), transparent 24%),
+        linear-gradient(180deg, rgba(255,255,255,0.01), transparent 18%);
+      opacity: 0.7;
     }
 
     a {
@@ -72,7 +72,7 @@
       height: 100%;
       z-index: 0;
       pointer-events: none;
-      opacity: 1;
+      opacity: 0.45;
     }
 
     .dna-blur-overlay {
@@ -80,13 +80,13 @@
       inset: 0;
       z-index: 1;
       pointer-events: none;
-      backdrop-filter: blur(7px);
-      -webkit-backdrop-filter: blur(7px);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
       background:
-        radial-gradient(circle at 18% 28%, rgba(111, 143, 216, 0.04), transparent 30%),
-        radial-gradient(circle at 78% 26%, rgba(255, 110, 69, 0.03), transparent 26%),
-        radial-gradient(circle at 52% 62%, rgba(149, 171, 235, 0.02), transparent 28%);
-      opacity: 0.9;
+        radial-gradient(circle at 18% 28%, rgba(111, 143, 216, 0.02), transparent 30%),
+        radial-gradient(circle at 78% 26%, rgba(255, 110, 69, 0.01), transparent 26%),
+        radial-gradient(circle at 52% 62%, rgba(149, 171, 235, 0.01), transparent 28%);
+      opacity: 0.95;
     }
 
     body.low-motion .dna-blur-overlay {

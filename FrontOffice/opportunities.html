@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CareerStrand | Opportunities</title>
+  <link rel="stylesheet" href="assets/css/frontoffice.css" />
+  <link rel="stylesheet" href="assets/css/opportunities.css" />
+</head>
+<body>
+  <canvas class="webgl-dna"></canvas>
+  <div class="dna-blur-overlay"></div>
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <div class="brand">
+        <div class="brand-mark">
+          <img class="brand-logo" src="images/CareerStrand_logo.png" alt="CareerStrand logo" />
+        </div>
+        <div>
+          <div class="brand-title">CareerStrand</div>
+          <div class="brand-sub">career progression platform</div>
+        </div>
+      </div>
+      <nav class="nav">
+        <a href="index.html">Home</a>
+        <a href="index.html#engine">Progression</a>
+        <a href="opportunities.html" style="color:var(--white);font-weight:700;">Opportunities</a>
+        <a href="index.html#command">Readiness</a>
+      </nav>
+      <div class="header-actions">
+        <button class="btn btn-ghost">Sign in</button>
+        <button class="btn btn-main">Build your DNA</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="container oppo-shell">
+
+      <div class="oppo-header">
+        <div class="oppo-header-top fade-up">
+          <div class="oppo-title-block">
+            <div class="page-eyebrow"><span class="dot"></span>matched to your ADN</div>
+            <h1>Your opportunities</h1>
+            <p>Ranked by DNA compatibility. The higher your score, the more doors open.</p>
+          </div>
+          <div class="dna-score-widget">
+            <div class="score-ring">
+              <svg viewBox="0 0 58 58">
+                <defs>
+                  <linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#6f8fd8"/>
+                    <stop offset="100%" stop-color="#ff6e45"/>
+                  </linearGradient>
+                </defs>
+                <circle class="score-ring-track" cx="29" cy="29" r="26"/>
+                <circle class="score-ring-fill"  cx="29" cy="29" r="26"/>
+              </svg>
+              <div class="score-ring-label">87</div>
+            </div>
+            <div class="score-info">
+              <div class="score-name">Your ADN score</div>
+              <div class="score-type">Creative + Technical hybrid</div>
+              <div class="score-skills">
+                <span class="skill-tag">Figma</span>
+                <span class="skill-tag">HTML/CSS</span>
+                <span class="skill-tag">UX</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="filter-bar fade-up">
+          <div class="filter-tabs">
+            <button class="filter-tab active" data-filter="recommended">Recommended <span class="tab-count">4</span></button>
+            <button class="filter-tab" data-filter="all">All <span class="tab-count">9</span></button>
+            <button class="filter-tab" data-filter="new">New <span class="tab-count">3</span></button>
+            <button class="filter-tab" data-filter="closing">Closing soon <span class="tab-count">2</span></button>
+            <button class="filter-tab" data-filter="applied">Applied <span class="tab-count">1</span></button>
+          </div>
+          <div class="search-sort">
+            <div class="search-box">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                <circle cx="7" cy="7" r="4.5"/><line x1="10.2" y1="10.2" x2="13.5" y2="13.5"/>
+              </svg>
+              <input type="text" id="searchInput" placeholder="Search roles or skills..." />
+            </div>
+            <select class="sort-select" id="sortSelect">
+              <option value="match">Best match</option>
+              <option value="newest">Newest</option>
+              <option value="deadline">Deadline</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="category-filters fade-up">
+          <button class="cat-chip active" data-cat="all">All categories</button>
+          <button class="cat-chip" data-cat="technical">Technical</button>
+          <button class="cat-chip" data-cat="creativity">Creativity</button>
+          <button class="cat-chip" data-cat="business">Business</button>
+          <button class="cat-chip" data-cat="communication">Communication</button>
+          <button class="cat-chip" data-cat="leadership">Leadership</button>
+        </div>
+      </div>
+
+      <div class="results-meta">
+        <span><strong id="resultCount">0</strong> opportunities found</span>
+        <span id="filterLabel">Showing all categories</span>
+      </div>
+
+      <div class="oppo-grid" id="oppoGrid"></div>
+
+    </div>
+  </main>
+
+  <div class="modal-overlay" id="applyModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div>
+          <div class="modal-role"    id="modalRole">Role</div>
+          <div class="modal-company" id="modalCompany">Company</div>
+        </div>
+        <button class="modal-close" id="modalClose">&#x2715;</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-compat">
+          <div class="modal-compat-label">DNA compatibility</div>
+          <div class="compat-bar">
+            <div class="compat-label-row"><span>Match strength</span><span id="modalScore">0%</span></div>
+            <div class="compat-track"><div class="compat-fill" id="modalBar" style="width:0%"></div></div>
+          </div>
+        </div>
+        <div class="modal-field">
+          <label>Why are you a great fit?</label>
+          <textarea id="modalMotivation" rows="4" placeholder="Tell them how your skills and journey align with this opportunity..."></textarea>
+        </div>
+        <div class="modal-field">
+          <label>Portfolio or relevant link (optional)</label>
+          <input id="modalPortfolio" type="url" placeholder="https://your-work.com" />
+        </div>
+        <div class="modal-actions">
+          <button class="btn-cancel"       id="modalCancel">Cancel</button>
+          <button class="btn-submit-apply" id="modalSubmit">Submit application</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-note">CareerStrand concept demo &middot; Opportunities page</div>
+
+
+
+  <button class="drawer-fab" id="drawerBtn" title="My applications">
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="2" width="14" height="16" rx="3"/>
+      <path d="M7 7h6M7 10.5h4"/>
+    </svg>
+    <span>My applications</span>
+    <span class="drawer-badge" id="drawerBadge" style="display:none">0</span>
+  </button>
+
+
+  <div class="drawer-backdrop" id="drawerBackdrop"></div>
+
+  
+  <aside class="submissions-drawer" id="submissionsDrawer">
+    <div class="drawer-header">
+      <div>
+        <div class="drawer-title">My applications</div>
+        <div class="drawer-sub" id="drawerSub">Your submitted applications</div>
+      </div>
+      <button class="drawer-close" id="drawerClose">&#x2715;</button>
+    </div>
+    <div class="drawer-list" id="drawerList"></div>
+  </aside>
+
+  <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+  <script src="assets/js/frontoffice.js"></script>
+  <script src="/Careerstrand/frontoffice/assets/js/opportunities.js"></script>
+</body>
+</html>
