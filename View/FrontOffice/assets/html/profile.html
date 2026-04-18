@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Profile — CareerStrand</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:       #040816;
+      --bg-2:     #071126;
+      --bg-card:  rgba(255,255,255,0.03);
+      --border:   rgba(255,255,255,0.08);
+      --border-hi:rgba(111,143,216,0.35);
+      --text:     #f5f3ee;
+      --muted:    rgba(245,243,238,0.55);
+      --blue:     #6f8fd8;
+      --blue-2:   #95abeb;
+      --red:      #ff6e45;
+      --green:    #4ade80;
+      --yellow:   #fbbf24;
+      --shadow:   0 24px 80px rgba(0,0,0,0.45);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: radial-gradient(circle at 10% 15%, rgba(111,143,216,0.10) 0%, transparent 40%),
+                  radial-gradient(circle at 90% 80%, rgba(255,110,69,0.07) 0%, transparent 35%),
+                  linear-gradient(160deg, #030712 0%, #071126 55%, #090514 100%);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── HEADER ── */
+    .site-header {
+      position: sticky; top: 0; z-index: 50;
+      background: rgba(4,8,22,0.70);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(18px);
+    }
+    .header-inner {
+      max-width: 1200px; margin: 0 auto; padding: 0 24px;
+      height: 68px; display: flex; align-items: center; justify-content: space-between;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+    .brand-logo { height: 48px; width: auto; display: block;  }
+    .brand-title { font-family: 'Syne', sans-serif; font-size: 17px; font-weight: 800; color: var(--text); }
+    .brand-sub   { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .15em; }
+    .nav-right { display: flex; align-items: center; gap: 12px; }
+    .btn { padding: 9px 20px; border-radius: 999px; font-weight: 600; font-size: 13px; cursor: pointer; border: none; transition: .2s; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+    .btn-ghost { background: var(--bg-card); border: 1px solid var(--border); color: var(--muted); }
+    .btn-ghost:hover { border-color: var(--border-hi); color: var(--text); }
+    .btn-main { background: linear-gradient(90deg, var(--blue), var(--red)); color: #fff; box-shadow: 0 8px 24px rgba(255,110,69,.2); }
+    .btn-main:hover { filter: brightness(1.1); transform: translateY(-1px); }
+    .btn-danger { background: rgba(255,110,69,.12); border: 1px solid rgba(255,110,69,.3); color: var(--red); }
+    .btn-danger:hover { background: rgba(255,110,69,.22); }
+
+    /* ── LAYOUT ── */
+    .page-wrap {
+      max-width: 1200px; margin: 0 auto; padding: 40px 24px 80px;
+      display: grid; grid-template-columns: 300px 1fr; gap: 28px; align-items: start;
+    }
+
+    /* ── SIDEBAR CARD ── */
+    .sidebar-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 28px;
+      position: sticky; top: 88px;
+    }
+    .avatar-wrap { display: flex; flex-direction: column; align-items: center; gap: 14px; margin-bottom: 24px; }
+    .avatar {
+      width: 88px; height: 88px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--blue), var(--red));
+      display: grid; place-items: center;
+      font-family: 'Syne', sans-serif; font-size: 30px; font-weight: 800; color: #fff;
+      border: 3px solid var(--border-hi);
+      overflow: hidden;
+    }
+    .avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+    .user-name  { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; text-align: center; }
+    .user-email { font-size: 13px; color: var(--muted); text-align: center; word-break: break-all; }
+
+    .role-chip {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 5px 12px; border-radius: 999px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .1em;
+      background: rgba(111,143,216,.14); border: 1px solid rgba(111,143,216,.3); color: var(--blue-2);
+    }
+
+    .progress-wrap { margin: 20px 0; }
+    .progress-label { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+    .progress-label strong { color: var(--text); }
+    .progress-bar { height: 6px; background: rgba(255,255,255,.08); border-radius: 999px; overflow: hidden; }
+    .progress-fill {
+      height: 100%; border-radius: 999px;
+      background: linear-gradient(90deg, var(--blue), var(--red));
+      transition: width .6s ease;
+    }
+
+    .level-badge {
+      display: flex; align-items: center; justify-content: center;
+      padding: 8px 0; border-radius: 14px;
+      background: rgba(74,222,128,.08); border: 1px solid rgba(74,222,128,.2);
+      color: var(--green); font-size: 12px; font-weight: 600; letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .info-rows { margin-top: 20px; display: flex; flex-direction: column; gap: 12px; }
+    .info-row  { display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
+    .info-row span { color: var(--muted); }
+    .info-row strong { color: var(--text); text-align: right; max-width: 160px; word-break: break-word; }
+
+    .sidebar-divider { height: 1px; background: var(--border); margin: 20px 0; }
+
+    /* ── MAIN PANEL ── */
+    .main-panel { display: flex; flex-direction: column; gap: 24px; }
+
+    /* ── TABS ── */
+    .tabs { display: flex; gap: 4px; background: rgba(255,255,255,.04); border: 1px solid var(--border); border-radius: 16px; padding: 5px; width: fit-content; }
+    .tab-btn {
+      padding: 9px 22px; border-radius: 12px; font-size: 13px; font-weight: 600;
+      border: none; background: transparent; color: var(--muted); cursor: pointer; transition: .2s;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .tab-btn.active { background: rgba(111,143,216,.18); color: var(--text); border: 1px solid var(--border-hi); }
+    .tab-btn:hover:not(.active) { color: var(--text); }
+
+    /* ── PANELS ── */
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── FORM CARD ── */
+    .form-card {
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: 24px; padding: 32px;
+    }
+    .card-header { margin-bottom: 28px; }
+    .card-title { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+    .card-sub   { font-size: 13px; color: var(--muted); }
+
+    .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .field-full { grid-column: span 2; }
+    .field { display: flex; flex-direction: column; gap: 8px; }
+    .field label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .14em; color: var(--muted); }
+    .field input, .field textarea, .field select {
+      padding: 13px 16px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      color: var(--text);
+      font-size: 14px;
+      font-family: 'DM Sans', sans-serif;
+      outline: none;
+      transition: .2s;
+      resize: vertical;
+    }
+    .field input:focus, .field textarea:focus, .field select:focus {
+      border-color: var(--blue);
+      background: rgba(111,143,216,.06);
+      box-shadow: 0 0 0 4px rgba(111,143,216,.10);
+    }
+    .field textarea { min-height: 100px; }
+
+    .form-actions { display: flex; gap: 12px; margin-top: 28px; flex-wrap: wrap; }
+
+    /* ── ALERT ── */
+    .alert {
+      padding: 14px 18px; border-radius: 14px; font-size: 14px; margin-bottom: 20px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .alert-success { background: rgba(74,222,128,.10); border: 1px solid rgba(74,222,128,.25); color: var(--green); }
+    .alert-error   { background: rgba(255,110,69,.10);  border: 1px solid rgba(255,110,69,.25);  color: var(--red); }
+    .alert ul { margin: 6px 0 0 16px; }
+
+    /* ── SKILLS ── */
+    .skills-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; margin-bottom: 28px; }
+    .skill-card {
+      background: rgba(255,255,255,.03); border: 1px solid var(--border);
+      border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 10px;
+      transition: border-color .2s;
+    }
+    .skill-card:hover { border-color: var(--border-hi); }
+    .skill-top { display: flex; justify-content: space-between; align-items: flex-start; }
+    .skill-name { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; }
+    .skill-source { font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); }
+    .skill-cert { font-size: 12px; }
+    .skill-cert a { color: var(--blue-2); text-decoration: none; }
+    .skill-cert a:hover { text-decoration: underline; }
+    .skill-date { font-size: 11px; color: var(--muted); }
+    .skill-delete {
+      background: none; border: none; color: var(--muted); cursor: pointer; font-size: 16px;
+      width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center;
+      transition: .2s;
+    }
+    .skill-delete:hover { background: rgba(255,110,69,.15); color: var(--red); }
+
+    .add-skill-form {
+      background: rgba(111,143,216,.05); border: 1px dashed rgba(111,143,216,.25);
+      border-radius: 20px; padding: 24px; margin-top: 8px;
+    }
+    .add-skill-title { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; margin-bottom: 18px; color: var(--blue-2); }
+
+    .empty-state {
+      text-align: center; padding: 48px 24px; color: var(--muted);
+    }
+    .empty-icon { font-size: 40px; margin-bottom: 12px; }
+    .empty-text { font-size: 14px; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 860px) {
+      .page-wrap { grid-template-columns: 1fr; }
+      .sidebar-card { position: static; }
+      .field-grid { grid-template-columns: 1fr; }
+      .field-full { grid-column: span 1; }
+    }
+    @media (max-width: 480px) {
+      .form-card { padding: 20px; }
+      .tabs { width: 100%; }
+      .tab-btn { flex: 1; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="../index.php" class="brand">
+        <img src="images/Capture%20d%27%C3%A9cran%202026-04-12%20131757.png" alt="CareerStrand logo" class="brand-logo">
+      </a>
+      <nav class="header-nav">
+        <a href="#" class="btn " style="color: #f5f3ee;">Events</a>
+        <a href="#" class="btn " style="color: #f5f3ee;">Opportunities</a>
+        <a href="#" class="btn " style="color: #f5f3ee;">Education</a>
+        <a href="#" class="btn " style="color: #f5f3ee;">Profile</a>
+      </nav>
+      <div class="nav-right">
+        <span style="font-size:13px;color:var(--muted);">
+          <?php echo htmlspecialchars($user['fullName']); ?>
+        </span>
+        <a href="logout.php" class="btn btn-ghost">Sign out</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN -->
+  <div class="page-wrap">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar-card">
+      <div class="avatar-wrap">
+        <div class="avatar">
+          <?php if (!empty($profile['photoUrl'])): ?>
+            <img src="<?php echo htmlspecialchars($profile['photoUrl']); ?>" alt="Photo">
+          <?php else: ?>
+            <?php echo strtoupper(substr($user['fullName'], 0, 1)); ?>
+          <?php endif; ?>
+        </div>
+        <div>
+          <div class="user-name"><?php echo htmlspecialchars($user['fullName']); ?></div>
+          <div class="user-email"><?php echo htmlspecialchars($user['email']); ?></div>
+        </div>
+        <span class="role-chip"><?php echo htmlspecialchars(ucfirst($user['role'])); ?></span>
+      </div>
+
+      <!-- Completion Score -->
+      <?php
+        $score = $profile['completionScore'] ?? 0;
+        $level = $profile['level'] ?? 'Starter';
+      ?>
+      <div class="progress-wrap">
+        <div class="progress-label">
+          <span>Profile completion</span>
+          <strong><?php echo $score; ?>%</strong>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width: <?php echo $score; ?>%"></div>
+        </div>
+      </div>
+
+      <div class="level-badge">⚡ <?php echo htmlspecialchars($level); ?></div>
+
+      <div class="info-rows">
+        <?php if (!empty($profile['location'])): ?>
+        <div class="info-row">
+          <span>Location</span>
+          <strong><?php echo htmlspecialchars($profile['location']); ?></strong>
+        </div>
+        <?php endif; ?>
+        <div class="info-row">
+          <span>Member since</span>
+          <strong><?php echo $user['createdAt'] ? date('M Y', strtotime($user['createdAt'])) : '—'; ?></strong>
+        </div>
+        <div class="info-row">
+          <span>Skills</span>
+          <strong><?php echo count($skills); ?> added</strong>
+        </div>
+        <div class="info-row">
+          <span>Status</span>
+          <strong style="color: <?php echo $user['status'] === 'active' ? 'var(--green)' : 'var(--red)'; ?>">
+            <?php echo ucfirst($user['status']); ?>
+          </strong>
+        </div>
+      </div>
+
+      <?php if (!empty($profile['bio'])): ?>
+      <div class="sidebar-divider"></div>
+      <p style="font-size:13px;color:var(--muted);line-height:1.6;"><?php echo htmlspecialchars($profile['bio']); ?></p>
+      <?php endif; ?>
+    </aside>
+
+    <!-- MAIN PANEL -->
+    <main class="main-panel">
+
+      <!-- Tabs -->
+      <div class="tabs">
+        <button class="tab-btn <?php echo ($tab ?? 'profile') === 'profile' ? 'active' : ''; ?>"
+                onclick="switchTab('profile')">
+          Profile Info
+        </button>
+        <button class="tab-btn <?php echo ($tab ?? 'profile') === 'skills' ? 'active' : ''; ?>"
+                onclick="switchTab('skills')">
+          Skills
+          <span style="background:rgba(111,143,216,.2);border-radius:999px;padding:1px 7px;font-size:11px;margin-left:4px;">
+            <?php echo count($skills); ?>
+          </span>
+        </button>
+      </div>
+
+      <!-- PROFILE TAB -->
+      <div id="tab-profile" class="tab-panel <?php echo ($tab ?? 'profile') === 'profile' ? 'active' : ''; ?>">
+        <div class="form-card">
+          <div class="card-header">
+            <div class="card-title">Personal Information</div>
+            <div class="card-sub">Update your name, email, photo and bio.</div>
+          </div>
+
+          <?php if ($success && ($tab ?? 'profile') === 'profile'): ?>
+            <div class="alert alert-success">✓ Profile updated successfully!</div>
+          <?php endif; ?>
+          <?php if (!empty($errors) && ($tab ?? 'profile') === 'profile'): ?>
+            <div class="alert alert-error">
+              <div>
+                <strong>Please fix the following:</strong>
+                <ul><?php foreach ($errors as $e): ?><li><?php echo htmlspecialchars($e); ?></li><?php endforeach; ?></ul>
+              </div>
+            </div>
+          <?php endif; ?>
+
+          <form method="POST" action="?tab=profile">
+            <input type="hidden" name="_action" value="update_profile">
+            <div class="field-grid">
+              <div class="field">
+                <label>First Name</label>
+                <input type="text" name="firstName" value="<?php echo htmlspecialchars($firstName); ?>">
+              </div>
+              <div class="field">
+                <label>Last Name</label>
+                <input type="text" name="lastName" value="<?php echo htmlspecialchars($lastName); ?>">
+              </div>
+              <div class="field field-full">
+                <label>Email Address</label>
+                <input type="text" name="email" value="<?php echo htmlspecialchars($user['email']); ?>">
+              </div>
+              <div class="field field-full">
+                <label>Profile Photo URL</label>
+                <input type="text" name="photoUrl" value="<?php echo htmlspecialchars($profile['photoUrl'] ?? ''); ?>" placeholder="https://...">
+              </div>
+              <div class="field field-full">
+                <label>Bio</label>
+                <textarea name="bio" placeholder="A short description about you..."><?php echo htmlspecialchars($profile['bio'] ?? ''); ?></textarea>
+              </div>
+              <div class="field">
+                <label>Location</label>
+                <input type="text" name="location" value="<?php echo htmlspecialchars($profile['location'] ?? ''); ?>" placeholder="City, Country">
+              </div>
+              <div class="field">
+                <label>Preferences</label>
+                <input type="text" name="preferences" value="<?php echo htmlspecialchars($profile['preferences'] ?? ''); ?>" placeholder="Remote, Design, Tech...">
+              </div>
+            </div>
+
+            <!-- Security section -->
+            <div style="margin-top:28px;padding-top:24px;border-top:1px solid var(--border);">
+              <div class="card-title" style="font-size:16px;margin-bottom:4px;">Change Password</div>
+              <div class="card-sub" style="margin-bottom:20px;">Leave blank to keep your current password.</div>
+              <div class="field-grid">
+                <div class="field">
+                  <label>New Password</label>
+                  <input type="password" name="password" placeholder="Min. 6 characters">
+                </div>
+                <div class="field">
+                  <label>Confirm Password</label>
+                  <input type="password" name="passwordConfirm" placeholder="Repeat password">
+                </div>
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="btn btn-main">Save Changes</button>
+              <a href="../profile.php" class="btn btn-ghost">Cancel</a>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- SKILLS TAB -->
+      <div id="tab-skills" class="tab-panel <?php echo ($tab ?? 'profile') === 'skills' ? 'active' : ''; ?>">
+        <div class="form-card">
+          <div class="card-header">
+            <div class="card-title">My Skills</div>
+            <div class="card-sub">Add your skills, certifications and validated competencies.</div>
+          </div>
+
+          <?php if ($success && ($tab ?? 'profile') === 'skills'): ?>
+            <div class="alert alert-success">✓ Skills updated successfully!</div>
+          <?php endif; ?>
+          <?php if (!empty($errors) && ($tab ?? 'profile') === 'skills'): ?>
+            <div class="alert alert-error">
+              <ul><?php foreach ($errors as $e): ?><li><?php echo htmlspecialchars($e); ?></li><?php endforeach; ?></ul>
+            </div>
+          <?php endif; ?>
+
+          <!-- Existing Skills -->
+          <?php if (!empty($skills)): ?>
+          <div class="skills-grid">
+            <?php foreach ($skills as $skill): ?>
+            <div class="skill-card">
+              <div class="skill-top">
+                <div class="skill-name"><?php echo htmlspecialchars($skill['skillName']); ?></div>
+                <form method="POST" action="?tab=skills" style="display:inline;">
+                  <input type="hidden" name="_action" value="delete_skill">
+                  <input type="hidden" name="skillId" value="<?php echo $skill['userSkillId']; ?>">
+                  <button type="submit" class="skill-delete" onclick="return confirm('Remove this skill?')" title="Remove">✕</button>
+                </form>
+              </div>
+              <?php if (!empty($skill['source'])): ?>
+              <div class="skill-source"><?php echo htmlspecialchars($skill['source']); ?></div>
+              <?php endif; ?>
+              <?php if (!empty($skill['certificateUrl'])): ?>
+              <div class="skill-cert">
+                <a href="<?php echo htmlspecialchars($skill['certificateUrl']); ?>" target="_blank">View certificate →</a>
+              </div>
+              <?php endif; ?>
+              <?php if (!empty($skill['validatedAt'])): ?>
+              <div class="skill-date">Validated: <?php echo date('d M Y', strtotime($skill['validatedAt'])); ?></div>
+              <?php endif; ?>
+            </div>
+            <?php endforeach; ?>
+          </div>
+          <?php else: ?>
+          <div class="empty-state">
+            <div class="empty-icon">🎯</div>
+            <div class="empty-text">No skills added yet. Add your first skill below.</div>
+          </div>
+          <?php endif; ?>
+
+          <!-- Add Skill Form -->
+          <div class="add-skill-form">
+            <div class="add-skill-title">+ Add a new skill</div>
+            <form method="POST" action="?tab=skills" onsubmit="return validateAddSkillForm()">
+              <input type="hidden" name="_action" value="add_skill">
+              <div class="field-grid">
+                <div class="field">
+                  <label>Skill Name *</label>
+                  <input type="text" id="skillName" name="skillName" placeholder="e.g. UI/UX Design">
+                </div>
+                <div class="field">
+                  <label>Source *</label>
+                  <input type="text" id="source" name="source" placeholder="e.g. Coursera, Self-taught">
+                </div>
+                <div class="field field-full">
+                  <label>Certificate URL *</label>
+                  <input type="text" id="certificateUrl" name="certificateUrl" placeholder="https://example.com/certificate">
+                </div>
+                <div class="field">
+                  <label>Validated Date (YYYY-MM-DD) *</label>
+                  <input type="text" id="validatedAt" name="validatedAt" placeholder="2026-04-18">
+                </div>
+              </div>
+              <div class="form-actions" style="margin-top:16px;">
+                <button type="submit" class="btn btn-main">Add Skill</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script>
+    function switchTab(tabName) {
+      // Remove active class from all buttons and panels
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      document.querySelectorAll('.tab-panel').forEach(panel => {
+        panel.classList.remove('active');
+      });
+
+      // Add active class to clicked button and corresponding panel
+      event.target.closest('.tab-btn').classList.add('active');
+      document.getElementById('tab-' + tabName).classList.add('active');
+    }
+
+    function validateAddSkillForm() {
+      const skillName      = document.getElementById('skillName').value.trim();
+      const source         = document.getElementById('source').value.trim();
+      const certificateUrl = document.getElementById('certificateUrl').value.trim();
+      const validatedAt    = document.getElementById('validatedAt').value.trim();
+
+      // 1. Skill Name — required, min 2 chars
+      if (!skillName || skillName.length < 2) {
+        alert('❌ ERROR: Skill name is required and must be at least 2 characters.');
+        document.getElementById('skillName').focus();
+        return false;
+      }
+
+      // 2. Source — required, min 2 chars
+      if (!source || source.length < 2) {
+        alert('❌ ERROR: Source is required and must be at least 2 characters.');
+        document.getElementById('source').focus();
+        return false;
+      }
+
+      // 3. Certificate URL — required, must be valid URL
+      if (!certificateUrl) {
+        alert('❌ ERROR: Certificate URL is required.');
+        document.getElementById('certificateUrl').focus();
+        return false;
+      }
+      if (!isValidURL(certificateUrl)) {
+        alert('❌ ERROR: Certificate URL must be a valid URL starting with http:// or https://\n\nExample: https://coursera.org/certificate/123');
+        document.getElementById('certificateUrl').focus();
+        return false;
+      }
+
+      // 4. Validated Date — required, must be YYYY-MM-DD and real date
+      if (!validatedAt) {
+        alert('❌ ERROR: Validated date is required.');
+        document.getElementById('validatedAt').focus();
+        return false;
+      }
+      if (!isValidDate(validatedAt)) {
+        alert('❌ ERROR: Validated date must be in YYYY-MM-DD format.\n\nExample: 2026-04-18');
+        document.getElementById('validatedAt').focus();
+        return false;
+      }
+
+      // All validations passed
+      console.log('✅ All validations passed!');
+      return true;
+    }
+
+    function isValidURL(url) {
+      try {
+        const u = new URL(url);
+        return u.protocol === 'http:' || u.protocol === 'https:';
+      } catch (e) {
+        console.error('URL validation failed:', e);
+        return false;
+      }
+    }
+
+    function isValidDate(dateString) {
+      // Check format YYYY-MM-DD
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+        console.error('Date format invalid:', dateString);
+        return false;
+      }
+      
+      // Check if valid date
+      const [y, m, d] = dateString.split('-').map(Number);
+      const date = new Date(y, m - 1, d);
+      const isValid = date.getFullYear() === y &&
+                      date.getMonth()    === m - 1 &&
+                      date.getDate()     === d;
+      
+      if (!isValid) {
+        console.error('Date value invalid:', dateString);
+      }
+      return isValid;
+    }
+  </script>
+</body>
+</html>
