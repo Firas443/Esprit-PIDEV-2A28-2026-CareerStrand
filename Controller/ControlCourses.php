@@ -23,7 +23,7 @@ include 'C:/xampp/htdocs/Careerstrand/Model/Courses.php';
                     'di' => $courses->getDifficulty(),
                     'du' => $courses->getDuration(),
                     'st' => $courses->getStatut(),
-                    'a' => $courses->getCreatedAT()->format('Y-m-d'), 
+                    'a' => $courses->getPublished()->format('Y-m-d'), 
                 ]);
             }catch(Exception $e){
                 die('Erreur:'.$e->getMessage());
@@ -45,7 +45,7 @@ include 'C:/xampp/htdocs/Careerstrand/Model/Courses.php';
         public function updateCourse($courses,$id){
             $db = config::getConnexion();
             try{
-                $req = $db->prepare('UPDATE course SET Title=:Title, Description=:Description, Categorie=:Categorie, Skill=:Skill, Difficulty=:Difficulty, Duration=:Duration, Statut=:Statut, CreatedAT=:CreatedAT WHERE CourseID=:CourseID');
+                $req = $db->prepare('UPDATE course SET Title=:Title, Description=:Description, Categorie=:Categorie, Skill=:Skill, Difficulty=:Difficulty, Duration=:Duration, Statut=:Statut, Published_AT=:Published_AT WHERE CourseID=:CourseID');
                 $req->execute([
                     'CourseID'=>$id,
                     'Title'=>$courses->getTitle(),
@@ -55,11 +55,17 @@ include 'C:/xampp/htdocs/Careerstrand/Model/Courses.php';
                     'Difficulty' =>$courses->getDifficulty(),
                     'Duration' =>$courses->getDuration(),
                     'Statut' =>$courses->getStatut(),
-                    'CreatedAT' =>$courses->getCreatedAT()->format('Y-m-d'),
+                    'Published_AT' =>$courses->getPublished()->format('Y-m-d'),
                 ]);
             } catch (Exception $e) {
                 die('Erreur: '.$e->getMessage());
             }
+        }
+        public function getCourseById($id){
+            $db = config::getConnexion();
+            $query = $db->prepare("SELECT * FROM course WHERE CourseID = ?");
+            $query->execute([$id]);
+            return $query->fetch();
         }
     }
 
