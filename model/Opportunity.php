@@ -1,234 +1,154 @@
 <?php
-
 class Opportunity {
     private PDO $db;
-    private string $table = 'Opportunity';
 
-    // Allowed values for validation
-    private array $validTypes       = ['internship', 'job', 'freelance', 'volunteer'];
-    private array $validCategories  = ['Technical', 'Creativity', 'Business', 'Communication', 'Leadership'];
-    private array $validLevels      = ['Beginner', 'Intermediate', 'Advanced'];
-    private array $validStatuses    = ['published', 'draft', 'archived'];
+    // Database mapping
+    private const TABLE          = 'Opportunity';
+    private const PK             = 'opportunityId';
+    private const FK_MANAGER     = 'managerId';
+    private const COL_TITLE      = 'title';
+    private const COL_DESC       = 'description';
+    private const COL_TYPE       = 'type';
+    private const COL_CATEGORY   = 'category';
+    private const COL_DEADLINE   = 'deadline';
+    private const COL_LEVEL      = 'requiredLevel';
+    private const COL_STATUS     = 'status';
+    private const COL_CREATED    = 'createdAt';
+
+    // Join tables
+    private const TABLE_USER     = 'User';
+    private const TABLE_APP      = 'Application';
+    private const USER_PK        = 'userId';
+    private const USER_NAME      = 'fullName';
+    private const APP_PK         = 'applicationId';
+
+    // Allowed values
+    private const VALID_TYPES      = ['internship', 'job', 'freelance', 'volunteer'];
+    private const VALID_CATEGORIES = ['Technical', 'Creativity', 'Business', 'Communication', 'Leadership'];
+    private const VALID_LEVELS     = ['Beginner', 'Intermediate', 'Advanced'];
+    private const VALID_STATUSES   = ['published', 'draft', 'archived'];
 
     public function __construct(PDO $db) {
         $this->db = $db;
     }
 
-//read all
+    public function getDb(): PDO {
+        return $this->db;
+    }
 
     public function getAll(array $filters = []): array {
         $where  = ['1=1'];
         $params = [];
 
         if (!empty($filters['status'])) {
-            $where[]           = 'o.status = :status';
-            $params['status']  = $filters['status'];
+            $where[]          = 'o.' . self::COL_STATUS . ' = :status';
+            $params['status'] = $filters['status'];
         }
-
         if (!empty($filters['category'])) {
-            $where[]             = 'o.category = :category';
-            $params['category']  = $filters['category'];
+            $where[]            = 'o.' . self::COL_CATEGORY . ' = :category';
+            $params['category'] = $filters['category'];
         }
-
         if (!empty($filters['requiredLevel'])) {
-            $where[]                = 'o.requiredLevel = :requiredLevel';
+            $where[]                 = 'o.' . self::COL_LEVEL . ' = :requiredLevel';
             $params['requiredLevel'] = $filters['requiredLevel'];
         }
-
         if (!empty($filters['search'])) {
-            $where[]           = '(o.title LIKE :search OR o.description LIKE :search)';
-            $params['search']  = '%' . $filters['search'] . '%';
+            $where[]          = '(o.' . self::COL_TITLE . ' LIKE :search OR o.' . self::COL_DESC . ' LIKE :search)';
+            $params['search'] = '%' . $filters['search'] . '%';
         }
 
-        $whereClause = implode(' AND ', $where);
-
         $sql = "SELECT 
-                    o.opportunityId,
-                    o.managerId,
-                    o.title,
-                    o.description,
-                    o.type,
-                    o.category,
-                    o.deadline,
-                    o.requiredLevel,
-                    o.status,
-                    o.createdAt,
-                    u.fullName AS managerName,
-                    COUNT(a.applicationId) AS applicationCount
-                FROM {$this->table} o
-                LEFT JOIN User u ON o.managerId = u.userId
-                LEFT JOIN Application a ON o.opportunityId = a.opportunityId
-                WHERE {$whereClause}
-                GROUP BY o.opportunityId
-                ORDER BY o.createdAt DESC";
+                    o." . self::PK . ",
+                    o." . self::FK_MANAGER . ",
+                    o." . self::COL_TITLE . ",
+                    o." . self::COL_DESC . ",
+                    o." . self::COL_TYPE . ",
+                    o." . self::COL_CATEGORY . ",
+                    o." . self::COL_DEADLINE . ",
+                    o." . self::COL_LEVEL . ",
+                    o." . self::COL_STATUS . ",
+                    o." . self::COL_CREATED . ",
+                    u." . self::USER_NAME . " AS managerName,
+                    COUNT(a." . self::APP_PK . ") AS applicationCount
+                FROM " . self::TABLE . " o
+                LEFT JOIN " . self::TABLE_USER . " u ON o." . self::FK_MANAGER . " = u." . self::USER_PK . "
+                LEFT JOIN " . self::TABLE_APP . " a ON o." . self::PK . " = a." . self::PK . "
+                WHERE " . implode(' AND ', $where) . "
+                GROUP BY o." . self::PK . "
+                ORDER BY o." . self::COL_CREATED . " DESC";
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
         return $stmt->fetchAll();
     }
 
-//what the backoffice will see
-
     public function getById(int $id): array|false {
         $sql = "SELECT 
                     o.*,
-                    u.fullName AS managerName,
-                    COUNT(a.applicationId) AS applicationCount
-                FROM {$this->table} o
-                LEFT JOIN User u ON o.managerId = u.userId
-                LEFT JOIN Application a ON o.opportunityId = a.opportunityId
-                WHERE o.opportunityId = :id
-                GROUP BY o.opportunityId";
+                    u." . self::USER_NAME . " AS managerName,
+                    COUNT(a." . self::APP_PK . ") AS applicationCount
+                FROM " . self::TABLE . " o
+                LEFT JOIN " . self::TABLE_USER . " u ON o." . self::FK_MANAGER . " = u." . self::USER_PK . "
+                LEFT JOIN " . self::TABLE_APP . " a ON o." . self::PK . " = a." . self::PK . "
+                WHERE o." . self::PK . " = :id
+                GROUP BY o." . self::PK;
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute(['id' => $id]);
         return $stmt->fetch();
     }
 
-//what the frontoffice will see
-
     public function getPublished(array $filters = []): array {
         $filters['status'] = 'published';
         return $this->getAll($filters);
     }
 
-//create
-
-    public function create(array $data): array {
-        $errors = $this->validate($data); //controle de saisie
-        if (!empty($errors)) {
-            return ['success' => false, 'errors' => $errors];
-        }
-
-        $sql = "INSERT INTO {$this->table} 
-            (managerId, title, description, type, category, deadline, requiredLevel, status)
-         VALUES 
-            (:managerId, :title, :description, :type, :category, :deadline, :requiredLevel, :status)";
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute([
-            'managerId'     => $data['managerId'],
-            'title'         => trim($data['title']),
-            'description'   => trim($data['description']),
-            'type'          => $data['type'],
-            'category'      => $data['category'],
-            'deadline'      => $data['deadline'],
-            'requiredLevel' => $data['requiredLevel'],
-            'status'        => $data['status'] ?? 'draft',
-        ]);
-
-        $newId = (int)$this->db->lastInsertId();
-        return ['success' => true, 'opportunityId' => $newId, 'message' => 'Opportunity created.'];
-    }
-
-   //update
-
-    public function update(int $id, array $data): array {
-        $existing = $this->getById($id);
-        if (!$existing) {
-            return ['success' => false, 'message' => 'Opportunity not found.'];
-        }
-
-        $errors = $this->validate($data, false);
-        if (!empty($errors)) {
-            return ['success' => false, 'errors' => $errors];
-        }
-
-        $sql = "UPDATE {$this->table} SET
-                    title         = :title,
-                    description   = :description,
-                    type          = :type,
-                    category      = :category,
-                    deadline      = :deadline,
-                    requiredLevel = :requiredLevel,
-                    status        = :status
-                WHERE opportunityId = :id";
-
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute([
-            'title'         => trim($data['title']),
-            'description'   => trim($data['description']),
-            'type'          => $data['type'],
-            'category'      => $data['category'],
-            'deadline'      => $data['deadline'],
-            'requiredLevel' => $data['requiredLevel'],
-            'status'        => $data['status'],
-            'id'            => $id,
-        ]);
-
-        return ['success' => true, 'message' => 'Opportunity updated.'];
-    }
-
-    //delete
-
-    public function delete(int $id): array {
-        $existing = $this->getById($id);
-        if (!$existing) {
-            return ['success' => false, 'message' => 'Opportunity not found.'];
-        }
-
-        // Remove linked applications first (FK constraint)
-        $this->db->prepare("DELETE FROM Application WHERE opportunityId = :id")->execute(['id' => $id]);
-
-        $stmt = $this->db->prepare("DELETE FROM {$this->table} WHERE opportunityId = :id");
-        $stmt->execute(['id' => $id]);
-
-        return ['success' => true, 'message' => 'Opportunity deleted.'];
-    }
-
-    //verifie les erreurs
-
-    private function validate(array $data, bool $requireAll = true): array {
+    public function validate(array $data, bool $requireAll = true): array {
         $errors = [];
 
-        if ($requireAll || isset($data['title'])) {
-            if (empty(trim($data['title'] ?? ''))) {
+        if ($requireAll || isset($data[self::COL_TITLE])) {
+            if (empty(trim($data[self::COL_TITLE] ?? '')))
                 $errors[] = 'Title is required.';
-            } elseif (strlen($data['title']) > 255) {
+            elseif (strlen($data[self::COL_TITLE]) > 255)
                 $errors[] = 'Title must be under 255 characters.';
-            }
         }
-
-        if ($requireAll || isset($data['description'])) {
-            if (empty(trim($data['description'] ?? ''))) {
+        if ($requireAll || isset($data[self::COL_DESC])) {
+            if (empty(trim($data[self::COL_DESC] ?? '')))
                 $errors[] = 'Description is required.';
-            }
         }
-
-        if ($requireAll || isset($data['type'])) {
-            if (!in_array($data['type'] ?? '', $this->validTypes)) {
-                $errors[] = 'Type must be one of: ' . implode(', ', $this->validTypes);
-            }
+        if ($requireAll || isset($data[self::COL_TYPE])) {
+            if (!in_array($data[self::COL_TYPE] ?? '', self::VALID_TYPES))
+                $errors[] = 'Type must be one of: ' . implode(', ', self::VALID_TYPES);
         }
-
-        if ($requireAll || isset($data['category'])) {
-            if (!in_array($data['category'] ?? '', $this->validCategories)) {
-                $errors[] = 'Category must be one of: ' . implode(', ', $this->validCategories);
-            }
+        if ($requireAll || isset($data[self::COL_CATEGORY])) {
+            if (!in_array($data[self::COL_CATEGORY] ?? '', self::VALID_CATEGORIES))
+                $errors[] = 'Category must be one of: ' . implode(', ', self::VALID_CATEGORIES);
         }
-
-        if ($requireAll || isset($data['requiredLevel'])) {
-            if (!in_array($data['requiredLevel'] ?? '', $this->validLevels)) {
-                $errors[] = 'Level must be one of: ' . implode(', ', $this->validLevels);
-            }
+        if ($requireAll || isset($data[self::COL_LEVEL])) {
+            if (!in_array($data[self::COL_LEVEL] ?? '', self::VALID_LEVELS))
+                $errors[] = 'Level must be one of: ' . implode(', ', self::VALID_LEVELS);
         }
-
-        if ($requireAll || isset($data['deadline'])) {
-            $d = $data['deadline'] ?? '';
-            if (empty($d) || strtotime($d) === false) {
+        if ($requireAll || isset($data[self::COL_DEADLINE])) {
+            $d = $data[self::COL_DEADLINE] ?? '';
+            if (empty($d) || strtotime($d) === false)
                 $errors[] = 'A valid deadline date is required.';
-            } elseif (strtotime($d) < strtotime('today')) {
+            elseif (strtotime($d) < strtotime('today'))
                 $errors[] = 'Deadline cannot be in the past.';
-            }
         }
-
-        if (isset($data['status']) && !in_array($data['status'], $this->validStatuses)) {
-            $errors[] = 'Status must be one of: ' . implode(', ', $this->validStatuses);
-        }
-
-        if ($requireAll && empty($data['managerId'])) {
+        if (isset($data[self::COL_STATUS]) && !in_array($data[self::COL_STATUS], self::VALID_STATUSES))
+            $errors[] = 'Status must be one of: ' . implode(', ', self::VALID_STATUSES);
+        if ($requireAll && empty($data[self::FK_MANAGER]))
             $errors[] = 'Manager ID is required.';
-        }
 
         return $errors;
     }
+    public function titleExists(string $title, int $excludeId = 0): bool {
+    $sql  = "SELECT COUNT(*) FROM " . self::TABLE . " 
+             WHERE " . self::COL_TITLE . " = :title 
+             AND " . self::COL_PK . " != :excludeId
+             AND " . self::COL_STATUS . " != 'archived'";
+    $stmt = $this->db->prepare($sql);
+    $stmt->execute(['title' => $title, 'excludeId' => $excludeId]);
+    return (int)$stmt->fetchColumn() > 0;
+}
 }

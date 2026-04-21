@@ -1,5 +1,5 @@
-const USER_ID    = 1;
-const APP_BASE   = '/Careerstrand/Controller/controller-applications/';
+
+const OPP_BASE = '/Careerstrand/controller/OpportunityController.php';
 const USER_SCORE = 87;
 
 // ── TOAST ──
@@ -20,7 +20,7 @@ let state = {
 // ── FETCH OPPORTUNITIES ──
 async function fetchOpportunities() {
   try {
-    const res  = await fetch('/Careerstrand/controller/controller-opportunities/get_opportunities.php?source=front');
+    const res  = await fetch(`${OPP_BASE}?source=front`);
     const text = await res.text();
     const json = JSON.parse(text);
     if (!json.success) throw new Error(json.message);
@@ -95,7 +95,7 @@ function cardHTML(o) {
   const saveIcon = o.saved
     ? `<svg viewBox="0 0 16 16" fill="currentColor"><path d="M3 2a1 1 0 011-1h8a1 1 0 011 1v11.5l-4.5-2.5L3 13.5V2z"/></svg>`
     : `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2a1 1 0 011-1h8a1 1 0 011 1v11.5l-4.5-2.5L3 13.5V2z"/></svg>`;
-  return `
+  return ` 
     <article class="oppo-card ${o.isRecommended ? "recommended" : ""} ${locked ? "locked" : ""}" data-id="${o.id}">
       ${locked ? `<div class="lock-overlay"><span style="font-size:22px">&#x1F512;</span><div class="lock-msg">Your ADN score needs to reach ${o.minScore} to unlock this</div><div class="lock-score">Your score: ${USER_SCORE} &middot; Need: ${o.minScore}</div></div>` : ""}
       <div class="card-top"><div class="card-badges">${badges}</div><div class="match-pill">${o.match}% match</div></div>
@@ -121,7 +121,7 @@ function cardHTML(o) {
         </div>
       </div>
     </article>`;
-}
+}//ekhdemha HTML KHIR el return 
 
 // ── RENDER GRID ──
 function render() {

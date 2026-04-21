@@ -1,9 +1,12 @@
+
+const USER_ID  = 1;
+const APP_BASE = '/Careerstrand/controller/ApplicationController.php';
 let submissions = [];
 
 // ── FETCH MY APPLICATIONS ──
 async function fetchMyApplications() {
   try {
-    const res  = await fetch(`${APP_BASE}get_applications.php?source=front&userId=${USER_ID}`);
+    const res  = await fetch(`${APP_BASE}?source=front&userId=${USER_ID}`);
     const json = await res.json();
     if (!json.success) throw new Error(json.message);
     submissions = json.data.map(a => ({
@@ -35,10 +38,10 @@ async function submitApply(id) {
   if (!motivation) { showToast('Please write your motivation.', 'error'); return; }
   if (portfolio) {
     try { if (new URL(portfolio).protocol !== 'https:') throw new Error(); }
-    catch { showToast('Please enter a valid portfolio URL (e.g. https://myportfolio.com)', 'error'); return; }
+    catch { showToast('Please enter a valid portfolio URL (exp: https://myportfolio.com)', 'error'); return; }
   }
   try {
-    const res  = await fetch(`${APP_BASE}create_application.php`, {
+    const res  =await fetch(APP_BASE,  {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -162,7 +165,7 @@ async function saveEdit(subId) {
   const newText  = textarea ? textarea.value.trim() : '';
   if (!newText) { showToast('Motivation cannot be empty.', 'error'); return; }
   try {
-    const res  = await fetch(`${APP_BASE}update_application.php?id=${sub.applicationId}`, {
+    const res  =await fetch(`${APP_BASE}?id=${sub.applicationId}`, {
       method:  'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ motivation: newText, portfolio: sub.portfolio || null }),
@@ -196,7 +199,7 @@ async function savePortfolio(subId) {
     catch { showToast('Portfolio link must start with https://', 'error'); return; }
   }
   try {
-    const res  = await fetch(`${APP_BASE}update_application.php?id=${sub.applicationId}`, {
+    const res  = await fetch(`${APP_BASE}?id=${sub.applicationId}`, {
       method:  'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ motivation: sub.motivation, portfolio: val || null }),
@@ -217,7 +220,7 @@ async function cancelSubmission(subId) {
   const sub = submissions.find(s => s.id == subId);
   if (!sub) return;
   try {
-    const res  = await fetch(`${APP_BASE}delete_application.php?id=${sub.applicationId}`, { method: 'DELETE' });
+    const res  = await fetch(`${APP_BASE}?id=${sub.applicationId}`, { method: 'DELETE' });
     const json = await res.json();
     if (!json.success) throw new Error(json.message);
     const o = state.data.find(x => x.id == sub.opportunityId);
