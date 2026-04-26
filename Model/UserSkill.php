@@ -12,15 +12,23 @@ class UserSkill
     ) {
     }
 
-    // Getters
-    public function getUserSkillId(): ?int    { return $this->userSkillId;    }
-    public function getUserId(): ?int         { return $this->userId;         }
-    public function getSkillName(): ?string   { return $this->skillName;      }
-    public function getSource(): ?string      { return $this->source;         }
+    // ── Getters ──────────────────────────────────────
+    public function getUserSkillId(): ?int       { return $this->userSkillId;    }
+    public function getUserId(): ?int            { return $this->userId;         }
+    public function getSkillName(): ?string      { return $this->skillName;      }
+    public function getSource(): ?string         { return $this->source;         }
     public function getCertificateUrl(): ?string { return $this->certificateUrl; }
-    public function getValidatedAt(): ?string { return $this->validatedAt;    }
+    public function getValidatedAt(): ?string    { return $this->validatedAt;    }
 
-    // Helper methods
+    // ── Setters ──────────────────────────────────────
+    public function setUserSkillId(?int $id): void       { $this->userSkillId    = $id; }
+    public function setUserId(?int $id): void            { $this->userId         = $id; }
+    public function setSkillName(?string $v): void       { $this->skillName      = $v;  }
+    public function setSource(?string $v): void          { $this->source         = $v;  }
+    public function setCertificateUrl(?string $v): void  { $this->certificateUrl = $v;  }
+    public function setValidatedAt(?string $v): void     { $this->validatedAt    = $v;  }
+
+    // ── Helpers ──────────────────────────────────────
     public function toArray(): array
     {
         return [
@@ -35,13 +43,14 @@ class UserSkill
 
     public static function fromArray(array $data): self
     {
-        $userSkill = new self();
-        $userSkill->userSkillId    = $data['userSkillId'] ?? null;
-        $userSkill->userId         = $data['userId'] ?? null;
-        $userSkill->skillName      = $data['skillName'] ?? null;
-        $userSkill->source         = $data['source'] ?? null;
-        $userSkill->certificateUrl = $data['certificateUrl'] ?? null;
-        $userSkill->validatedAt    = $data['validatedAt'] ?? null;
-        return $userSkill;
+        $s = new self();
+        $s->userSkillId    = $data['userSkillId']    ?? null;
+        $s->userId         = $data['userId']         ?? null;
+        $s->skillName      = $data['skillName']      ?? null;
+        $s->source         = $data['source']         ?? null;
+        $s->certificateUrl = $data['certificateUrl'] ?? null;
+        $s->validatedAt    = $data['validatedAt']    ?? null;
+        return $s;
     }
 }
+?>

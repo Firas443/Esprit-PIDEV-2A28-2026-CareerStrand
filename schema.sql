@@ -248,3 +248,28 @@ CREATE TABLE IF NOT EXISTS Application (
     FOREIGN KEY (userId) REFERENCES User(userId),
     FOREIGN KEY (opportunityId) REFERENCES Opportunity(opportunityId)
 );
+-- =========================
+-- MANAGER PROFILE
+-- =========================
+CREATE TABLE IF NOT EXISTS ManagerProfile (
+    managerProfileId INT PRIMARY KEY AUTO_INCREMENT,
+    userId           INT UNIQUE NOT NULL,
+    organization     VARCHAR(255) NOT NULL,
+    categoryFocus    VARCHAR(100) NOT NULL,
+    description      VARCHAR(500),
+    FOREIGN KEY (userId) REFERENCES Users(userId) ON DELETE CASCADE
+);
+
+-- =========================
+-- RECRUITER PROFILE
+-- =========================
+CREATE TABLE IF NOT EXISTS RecruiterProfile (
+    recruiterProfileId INT PRIMARY KEY AUTO_INCREMENT,
+    userId             INT UNIQUE NOT NULL,
+    companyName        VARCHAR(255) NOT NULL,
+    jobTitle           VARCHAR(100) NOT NULL,
+    industry           VARCHAR(100) NOT NULL,
+    companyWebsite     VARCHAR(255),
+    opportunityTypes   VARCHAR(255),
+    FOREIGN KEY (userId) REFERENCES Users(userId) ON DELETE CASCADE
+);
