@@ -1,60 +1,83 @@
-function validerCourse(){
-    let isvalid= true
-    var Title=document.getElementById("Title")
-    var Titlevalue= Title.value
-    removeMsg(Title)
-    if (Titlevalue===""){
-        showMsg(Title,"Please enter the title needed",false)
-        isvalid=false
-    } 
-    else if(Titlevalue.length<3){
-        showMsg(Title,"Title has to be longer than 3",false)
-        isvalid=false
+// ══════════════════════════════════════════════
+// DROPDOWN TRI
+// ══════════════════════════════════════════════
 
-    }
-    else{
-        showMsg(Title,"Valid title",true)
-        isvalid=true
+document.addEventListener('DOMContentLoaded', function () {
+
+    var sortWrapper = document.getElementById('sort-wrapper');
+    var sortToggle  = document.getElementById('sort-toggle');
+
+    if (sortToggle && sortWrapper) {
+
+        // Ouvre / ferme le dropdown
+        sortToggle.addEventListener('click', function (e) {
+            e.stopPropagation();
+            sortWrapper.classList.toggle('open');
+        });
+
+        // Ferme si on clique ailleurs
+        document.addEventListener('click', function () {
+            sortWrapper.classList.remove('open');
+        });
+
+        // Empêche la fermeture si on clique dans le dropdown
+        sortWrapper.addEventListener('click', function (e) {
+            e.stopPropagation();
+        });
     }
 
-    var Description=document.getElementById("Description")
-    var Descriptionvalue= Description.value
-    removeMsg(Description)
-    if (Descriptionvalue===""){
-        showMsg(Description,"Please enter the description",false)
-        isvalid=false
-    } 
-    else if(Descriptionvalue.length<15){
-        showMsg(Description,"Description has to be longer than 15",false)
-        isvalid=false
+});
 
-    }
-    else{
-        showMsg(Description,"Valid Description",true)
-        isvalid=true
-    }
-    var Duration=document.getElementById("Duration")
-    var Durationvalue= Duration.value
-    removeMsg(Duration)
-    if (Durationvalue===""){
-        showMsg(Duration,"Please enter the duration",false)
-        isvalid=false
-    } 
-    else if(Number(Durationvalue)<1){
-        showMsg(Duration,"Duration has to be longer than 1",false)
-        isvalid=false
+// ══════════════════════════════════════════════
+// VALIDATION DU FORMULAIRE
+// ══════════════════════════════════════════════
 
-    }
-    else if(Number(Durationvalue)>4){
-        showMsg(Duration,"Duration has to be under 4",false)
-        isvalid=false
+function validerCourse() {
+    let isvalid = true;
 
+    var Title = document.getElementById("Title");
+    var Titlevalue = Title.value;
+    removeMsg(Title);
+    if (Titlevalue === "") {
+        showMsg(Title, "Please enter the title needed", false);
+        isvalid = false;
+    } else if (Titlevalue.length < 3) {
+        showMsg(Title, "Title has to be longer than 3", false);
+        isvalid = false;
+    } else {
+        showMsg(Title, "Valid title", true);
     }
-    else{
-        showMsg(Duration,"Valid Durattion",true)
-        isvalid=true
+
+    var Description = document.getElementById("Description");
+    var Descriptionvalue = Description.value;
+    removeMsg(Description);
+    if (Descriptionvalue === "") {
+        showMsg(Description, "Please enter the description", false);
+        isvalid = false;
+    } else if (Descriptionvalue.length < 15) {
+        showMsg(Description, "Description has to be longer than 15", false);
+        isvalid = false;
+    } else {
+        showMsg(Description, "Valid Description", true);
     }
-    const Published=document.querySelector("input[name='Published']")
+
+    var Duration = document.getElementById("Duration");
+    var Durationvalue = Duration.value;
+    removeMsg(Duration);
+    if (Durationvalue === "") {
+        showMsg(Duration, "Please enter the duration", false);
+        isvalid = false;
+    } else if (Number(Durationvalue) < 1) {
+        showMsg(Duration, "Duration has to be longer than 1", false);
+        isvalid = false;
+    } else if (Number(Durationvalue) > 4) {
+        showMsg(Duration, "Duration has to be under 4", false);
+        isvalid = false;
+    } else {
+        showMsg(Duration, "Valid Duration", true);
+    }
+
+    const Published = document.querySelector("input[name='Published_AT']");
     const Debut = Published.value;
     removeMsg(Published);
     if (!Debut) {
@@ -62,15 +85,15 @@ function validerCourse(){
         isvalid = false;
     } else {
         const today = new Date().toISOString();
-        if(Debut >= today){
-            showMsg(Published, "valid date ✓", true);
-        }else {
+        if (Debut >= today) {
+            showMsg(Published, "Valid date ✓", true);
+        } else {
             showMsg(Published, "Date not valid.", false);
             isvalid = false;
         }
     }
-    return isvalid
 
+    return isvalid;
 }
 
 function showMsg(input, message, success) {
@@ -79,6 +102,7 @@ function showMsg(input, message, success) {
     msg.textContent = message;
     input.insertAdjacentElement("afterend", msg);
 }
+
 function removeMsg(input) {
     const next = input.nextElementSibling;
     if (next && next.classList.contains("validation-msg")) {

@@ -81,7 +81,7 @@ $action = $_GET['action'] ?? 'list';
             </div>
             <div class="header-actions">
                 <a href="admin-calendrier.php?action=add" class="btn-primary">+ Add event</a>
-                <a class="btn btn-main" href="../front_office/courses.html">Front Office</a>
+                <a class="btn btn-main" href="../front_office/course.php">Front Office</a>
             </div>
         </header>
 
