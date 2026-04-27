@@ -1,12 +1,106 @@
 <?php
-require_once __DIR__ . '/../../Controller/SkillHubController.php';
+require_once __DIR__ . '/../../config.php';
+require_once __DIR__ . '/../../Controller/SkillHubCoreController.php';
+require_once __DIR__ . '/../../Controller/SkillHubEngagementController.php';
 
-$controller = new SkillHubController();
-$hubs = $controller->afficherHubs();
-$stats = $controller->getStats();
+$coreController = new SkillHubCoreController();
+$engagementController = new SkillHubEngagementController();
+$pdo = config::getConnexion();
 
-$joinedHubs = array_slice($hubs, 0, 3);
-$suggestedHubs = array_slice($hubs, 3);
+$users = $pdo->query("SELECT userId, fullName, role FROM Users ORDER BY userId ASC")->fetchAll();
+$defaultUserId = !empty($users) ? (int) $users[0]['userId'] : null;
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $defaultUserId !== null) {
+    $action = $_POST['action'] ?? '';
+    $targetGroupId = (int) ($_POST['groupId'] ?? 0);
+
+    if ($action === 'join_hub' && $targetGroupId > 0) {
+        $existingMember = $coreController->getGroupMemberByGroupAndUser($targetGroupId, $defaultUserId);
+        if ($existingMember === null) {
+            $coreController->createGroupMember(
+                new GroupMemberEntity(
+                    null,
+                    $targetGroupId,
+                    $defaultUserId,
+                    date('Y-m-d'),
+                    'active'
+                )
+            );
+        }
+
+        header('Location: skillhub.php?membership=joined');
+        exit;
+    }
+
+    if ($action === 'leave_hub' && $targetGroupId > 0) {
+        $coreController->deleteGroupMemberByGroupAndUser($targetGroupId, $defaultUserId);
+        header('Location: skillhub.php?membership=left');
+        exit;
+    }
+}
+
+$hubRows = $coreController->getAllSkillHubs();
+$memberRows = $coreController->getAllGroupMembers();
+$challengeRows = $coreController->getAllChallenges();
+$postRows = $engagementController->getAllPosts();
+
+$memberCounts = [];
+foreach ($memberRows as $memberRow) {
+    $memberCounts[(int) $memberRow['groupId']] = ($memberCounts[(int) $memberRow['groupId']] ?? 0) + 1;
+}
+
+$workCounts = [];
+foreach ($challengeRows as $challengeRow) {
+    $workCounts[(int) $challengeRow['groupId']] = ($workCounts[(int) $challengeRow['groupId']] ?? 0) + 1;
+}
+
+$threadCounts = [];
+foreach ($postRows as $postRow) {
+    $threadCounts[(int) $postRow['groupId']] = ($threadCounts[(int) $postRow['groupId']] ?? 0) + 1;
+}
+
+usort($hubRows, static function (array $left, array $right): int {
+    $createdComparison = strcmp((string) ($right['createdAt'] ?? ''), (string) ($left['createdAt'] ?? ''));
+    if ($createdComparison !== 0) {
+        return $createdComparison;
+    }
+
+    return strcmp((string) ($left['name'] ?? ''), (string) ($right['name'] ?? ''));
+});
+
+$hubs = array_map(static function (array $hub) use ($memberCounts, $workCounts, $threadCounts): array {
+    $groupId = (int) $hub['groupId'];
+    $hub['memberCount'] = $memberCounts[$groupId] ?? 0;
+    $hub['workCount'] = $workCounts[$groupId] ?? 0;
+    $hub['threadCount'] = $threadCounts[$groupId] ?? 0;
+    return $hub;
+}, $hubRows);
+
+$managerCountQuery = $pdo->query("SELECT COUNT(*) FROM Users WHERE LOWER(role) IN ('manager', 'admin')");
+$stats = [
+    'hubCount' => count($hubRows),
+    'managerCount' => (int) $managerCountQuery->fetchColumn(),
+    'workCount' => count($challengeRows),
+    'threadCount' => count($postRows),
+];
+
+$joinedGroupIds = [];
+if ($defaultUserId !== null) {
+    foreach ($memberRows as $memberRow) {
+        if ((int) $memberRow['userId'] === $defaultUserId) {
+            $joinedGroupIds[(int) $memberRow['groupId']] = true;
+        }
+    }
+}
+
+$joinedHubs = array_values(array_filter(
+    $hubs,
+    static fn(array $hub): bool => isset($joinedGroupIds[(int) $hub['groupId']])
+));
+$suggestedHubs = array_values(array_filter(
+    $hubs,
+    static fn(array $hub): bool => !isset($joinedGroupIds[(int) $hub['groupId']])
+));
 
 function h(?string $value): string
 {
@@ -35,6 +129,11 @@ function hubCategoryKey(string $category): string
 </head>
 <body>
     <div class="page-shell">
+        <canvas class="directory-network-canvas" id="directoryNetworkCanvas" aria-hidden="true"></canvas>
+        <div class="directory-aurora directory-aurora-left" aria-hidden="true"></div>
+        <div class="directory-aurora directory-aurora-right" aria-hidden="true"></div>
+        <div class="directory-gridline" aria-hidden="true"></div>
+
         <header class="site-header">
             <div class="container header-inner">
                 <a class="brand" href="index.php">
@@ -64,9 +163,11 @@ function hubCategoryKey(string $category): string
             <div class="container">
                 <section class="hero-panel">
                     <div class="hero-copy">
-                        <div class="eyebrow">Skill Hub Directory</div>
-                        <h1>Find the communities where your work, questions, and momentum belong.</h1>
-                        <p>These hubs are now loaded from your database, so the front directory reflects the communities managers and admins create in the back office.</p>
+                        <div class="hero-copy-top">
+                            <div class="eyebrow">Skill Hub Directory</div>
+                            <h1>Find the communities where your work, questions, and momentum belong.</h1>
+                            <p class="hero-description">Move through live circles of makers, mentors, and projects. Each cluster below is a real workspace connected to the people and work already in your database.</p>
+                        </div>
                     </div>
                     <div class="hero-stats">
                         <div class="hero-stat">
@@ -129,7 +230,7 @@ function hubCategoryKey(string $category): string
                         <section class="glass-panel search-panel">
                             <div class="search-row">
                                 <input id="hubSearch" class="search-input" type="text" placeholder="Search hubs, mentors, themes, or workspaces...">
-                                <a class="ghost-btn" href="searchWorkItems.php">Explore</a>
+                                <a class="ghost-btn" href="hub.php<?= !empty($joinedHubs) ? '?groupId=' . (int) $joinedHubs[0]['groupId'] : ''; ?>">Explore</a>
                             </div>
                         </section>
 
@@ -162,7 +263,11 @@ function hubCategoryKey(string $category): string
                                         </div>
                                         <div class="hub-card-actions">
                                             <a class="primary-btn" href="hub.php?groupId=<?= (int) $hub['groupId']; ?>">Open hub</a>
-                                            <a class="ghost-btn" href="searchWorkItems.php">Open work</a>
+                                            <form class="inline-action-form" method="POST">
+                                                <input type="hidden" name="action" value="leave_hub">
+                                                <input type="hidden" name="groupId" value="<?= (int) $hub['groupId']; ?>">
+                                                <button class="ghost-btn leave-btn" type="submit">Leave hub</button>
+                                            </form>
                                         </div>
                                     </article>
                                 <?php } ?>
@@ -194,7 +299,11 @@ function hubCategoryKey(string $category): string
                                             <span><?= h($hub['category']); ?></span>
                                         </div>
                                         <div class="hub-card-actions">
-                                            <button class="primary-btn join-btn" type="button">Join hub</button>
+                                            <form class="inline-action-form" method="POST">
+                                                <input type="hidden" name="action" value="join_hub">
+                                                <input type="hidden" name="groupId" value="<?= (int) $hub['groupId']; ?>">
+                                                <button class="primary-btn join-btn" type="submit">Join hub</button>
+                                            </form>
                                             <a class="ghost-btn" href="hub.php?groupId=<?= (int) $hub['groupId']; ?>">Preview</a>
                                         </div>
                                     </article>

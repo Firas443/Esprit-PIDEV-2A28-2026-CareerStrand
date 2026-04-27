@@ -1,9 +1,23 @@
 <?php
-require_once __DIR__ . '/../../Controller/SkillHubController.php';
+require_once __DIR__ . '/../../config.php';
+require_once __DIR__ . '/../../Controller/SkillHubCoreController.php';
+require_once __DIR__ . '/../../Controller/SkillHubEngagementController.php';
+require_once __DIR__ . '/../../Model/SkillHubEngagement.php';
 
-$controller = new SkillHubController();
-$defaultUserId = $controller->getDefaultUserId();
-$groupId = isset($_GET['groupId']) ? (int) $_GET['groupId'] : ($controller->getFirstHubId() ?? 0);
+$coreController = new SkillHubCoreController();
+$engagementController = new SkillHubEngagementController();
+$pdo = config::getConnexion();
+$forumCommentError = '';
+
+$users = $pdo->query("SELECT userId, fullName, role FROM Users")->fetchAll();
+$userMap = [];
+foreach ($users as $user) {
+    $userMap[(int) $user['userId']] = $user;
+}
+
+$defaultUserId = !empty($users) ? (int) $users[0]['userId'] : null;
+$allHubs = $coreController->getAllSkillHubs();
+$groupId = isset($_GET['groupId']) ? (int) $_GET['groupId'] : (!empty($allHubs) ? (int) $allHubs[0]['groupId'] : 0);
 $selectedPostId = isset($_GET['postId']) ? (int) $_GET['postId'] : 0;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $defaultUserId !== null) {
@@ -12,16 +26,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $defaultUserId !== null) {
     if ($action === 'create_comment') {
         $postId = (int) ($_POST['postId'] ?? 0);
         $targetGroupId = (int) ($_POST['groupId'] ?? $groupId);
-        if ($postId > 0) {
-            $controller->createComment($postId, $defaultUserId, trim((string) ($_POST['content'] ?? '')));
+        $submittedContent = trim((string) ($_POST['content'] ?? ''));
+        if ($submittedContent === '') {
+            $forumCommentError = 'Comment is required.';
+        } elseif ($postId > 0) {
+            $engagementController->createComment(
+                new CommentEntity(
+                    null,
+                    $postId,
+                    $defaultUserId,
+                    null,
+                    $submittedContent,
+                    0,
+                    'active'
+                )
+            );
+            header('Location: forum.php?groupId=' . $targetGroupId . '&postId=' . $postId);
+            exit;
         }
-        header('Location: forum.php?groupId=' . $targetGroupId . '&postId=' . $postId);
-        exit;
     }
 }
 
-$currentHub = $controller->getHubById($groupId);
-$hubPosts = $groupId > 0 ? $controller->getHubPosts($groupId) : [];
+$currentHub = $groupId > 0 ? $coreController->getSkillHubById($groupId) : null;
+$commentRows = $engagementController->getAllComments();
+$commentCounts = [];
+foreach ($commentRows as $commentRow) {
+    $commentCounts[(int) $commentRow['postId']] = ($commentCounts[(int) $commentRow['postId']] ?? 0) + 1;
+}
+
+$hubPosts = array_values(array_filter(
+    $engagementController->getAllPosts(),
+    static fn(array $post): bool => (int) $post['groupId'] === $groupId && empty($post['challengeId'])
+));
+$hubPosts = array_map(static function (array $post) use ($userMap, $commentCounts): array {
+    $user = $userMap[(int) $post['userId']] ?? ['fullName' => 'Unknown', 'role' => 'user'];
+    $post['fullName'] = $user['fullName'];
+    $post['role'] = $user['role'];
+    $post['commentCount'] = $commentCounts[(int) $post['postId']] ?? 0;
+    return $post;
+}, $hubPosts);
+
 if ($selectedPostId === 0 && !empty($hubPosts)) {
     $selectedPostId = (int) $hubPosts[0]['postId'];
 }
@@ -34,7 +78,16 @@ foreach ($hubPosts as $post) {
     }
 }
 
-$comments = $selectedPostId > 0 ? $controller->getCommentsByPost($selectedPostId) : [];
+$comments = array_values(array_filter(
+    $commentRows,
+    static fn(array $comment): bool => (int) $comment['postId'] === $selectedPostId
+));
+$comments = array_map(static function (array $comment) use ($userMap): array {
+    $user = $userMap[(int) $comment['userId']] ?? ['fullName' => 'Unknown', 'role' => 'user'];
+    $comment['fullName'] = $user['fullName'];
+    $comment['role'] = $user['role'];
+    return $comment;
+}, $comments);
 
 function h(?string $value): string
 {
@@ -120,11 +173,12 @@ function avatarClass(?string $role): string
                     </article>
 
                     <section class="conversation-panel">
-                        <form method="POST" class="join-box">
+                        <form method="POST" class="join-box" id="forumCommentForm" novalidate>
                             <input type="hidden" name="action" value="create_comment">
                             <input type="hidden" name="groupId" value="<?= (int) $groupId; ?>">
                             <input type="hidden" name="postId" value="<?= (int) $selectedPost['postId']; ?>">
-                            <textarea name="content" rows="3" placeholder="Join the conversation" required></textarea>
+                            <textarea id="forumCommentInput" name="content" rows="3" placeholder="Join the conversation" data-required-message="Comment is required."><?= h($_POST['action'] ?? '' ? ($_POST['content'] ?? '') : ''); ?></textarea>
+                            <small class="field-error" id="forumCommentError"><?= h($forumCommentError); ?></small>
                             <div class="forum-form-actions">
                                 <button class="primary-btn" type="submit">Comment</button>
                             </div>
@@ -164,5 +218,31 @@ function avatarClass(?string $role): string
             </div>
         </main>
     </div>
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.getElementById('forumCommentForm');
+        const input = document.getElementById('forumCommentInput');
+        const error = document.getElementById('forumCommentError');
+        if (!form || !input || !error) return;
+
+        const validate = () => {
+            const message = input.value.trim() ? '' : (input.dataset.requiredMessage || 'Comment is required.');
+            error.textContent = message;
+            input.classList.toggle('is-invalid', Boolean(message));
+            input.dataset.invalid = message ? 'true' : 'false';
+            return !message;
+        };
+
+        input.addEventListener('input', validate);
+        input.addEventListener('blur', validate);
+
+        form.addEventListener('submit', function (event) {
+            if (!validate()) {
+                event.preventDefault();
+                input.focus();
+            }
+        });
+    });
+    </script>
 </body>
 </html>

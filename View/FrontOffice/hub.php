@@ -1,29 +1,167 @@
 <?php
-require_once __DIR__ . '/../../Controller/SkillHubController.php';
+require_once __DIR__ . '/../../config.php';
+require_once __DIR__ . '/../../Controller/SkillHubCoreController.php';
+require_once __DIR__ . '/../../Controller/SkillHubEngagementController.php';
+require_once __DIR__ . '/../../Model/SkillHubEngagement.php';
 
-$controller = new SkillHubController();
-$defaultUserId = $controller->getDefaultUserId();
-$groupId = isset($_GET['groupId']) ? (int) $_GET['groupId'] : ($controller->getFirstHubId() ?? 0);
+$coreController = new SkillHubCoreController();
+$engagementController = new SkillHubEngagementController();
+$pdo = config::getConnexion();
+$hubPostErrors = [
+    'title' => '',
+    'content' => '',
+    'postType' => '',
+];
+
+$users = $pdo->query("SELECT userId, fullName, role FROM Users")->fetchAll();
+$userMap = [];
+foreach ($users as $user) {
+    $userMap[(int) $user['userId']] = $user;
+}
+
+$defaultUserId = !empty($users) ? (int) $users[0]['userId'] : null;
+$allHubs = $coreController->getAllSkillHubs();
+$allChallenges = $coreController->getAllChallenges();
+$allMembers = $coreController->getAllGroupMembers();
+$allPosts = $engagementController->getAllPosts();
+
+usort($allHubs, static function (array $left, array $right): int {
+    return (int) $left['groupId'] <=> (int) $right['groupId'];
+});
+
+$groupId = isset($_GET['groupId']) ? (int) $_GET['groupId'] : (!empty($allHubs) ? (int) $allHubs[0]['groupId'] : 0);
+$workFilters = [
+    'groupId' => $groupId,
+    'search' => trim((string) ($_GET['workSearch'] ?? '')),
+    'difficulty' => trim((string) ($_GET['workDifficulty'] ?? '')),
+    'type' => trim((string) ($_GET['workType'] ?? '')),
+    'status' => trim((string) ($_GET['workStatus'] ?? '')),
+    'sort' => trim((string) ($_GET['workSort'] ?? 'newest')),
+];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $defaultUserId !== null) {
     if ($_POST['action'] === 'create_hub_post') {
-        $controller->createHubPost(
-            (int) $_POST['groupId'],
-            $defaultUserId,
-            trim((string) ($_POST['title'] ?? 'Hub discussion')),
-            trim((string) ($_POST['content'] ?? '')),
-            trim((string) ($_POST['postType'] ?? 'discussion'))
-        );
-        header('Location: hub.php?groupId=' . (int) $_POST['groupId']);
-        exit;
+        $submittedTitle = trim((string) ($_POST['title'] ?? ''));
+        $submittedContent = trim((string) ($_POST['content'] ?? ''));
+        $submittedPostType = trim((string) ($_POST['postType'] ?? ''));
+
+        if ($submittedTitle === '') {
+            $hubPostErrors['title'] = 'Title is required.';
+        }
+        if ($submittedContent === '') {
+            $hubPostErrors['content'] = 'Content is required.';
+        }
+        if ($submittedPostType === '') {
+            $hubPostErrors['postType'] = 'Post type is required.';
+        }
+
+        if (!array_filter($hubPostErrors)) {
+            $engagementController->createPost(
+                new PostEntity(
+                    null,
+                    (int) $_POST['groupId'],
+                    $defaultUserId,
+                    null,
+                    $submittedPostType,
+                    $submittedTitle,
+                    $submittedContent,
+                    'active',
+                    null
+                )
+            );
+            header('Location: hub.php?groupId=' . (int) $_POST['groupId']);
+            exit;
+        }
     }
 }
 
-$currentHub = $controller->getHubById($groupId);
-$allHubs = $controller->afficherHubs();
-$workItems = $groupId > 0 ? $controller->getWorkItems($groupId) : [];
-$hubPosts = $groupId > 0 ? $controller->getHubPosts($groupId) : [];
-$members = $groupId > 0 ? $controller->getHubMembers($groupId, 5) : [];
+$memberCounts = [];
+foreach ($allMembers as $member) {
+    $memberCounts[(int) $member['groupId']] = ($memberCounts[(int) $member['groupId']] ?? 0) + 1;
+}
+
+$workCounts = [];
+foreach ($allChallenges as $challenge) {
+    $workCounts[(int) $challenge['groupId']] = ($workCounts[(int) $challenge['groupId']] ?? 0) + 1;
+}
+
+$threadCounts = [];
+foreach ($allPosts as $post) {
+    $threadCounts[(int) $post['groupId']] = ($threadCounts[(int) $post['groupId']] ?? 0) + 1;
+}
+
+$allHubs = array_map(static function (array $hub) use ($memberCounts, $workCounts, $threadCounts): array {
+    $groupId = (int) $hub['groupId'];
+    $hub['memberCount'] = $memberCounts[$groupId] ?? 0;
+    $hub['workCount'] = $workCounts[$groupId] ?? 0;
+    $hub['threadCount'] = $threadCounts[$groupId] ?? 0;
+    return $hub;
+}, $allHubs);
+
+$currentHub = $groupId > 0 ? $coreController->getSkillHubById($groupId) : null;
+
+$workItems = array_values(array_filter($allChallenges, static fn(array $challenge): bool => (int) $challenge['groupId'] === $groupId));
+$workItems = array_map(static function (array $challenge) use ($currentHub, $userMap): array {
+    $manager = $userMap[(int) $challenge['managerId']] ?? ['fullName' => 'Manager'];
+    $challenge['hubName'] = $currentHub['name'] ?? 'Skill Hub';
+    $challenge['managerName'] = $manager['fullName'] ?? 'Manager';
+    return $challenge;
+}, $workItems);
+$filteredWorkItems = $coreController->filterChallenges($workFilters);
+$filteredWorkItems = array_map(static function (array $challenge) use ($currentHub, $userMap): array {
+    $challenge['hubName'] = $challenge['hubName'] ?? ($currentHub['name'] ?? 'Skill Hub');
+    if (empty($challenge['managerName'])) {
+        $manager = $userMap[(int) $challenge['managerId']] ?? ['fullName' => 'Manager'];
+        $challenge['managerName'] = $manager['fullName'] ?? 'Manager';
+    }
+    return $challenge;
+}, $filteredWorkItems);
+$workDifficulties = array_values(array_unique(array_filter(array_map(
+    static fn(array $challenge): string => trim((string) ($challenge['difficulty'] ?? '')),
+    $workItems
+))));
+sort($workDifficulties);
+$workStatuses = array_values(array_unique(array_filter(array_map(
+    static fn(array $challenge): string => trim((string) ($challenge['status'] ?? '')),
+    $workItems
+))));
+sort($workStatuses);
+
+$commentRows = $engagementController->getAllComments();
+$commentCounts = [];
+foreach ($commentRows as $commentRow) {
+    $commentCounts[(int) $commentRow['postId']] = ($commentCounts[(int) $commentRow['postId']] ?? 0) + 1;
+}
+
+$hubPosts = array_values(array_filter(
+    $allPosts,
+    static fn(array $post): bool => (int) $post['groupId'] === $groupId && empty($post['challengeId'])
+));
+$hubPosts = array_map(static function (array $post) use ($userMap, $commentCounts): array {
+    $user = $userMap[(int) $post['userId']] ?? ['fullName' => 'Unknown', 'role' => 'user'];
+    $post['fullName'] = $user['fullName'];
+    $post['role'] = $user['role'];
+    $post['commentCount'] = $commentCounts[(int) $post['postId']] ?? 0;
+    return $post;
+}, $hubPosts);
+
+$members = array_values(array_filter($allMembers, static fn(array $member): bool => (int) $member['groupId'] === $groupId));
+$members = array_map(static function (array $member) use ($userMap): array {
+    $user = $userMap[(int) $member['userId']] ?? ['fullName' => 'Unknown', 'role' => 'user'];
+    $member['fullName'] = $user['fullName'];
+    $member['role'] = $user['role'];
+    return $member;
+}, $members);
+usort($members, static function (array $left, array $right): int {
+    $joinedComparison = strcmp((string) ($right['joinedAt'] ?? ''), (string) ($left['joinedAt'] ?? ''));
+    if ($joinedComparison !== 0) {
+        return $joinedComparison;
+    }
+
+    return strcmp((string) ($left['fullName'] ?? ''), (string) ($right['fullName'] ?? ''));
+});
+$members = array_slice($members, 0, 5);
+
 $savedItems = array_slice($workItems, 0, 4);
 $pinnedItems = array_slice($savedItems, 0, 3);  
 
@@ -96,18 +234,6 @@ function avatarClass(?string $role): string
             <div class="container app-grid">
                 <section class="feed-column">
                     <div class="feed-shell">
-                        <div class="social-topbar">
-                            <div class="search-wrap">
-                                <input type="text" placeholder="Search hubs, tasks, projects, discussions..." disabled>
-                            </div>
-                            <div class="feed-tabs">
-                                <button class="feed-tab active" type="button">For You</button>
-                                <button class="feed-tab" type="button">Tasks</button>
-                                <button class="feed-tab" type="button">Projects</button>
-                                <button class="feed-tab" type="button">Discussions</button>
-                            </div>
-                        </div>
-
                         <section class="social-strip">
                             <article class="strip-card emphasis">
                                 <div class="hub-widget-top">
@@ -121,7 +247,7 @@ function avatarClass(?string $role): string
                                 <div class="hub-widget-grid">
                                     <div class="hub-widget-stat">
                                         <span class="hub-stat-label">Open now</span>
-                                        <strong><?= count($workItems); ?></strong>
+                                        <strong><?= count($filteredWorkItems); ?></strong>
                                         <span class="hub-stat-copy">tasks and projects in this hub</span>
                                     </div>
                                     <div class="hub-widget-stat">
@@ -159,6 +285,63 @@ function avatarClass(?string $role): string
                                 <?php } ?>
                             </article>
                         </section>
+                        <section class="hub-filter-panel">
+                            <div class="hub-filter-head">
+                                <div>
+                                    <div class="strip-kicker">Challenge filter</div>
+                                    <h3>Refine this hub's tasks and projects</h3>
+                                </div>
+                                <div class="hub-filter-badge"><?= count($filteredWorkItems); ?> result<?= count($filteredWorkItems) === 1 ? '' : 's'; ?></div>
+                            </div>
+                            <form class="hub-work-filter-form" method="GET">
+                                <input type="hidden" name="groupId" value="<?= (int) $groupId; ?>">
+                                <div class="hub-work-filter-grid">
+                                    <label class="hub-filter-field hub-filter-field-search">
+                                        <span>Keyword</span>
+                                        <input type="text" name="workSearch" value="<?= h($workFilters['search']); ?>" placeholder="Search tasks, projects, or descriptions...">
+                                    </label>
+                                    <label class="hub-filter-field">
+                                        <span>Difficulty</span>
+                                        <select name="workDifficulty">
+                                            <option value="">All levels</option>
+                                            <?php foreach ($workDifficulties as $difficulty) { ?>
+                                                <option value="<?= h($difficulty); ?>" <?= strcasecmp($workFilters['difficulty'], $difficulty) === 0 ? 'selected' : ''; ?>><?= h($difficulty); ?></option>
+                                            <?php } ?>
+                                        </select>
+                                    </label>
+                                    <label class="hub-filter-field">
+                                        <span>Type</span>
+                                        <select name="workType">
+                                            <option value="">All types</option>
+                                            <option value="task" <?= strcasecmp($workFilters['type'], 'task') === 0 ? 'selected' : ''; ?>>Task</option>
+                                            <option value="project" <?= strcasecmp($workFilters['type'], 'project') === 0 ? 'selected' : ''; ?>>Project</option>
+                                        </select>
+                                    </label>
+                                    <label class="hub-filter-field">
+                                        <span>Status</span>
+                                        <select name="workStatus">
+                                            <option value="">All statuses</option>
+                                            <?php foreach ($workStatuses as $status) { ?>
+                                                <option value="<?= h($status); ?>" <?= strcasecmp($workFilters['status'], $status) === 0 ? 'selected' : ''; ?>><?= h(ucfirst($status)); ?></option>
+                                            <?php } ?>
+                                        </select>
+                                    </label>
+                                    <label class="hub-filter-field">
+                                        <span>Sort by</span>
+                                        <select name="workSort">
+                                            <option value="newest" <?= $workFilters['sort'] === 'newest' ? 'selected' : ''; ?>>Newest first</option>
+                                            <option value="deadline_soon" <?= $workFilters['sort'] === 'deadline_soon' ? 'selected' : ''; ?>>Nearest deadline</option>
+                                            <option value="difficulty_high" <?= $workFilters['sort'] === 'difficulty_high' ? 'selected' : ''; ?>>Highest difficulty</option>
+                                            <option value="title_az" <?= $workFilters['sort'] === 'title_az' ? 'selected' : ''; ?>>Title A-Z</option>
+                                        </select>
+                                    </label>
+                                </div>
+                                <div class="hub-work-filter-actions">
+                                    <button class="primary-btn" type="submit">Apply filters</button>
+                                    <a class="ghost-btn" href="hub.php?groupId=<?= (int) $groupId; ?>">Clear</a>
+                                </div>
+                            </form>
+                        </section>
                         <section class="feed-switcher">
                             <div class="feed-mode-toggle">
                                 <button class="mode-chip active" type="button" data-view="current">
@@ -187,29 +370,32 @@ function avatarClass(?string $role): string
                                     <div class="composer-visibility">Visible in this hub</div>
                                 </div>
 
-                                <form method="POST" class="field-grid modern-post-form">
+                                <form method="POST" class="field-grid modern-post-form" id="hubPostForm" novalidate>
                                     <input type="hidden" name="action" value="create_hub_post">
                                     <input type="hidden" name="groupId" value="<?= (int) $groupId; ?>">
 
                                     <div class="post-top-row">
                                         <div class="field grow">
                                             <label>Title</label>
-                                            <input type="text" name="title" placeholder="What do you want to share?" required>
+                                            <input type="text" id="hubPostTitle" name="title" value="<?= h($_POST['action'] ?? '' ? ($_POST['title'] ?? '') : ''); ?>" placeholder="What do you want to share?" data-required-message="Title is required.">
+                                            <small class="field-error" id="hubPostTitleError"><?= h($hubPostErrors['title']); ?></small>
                                         </div>
 
                                         <div class="field type-field">
                                             <label>Post type</label>
-                                            <select name="postType">
+                                            <select id="hubPostType" name="postType" data-required-message="Post type is required.">
                                                 <option value="discussion">Discussion</option>
                                                 <option value="question">Question</option>
                                                 <option value="resource">Resource</option>
                                             </select>
+                                            <small class="field-error" id="hubPostTypeError"><?= h($hubPostErrors['postType']); ?></small>
                                         </div>
                                     </div>
 
                                     <div class="field">
                                         <label>Content</label>
-                                        <textarea name="content" rows="5" placeholder="Write your post here..." required></textarea>
+                                        <textarea id="hubPostContent" name="content" rows="5" placeholder="Write your post here..." data-required-message="Content is required."><?= h($_POST['action'] ?? '' ? ($_POST['content'] ?? '') : ''); ?></textarea>
+                                        <small class="field-error" id="hubPostContentError"><?= h($hubPostErrors['content']); ?></small>
                                     </div>
 
                                     <div class="card-actions">
@@ -220,7 +406,7 @@ function avatarClass(?string $role): string
                         </section>
 
                         <section class="feed view-panel" id="currentFeed">
-                            <?php foreach ($workItems as $item) { ?>
+                            <?php foreach ($filteredWorkItems as $item) { ?>
                                 <article class="feed-card interactive-card" data-type="<?= h($item['type'] === 'project' ? 'projects' : 'tasks'); ?>" data-hub="<?= h(strtolower((string) $currentHub['category'])); ?>">
                                     <div class="card-head">
                                         <div class="author-line">
@@ -254,6 +440,13 @@ function avatarClass(?string $role): string
                                             <a class="ghost-btn" href="thread.php?challengeId=<?= (int) $item['challengeId']; ?>&view=discussion">Open discussion</a>
                                         </div>
                                     </div>
+                                </article>
+                            <?php } ?>
+
+                            <?php if (empty($filteredWorkItems)) { ?>
+                                <article class="feed-card filter-empty-card" data-type="tasks" data-hub="<?= h(strtolower((string) ($currentHub['category'] ?? 'hub'))); ?>">
+                                    <h3>No work items match these filters</h3>
+                                    <p>Try a broader keyword, switch the type, or reset the hub filters to see all available tasks and projects again.</p>
                                 </article>
                             <?php } ?>
 
@@ -402,6 +595,47 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 </script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const form = document.getElementById('hubPostForm');
+    if (!form) return;
+
+    const fieldMap = {
+        hubPostTitle: 'hubPostTitleError',
+        hubPostType: 'hubPostTypeError',
+        hubPostContent: 'hubPostContentError'
+    };
+
+    const setFieldError = (field, message) => {
+        const error = document.getElementById(fieldMap[field.id] || '');
+        if (error) error.textContent = message;
+        field.classList.toggle('is-invalid', Boolean(message));
+        field.dataset.invalid = message ? 'true' : 'false';
+    };
+
+    const validateRequired = (field) => {
+        const message = field.value.trim() ? '' : (field.dataset.requiredMessage || 'This field is required.');
+        setFieldError(field, message);
+        return !message;
+    };
+
+    form.querySelectorAll('[data-required-message]').forEach((field) => {
+        const eventName = field.tagName === 'SELECT' ? 'change' : 'input';
+        field.addEventListener(eventName, () => validateRequired(field));
+        field.addEventListener('blur', () => validateRequired(field));
+    });
+
+    form.addEventListener('submit', function (event) {
+        form.querySelectorAll('[data-required-message]').forEach((field) => validateRequired(field));
+        const invalid = form.querySelector('[data-invalid="true"]');
+        if (invalid) {
+            event.preventDefault();
+            invalid.focus();
+        }
+    });
+});
+</script>
 </body>
 
 </html>
+

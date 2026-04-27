@@ -643,6 +643,7 @@ td strong {
 .field {
   display: grid;
   gap: 8px;
+  position: relative;
 }
 
 .field label {
@@ -663,9 +664,175 @@ td strong {
   outline: none;
 }
 
+.field select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  color-scheme: dark;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--blue-2) 50%),
+    linear-gradient(135deg, var(--blue-2) 50%, transparent 50%);
+  background-position:
+    calc(100% - 22px) calc(50% - 3px),
+    calc(100% - 16px) calc(50% - 3px);
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+  padding-right: 44px;
+}
+
+.field select,
+select {
+  color-scheme: dark;
+}
+
+.field select option,
+.field select optgroup,
+select option,
+select optgroup {
+  color: var(--white) !important;
+  background-color: #0d1631 !important;
+}
+
+.field select option:checked,
+select option:checked {
+  color: #081225 !important;
+  background: #a9c5ef !important;
+}
+
+.field select option:hover,
+select option:hover {
+  color: #081225;
+  background-color: #c2d6f4;
+}
+
+.field select:focus {
+  border-color: rgba(255, 110, 69, 0.35);
+  box-shadow: 0 0 0 4px rgba(255, 110, 69, 0.08);
+}
+
 .field textarea {
   min-height: 120px;
   resize: vertical;
+}
+
+.field-error {
+  min-height: 18px;
+  color: var(--red);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.field input.is-invalid,
+.field select.is-invalid,
+.field textarea.is-invalid {
+  border-color: rgba(255, 110, 69, 0.55);
+  box-shadow: 0 0 0 4px rgba(255, 110, 69, 0.08);
+}
+
+form.table-toolbar {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 18px;
+  padding: 18px;
+  border-radius: 22px;
+  background: rgba(8, 15, 33, 0.56);
+  border: 1px solid rgba(126, 159, 228, 0.12);
+}
+
+form.table-toolbar .toolbar-grid {
+  display: grid;
+  gap: 14px;
+  align-items: end;
+}
+
+form.table-toolbar .toolbar-grid-hubs {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+form.table-toolbar .toolbar-grid-work {
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+form.table-toolbar .toolbar-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+form.table-toolbar .toolbar-field label {
+  display: block;
+  color: var(--muted-2);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+}
+
+form.table-toolbar .toolbar-field input,
+form.table-toolbar .toolbar-field select {
+  width: 100%;
+  min-width: 0;
+  padding: 13px 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(126, 159, 228, 0.16) !important;
+  background: rgba(8, 15, 33, 0.92) !important;
+  color: var(--white) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+form.table-toolbar .toolbar-field input::placeholder {
+  color: var(--muted-2);
+}
+
+form.table-toolbar .toolbar-field select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  color-scheme: dark;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--blue-2) 50%),
+    linear-gradient(135deg, var(--blue-2) 50%, transparent 50%) !important;
+  background-position:
+    calc(100% - 22px) calc(50% - 3px),
+    calc(100% - 16px) calc(50% - 3px) !important;
+  background-size: 6px 6px, 6px 6px !important;
+  background-repeat: no-repeat !important;
+  padding-right: 44px;
+}
+
+form.table-toolbar .toolbar-field select option,
+form.table-toolbar .toolbar-field select optgroup {
+  color: var(--white) !important;
+  background-color: #0d1631 !important;
+}
+
+form.table-toolbar .toolbar-grid-hubs .toolbar-field:first-child,
+form.table-toolbar .toolbar-grid-work .toolbar-field:first-child {
+  grid-column: 1 / -1;
+}
+
+form.table-toolbar .toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.btn-clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 13px 18px;
+  color: var(--white);
+  background: rgba(111, 143, 216, 0.08);
+  border: 1px solid rgba(126, 159, 228, 0.16);
+}
+
+.empty-cell {
+  padding: 28px 18px;
+  text-align: center;
+  color: var(--muted);
 }
 
 .footer-note {
@@ -675,12 +842,177 @@ td strong {
   text-align: center;
 }
 
+.review-workbench {
+  display: grid;
+  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.review-queue-panel,
+.review-detail-panel {
+  min-height: 100%;
+}
+
+.review-queue-list {
+  display: grid;
+  gap: 14px;
+}
+
+.review-queue-card {
+  display: grid;
+  gap: 10px;
+  padding: 18px 20px;
+  border: 1px solid rgba(144, 157, 224, 0.14);
+  border-radius: 22px;
+  background:
+    linear-gradient(180deg, rgba(18, 25, 50, 0.92), rgba(11, 16, 35, 0.96));
+  color: var(--text);
+  text-decoration: none;
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    background 0.18s ease;
+}
+
+.review-queue-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(143, 165, 255, 0.3);
+  box-shadow: 0 18px 34px rgba(6, 10, 24, 0.34);
+}
+
+.review-queue-card.is-active {
+  border-color: rgba(255, 110, 69, 0.38);
+  box-shadow: 0 22px 44px rgba(255, 110, 69, 0.12);
+  background:
+    linear-gradient(180deg, rgba(27, 33, 63, 0.98), rgba(13, 18, 38, 0.98));
+}
+
+.review-queue-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.review-queue-top strong {
+  font-size: 18px;
+  line-height: 1.25;
+}
+
+.review-queue-card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.review-queue-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  padding: 9px 14px;
+  border: 1px solid rgba(143, 165, 255, 0.16);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.review-detail-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(280px, 360px);
+  gap: 22px;
+  align-items: start;
+}
+
+.review-detail-copy {
+  padding: 24px;
+  border: 1px solid rgba(144, 157, 224, 0.12);
+  border-radius: 26px;
+  background:
+    linear-gradient(180deg, rgba(19, 25, 49, 0.86), rgba(11, 16, 32, 0.95));
+}
+
+.review-detail-copy h3 {
+  font-size: clamp(28px, 3vw, 34px);
+  line-height: 1.05;
+  margin: 0 0 8px;
+}
+
+.review-detail-copy .field textarea[disabled],
+.review-detail-copy .field input[disabled] {
+  background: rgba(8, 12, 25, 0.86);
+  color: rgba(234, 238, 255, 0.92);
+}
+
+.review-score-panel {
+  display: grid;
+  gap: 18px;
+  padding: 22px;
+  border: 1px solid rgba(144, 157, 224, 0.14);
+  border-radius: 24px;
+  background:
+    linear-gradient(180deg, rgba(24, 32, 60, 0.96), rgba(12, 18, 37, 0.98));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.review-score-panel .field-grid {
+  gap: 16px;
+}
+
+.review-score-panel .field label {
+  color: rgba(231, 235, 255, 0.84);
+}
+
+.review-score-panel .table-foot {
+  padding-top: 4px;
+}
+
+.review-archive-list {
+  display: grid;
+  gap: 14px;
+}
+
+.review-archive-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px;
+  padding: 18px 20px;
+  border: 1px solid rgba(144, 157, 224, 0.1);
+  border-radius: 22px;
+  background:
+    linear-gradient(180deg, rgba(18, 24, 46, 0.8), rgba(10, 15, 29, 0.92));
+}
+
+.review-archive-row.is-active {
+  border-color: rgba(255, 110, 69, 0.34);
+  box-shadow: 0 16px 30px rgba(255, 110, 69, 0.1);
+}
+
+.review-archive-row strong {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 16px;
+}
+
+.review-archive-row .filters {
+  justify-content: flex-end;
+}
+
 @media (max-width: 1400px) {
   .detail-grid,
   .hero-grid,
   .split-grid,
   .chart-grid,
-  .donut-layout {
+  .donut-layout,
+  .review-workbench,
+  .review-detail-grid {
     grid-template-columns: 1fr;
   }
 
@@ -725,7 +1057,17 @@ td strong {
 
   .searchbar {
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
-    min-width: 100%;
+      min-width: 100%;
+  }
+
+  .review-archive-row,
+  .review-queue-top {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .review-archive-row .filters {
+    justify-content: flex-start;
   }
 }
 

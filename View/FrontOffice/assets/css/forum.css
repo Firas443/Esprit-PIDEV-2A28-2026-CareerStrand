@@ -95,6 +95,20 @@ textarea::placeholder {
   color: rgba(245, 243, 238, 0.42);
 }
 
+.field-error {
+  display: block;
+  min-height: 18px;
+  margin-top: 8px;
+  color: var(--red);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.is-invalid {
+  border-color: rgba(255, 110, 69, 0.5) !important;
+  box-shadow: 0 0 0 4px rgba(255, 110, 69, 0.08) !important;
+}
+
 .page-shell {
   position: relative;
   min-height: 100vh;
