@@ -8,7 +8,7 @@ document.body.append(
   document.getElementById('toast')
 );
 closeModal('detailModal');
-
+//show the message error at the bottom of the screen 
 function showToast(msg, type = 'success') {
   const t = document.getElementById('toast');
   t.textContent = msg; t.className = `toast ${type}`;
@@ -17,12 +17,12 @@ function showToast(msg, type = 'success') {
 }
 function openModal(id)  { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
-
+// Converts < > & " into safe HTML entities so they display as text instead of executing
 function escHtml(str) {
   return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-// ── LOAD ──
+//fetch all applications from the backend
 async function loadApplications() {
   const params = new URLSearchParams({ source: 'back' });
   if (filterStatus) params.set('status', filterStatus);
@@ -46,7 +46,7 @@ async function loadApplications() {
   }
 }
 
-// ── RENDER TABLE ──
+//render list of applications  + accept reject details buttons
 function renderTable(list) {
   const tbody = document.getElementById('appBody');
   document.getElementById('tableCaption').textContent =
@@ -75,7 +75,7 @@ function renderTable(list) {
   }).join('');
 }
 
-// ── RENDER SUMMARY BARS ──
+//count how much accept reject pending returned by the backend and animate bar
 function renderSummary(counts) {
   if (!counts) return;
   const total = (counts.pending || 0) + (counts.accepted || 0) + (counts.rejected || 0) || 1;
@@ -87,7 +87,7 @@ function renderSummary(counts) {
   document.getElementById('barRejected').style.width   = ((counts.rejected || 0) / total * 100) + '%';
 }
 
-// ── OPEN DETAIL MODAL ──
+// Opens the detail modal for a specific application by its ID + show accept reject button
 function openDetail(id) {
   const a = allApps.find(x => x.applicationId == id);
   if (!a) return;
@@ -111,10 +111,10 @@ function openDetail(id) {
   openModal('detailModal');
 }
 
-// ── UPDATE STATUS ──
+//change status and refresh table
 async function updateStatus(id, status) {
   try {
-    const res         = await fetch(`${API_BASE}?id=${id}&action=status`, {
+    const res= await fetch(`${API_BASE}?id=${id}&action=status`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status }),

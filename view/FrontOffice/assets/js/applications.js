@@ -3,7 +3,7 @@ const USER_ID  = 1;
 const APP_BASE = '/Careerstrand/controller/ApplicationController.php';
 let submissions = [];
 
-// ── FETCH MY APPLICATIONS ──
+//fetch all applications submitted by the current user from the backend
 async function fetchMyApplications() {
   try {
     const res  = await fetch(`${APP_BASE}?source=front&userId=${USER_ID}`);
@@ -29,7 +29,7 @@ async function fetchMyApplications() {
   }
 }
 
-// ── SUBMIT APPLICATION ──
+// Submits a new application for a given opportunity ID + controle de saisie URL + mark as applied when good + controle de saisie motivation 
 async function submitApply(id) {
   const o = state.data.find(x => x.id === id);
   if (!o) return;
@@ -72,7 +72,7 @@ async function submitApply(id) {
   }
 }
 
-// ── DRAWER BADGE ──
+// Updates the badge counter shown on the drawer button
 function updateDrawerBadge() {
   const badge = document.getElementById("drawerBadge");
   const count = submissions.length;
@@ -80,7 +80,7 @@ function updateDrawerBadge() {
   badge.style.display = count > 0 ? "flex" : "none";
 }
 
-// ── RENDER DRAWER ──
+//rebuild drawer an show application info + editable area + edit withdraw buttons
 function renderDrawer() {
   const list = document.getElementById('drawerList');
   if (!submissions.length) {
@@ -149,15 +149,17 @@ function renderDrawer() {
   updateDrawerBadge();
 }
 
-// ── EDIT PITCH ──
+//toggle edit mode + render again 
 function toggleEdit(subId) {
   const sub = submissions.find(s => s.id == subId);
   if (sub) { sub.isEditing = !sub.isEditing; renderDrawer(); }
 }
+
 function cancelEdit(subId) {
   const sub = submissions.find(s => s.id == subId);
   if (sub) { sub.isEditing = false; renderDrawer(); }
 }
+//save updated motivation
 async function saveEdit(subId) {
   const sub      = submissions.find(s => s.id == subId);
   if (!sub) return;
@@ -180,15 +182,17 @@ async function saveEdit(subId) {
   }
 }
 
-// ── EDIT PORTFOLIO ──
+//portfolio edit mode 
 function togglePortfolioEdit(subId) {
   const sub = submissions.find(s => s.id == subId);
   if (sub) { sub.isEditingPortfolio = !sub.isEditingPortfolio; renderDrawer(); }
 }
+
 function cancelPortfolioEdit(subId) {
   const sub = submissions.find(s => s.id == subId);
   if (sub) { sub.isEditingPortfolio = false; renderDrawer(); }
 }
+//Save the updated portfolio URL + check if url condition is filled +render
 async function savePortfolio(subId) {
   const sub   = submissions.find(s => s.id == subId);
   if (!sub) return;
@@ -215,7 +219,7 @@ async function savePortfolio(subId) {
   }
 }
 
-// ── WITHDRAW ──
+//delete and mark opportunity as not applied
 async function cancelSubmission(subId) {
   const sub = submissions.find(s => s.id == subId);
   if (!sub) return;
@@ -232,7 +236,7 @@ async function cancelSubmission(subId) {
   }
 }
 
-// ── DRAWER OPEN / CLOSE ──
+//DRAWER OPEN / CLOSE 
 function openDrawer()  {
   renderDrawer();
   document.getElementById("submissionsDrawer").classList.add("open");

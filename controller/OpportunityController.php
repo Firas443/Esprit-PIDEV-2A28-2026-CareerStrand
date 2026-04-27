@@ -32,6 +32,7 @@ class OpportunityController {
         $this->body   = json_decode(file_get_contents('php://input'), true) ?? [];
         $this->source = $_GET['source'] ?? 'front';
     }
+    //check if title exist in database 
 private function checkTitle(): void {
     $title     = trim($_GET['title'] ?? '');
     $excludeId = isset($_GET['excludeId']) ? (int)$_GET['excludeId'] : 0;

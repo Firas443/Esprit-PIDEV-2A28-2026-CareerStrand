@@ -11,7 +11,7 @@ document.body.append(
 );
 closeModal('formModal');
 closeModal('deleteModal');
-
+//display error notificaton at the bottom of the screen 
 function showToast(msg, type = 'success') {
   const t = document.getElementById('toast');
   t.textContent = msg; t.className = `toast ${type}`;
@@ -28,13 +28,13 @@ function escHtml(str) {
 // AJAX CHECK
 let titleCheckTimer = null;
 let titleIsValid    = true;
-
+//reset title border (remove the red when error and hide the error msg)
 function resetTitleValidation() {
   document.getElementById('fTitle').classList.remove('invalid', 'valid');
   document.getElementById('titleError').classList.remove('visible');
   titleIsValid = true;
 }
-
+//check if title already existed in the database (controle de saisie) + show the red border when error 
 async function checkTitleExists(title, excludeId = 0) {
   if (!title.trim()) { resetTitleValidation(); return; }
 
@@ -66,7 +66,7 @@ async function checkTitleExists(title, excludeId = 0) {
     }
   }, 400); // 400ms debounce
 }
-// ── LOAD ──
+//fetch opportunities and render them 
 async function loadOpportunities() {
   const category = document.getElementById('filterCategory').value;
   const level    = document.getElementById('filterLevel').value;
@@ -95,7 +95,7 @@ async function loadOpportunities() {
   }
 }
 
-// ── RENDER TABLE ──
+// take list of opportunities and build table 
 function renderTable(list) {
   const tbody = document.getElementById('oppoBody');
   document.getElementById('tableCaption').textContent =
@@ -129,7 +129,7 @@ function renderTable(list) {
   }).join('');
 }
 
-// ── STATUS TOGGLE ──
+//toggle status (published/draft/archive) and then send new data
 async function quickToggleStatus(id, currentStatus) {
   const next = currentStatus === 'published' ? 'draft' : currentStatus === 'draft' ? 'published' : 'published';
   const o    = allOppos.find(x => x.opportunityId == id);
@@ -152,7 +152,7 @@ async function quickToggleStatus(id, currentStatus) {
   } catch (e) { showToast('Update failed: ' + e.message, 'error'); }
 }
 
-// ── CREATE MODAL ──
+//open the create 'window' clear all fields
 function openCreateModal() {
   resetTitleValidation();
   document.getElementById('modalTitle').textContent = 'Create opportunity';
@@ -167,7 +167,7 @@ function openCreateModal() {
   openModal('formModal');
 }
 
-// ── EDIT MODAL ──
+//open the 'edit' window and prefill existing data
 function openEditModal(id) {
   resetTitleValidation();
   const o = allOppos.find(x => x.opportunityId == id);
@@ -184,13 +184,13 @@ function openEditModal(id) {
   openModal('formModal');
 }
 
-// ── SAVE ──
+//save all the data 
 async function saveOpportunity() {
   const title       = document.getElementById('fTitle').value.trim();
   const description = document.getElementById('fDescription').value.trim();
   const deadline    = document.getElementById('fDeadline').value;
 
-  // ── CLIENT-SIDE VALIDATION ──
+
   if (!title) {
     document.getElementById('fTitle').classList.add('invalid');
     showToast('Title is required.', 'error');
@@ -250,13 +250,13 @@ async function saveOpportunity() {
   } catch (e) { showToast(e.message, 'error'); }
 }
 
-// ── DELETE ──
+//open delete 'window' and store the id 
 function openDeleteModal(id, title) {
   pendingDeleteId = id;
   document.getElementById('deleteTarget').textContent = `"${title}"`;
   openModal('deleteModal');
 }
-
+//delete the opportunity that was in the stored id 
 async function confirmDelete() {
   if (!pendingDeleteId) return;
   try {

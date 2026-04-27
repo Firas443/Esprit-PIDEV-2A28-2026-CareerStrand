@@ -2,7 +2,7 @@
 const OPP_BASE = '/Careerstrand/controller/OpportunityController.php';
 const USER_SCORE = 87;
 
-// ── TOAST ──
+//display error message in the bottom
 function showToast(msg, type = 'success') {
   const t = document.getElementById('toast');
   t.textContent = msg;
@@ -17,7 +17,7 @@ let state = {
   data: [],
 };
 
-// ── FETCH OPPORTUNITIES ──
+//fetch all public opportunities
 async function fetchOpportunities() {
   try {
     const res  = await fetch(`${OPP_BASE}?source=front`);
@@ -78,7 +78,7 @@ function getFiltered() {
   return list;
 }
 
-// ── CARD HTML ──
+//show applied or apply now button + build card 
 function cardHTML(o) {
   const locked = o.minScore > USER_SCORE;
   const closingSoon = o.tags.includes("closing");
@@ -121,7 +121,7 @@ function cardHTML(o) {
         </div>
       </div>
     </article>`;
-}//ekhdemha HTML KHIR el return 
+}
 
 // ── RENDER GRID ──
 function render() {
@@ -150,7 +150,7 @@ function toggleSave(e, id) {
   if (o) { o.saved = !o.saved; render(); }
 }
 
-// ── APPLY MODAL ──
+//open apply 'window' prefill data + submit button 
 function openModal(id) {
   const o = state.data.find(x => x.id === id);
   if (!o) return;
