@@ -18,6 +18,103 @@ let curYear = now.getFullYear();
 let curMon  = now.getMonth();
 let selDay  = null;
 
+// ══════════════════════════════════════════════
+// VALIDATION JS — remplace le required HTML5
+// ══════════════════════════════════════════════
+
+function validerCalendrier(formId) {
+    var prefix = formId === 'form-add' ? 'add' : 'edit';
+    var isValid = true;
+
+    // Helpers
+    function getEl(id)  { return document.getElementById(id); }
+    function showErr(fieldId, errId, msg) {
+        var field = getEl('field-' + prefix + '-' + fieldId);
+        var err   = getEl('err-'   + prefix + '-' + fieldId);
+        if (!field || !err) return;
+        field.classList.add('has-error');
+        field.classList.remove('has-success');
+        err.textContent = msg;
+        err.classList.add('visible');
+        isValid = false;
+    }
+    function showOk(fieldId) {
+        var field = getEl('field-' + prefix + '-' + fieldId);
+        var err   = getEl('err-'   + prefix + '-' + fieldId);
+        if (!field || !err) return;
+        field.classList.remove('has-error');
+        field.classList.add('has-success');
+        err.classList.remove('visible');
+    }
+    function clearAll() {
+        ['title','start','end','progress','status'].forEach(function(f) {
+            var field = getEl('field-' + prefix + '-' + f);
+            var err   = getEl('err-'   + prefix + '-' + f);
+            if (field) { field.classList.remove('has-error','has-success'); }
+            if (err)   { err.classList.remove('visible'); }
+        });
+    }
+
+    clearAll();
+
+    // 1. Cours associé
+    var title = getEl(prefix + '-title');
+    if (!title || title.value.trim() === '') {
+        showErr('title', 'err-title', 'Veuillez choisir un cours.');
+    } else {
+        showOk('title');
+    }
+
+    // 2. Date de début
+    var start = getEl(prefix + '-start');
+    if (!start || start.value === '') {
+        showErr('start', 'err-start', 'Veuillez entrer une date de début.');
+    } else {
+        showOk('start');
+    }
+
+    // 3. Date de fin
+    var end = getEl(prefix + '-end');
+    if (!end || end.value === '') {
+        showErr('end', 'err-end', 'Veuillez entrer une date de fin.');
+    } else if (start && start.value !== '' && end.value < start.value) {
+        showErr('end', 'err-end', 'La date de fin doit être après la date de début.');
+    } else {
+        showOk('end');
+    }
+
+    // 4. Progression
+    var prog = getEl(prefix + '-progress');
+    if (prog) {
+        var v = Number(prog.value);
+        if (prog.value === '' || isNaN(v) || v < 0 || v > 100) {
+            showErr('progress', 'err-progress', 'La progression doit être entre 0 et 100.');
+        } else {
+            showOk('progress');
+        }
+    }
+
+    // 5. Status
+    var status = getEl(prefix + '-status');
+    if (!status || status.value === '') {
+        showErr('status', 'err-status', 'Veuillez choisir un statut.');
+    } else {
+        showOk('status');
+    }
+
+    // Si invalide : scroll vers le premier champ en erreur
+    if (!isValid) {
+        var firstErr = document.querySelector('#form-' + prefix.replace('add','add').replace('edit','edit') + ' .field.has-error');
+        if (firstErr) firstErr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    return isValid;
+}
+
+// ══════════════════════════════════════════════
+// CALENDRIER
+// ══════════════════════════════════════════════
+
 function scheduled() {
   return COURSES
     .filter(c => state[c.id]?.scheduled)
@@ -75,7 +172,7 @@ function renderCalendar() {
 
     let pillsHtml = evs.slice(0,2).map(e => {
       const tc = TRACK_COLORS[e.track] || TRACK_COLORS.Planned;
-      return `<div class="ev-pill ${tc.pill}" onclick="clickPill(event,${yr},${mo},${day})">${e.title}</div>`;
+      return `<div class="ev-pill ${tc.pill}" style="cursor:pointer" onclick="event.stopPropagation(); openEventPopup(${e.id})">${e.title}</div>`;
     }).join('');
     if (evs.length > 2) pillsHtml += `<div class="ev-more">+${evs.length - 2}</div>`;
 
@@ -90,8 +187,6 @@ function renderCalendar() {
   renderStats();
   renderLegend();
 }
-
-function clickPill(e, yr, mo, day) { e.stopPropagation(); selectDay(yr, mo, day); }
 
 function selectDay(yr, mo, day) {
   selDay = { year: yr, month: mo, day };
@@ -120,7 +215,14 @@ function renderDayDetail() {
     const days = Math.round((new Date(ev.end) - new Date(ev.start)) / 86400000) + 1;
     return `
       <div class="detail-ev" style="border-left-color:${tc.border}">
-        <div class="detail-ev-title">${ev.title}</div>
+        <div class="detail-ev-header">
+          <div class="detail-ev-title" style="cursor:pointer" onclick="openEventPopup(${ev.id})">${ev.title}</div>
+          <div class="detail-ev-actions">
+            <a href="admin-calendrier.php?action=edit&id=${ev.id}" class="detail-ev-edit" title="Modifier">✏️</a>
+            <a href="admin-calendrier.php?delete=${ev.id}" class="detail-ev-delete"
+               onclick="return confirm('Supprimer l\\'événement ${ev.title.replace(/'/g,"\\'")} ?')" title="Supprimer">🗑</a>
+          </div>
+        </div>
         <div class="detail-ev-track">${ev.track} · ${days} jours · ${ev.Progress ?? 0}%</div>
         <div class="detail-ev-dates">
           <span class="range-pill">📅 ${fmtDate(ev.start)}</span>
@@ -141,8 +243,13 @@ function renderAllCourses() {
     return `
       <div class="course-item">
         <div class="course-item-top">
-          <div class="course-item-name">${c.title}</div>
-          <span class="ev-pill ${tc.pill}" style="flex-shrink:0">${c.track}</span>
+          <div class="course-item-name" style="cursor:pointer" onclick="openEventPopup(${c.id})">${c.title}</div>
+          <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+            <span class="ev-pill ${tc.pill}">${c.track}</span>
+            <a href="admin-calendrier.php?action=edit&id=${c.id}" class="detail-ev-edit" title="Modifier">✏️</a>
+            <a href="admin-calendrier.php?delete=${c.id}" class="detail-ev-delete"
+               onclick="return confirm('Supprimer l\\'événement ${c.title.replace(/'/g,"\\'")} ?')" title="Supprimer">🗑</a>
+          </div>
         </div>
         ${dateInfo}
       </div>`;

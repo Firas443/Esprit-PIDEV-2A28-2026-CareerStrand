@@ -1,44 +1,50 @@
 <?php
-    class Courses{
-        private string $Title;
-        private string $Description;
-        private string $Categorie;
-        private string $Skills;
-        private string $Difficulty;
-        private int $Duration;
-        private string $Statut;
-        private DateTime $Published;
+class Courses {
+    private $CourseID;
+    private $Title;
+    private $Description;
+    private $Categorie;
+    private $Skill;
+    private $Difficulty;
+    private $Duration;
+    private $Statut;
+    private $Published_AT;
+    private $upload_video;
 
-        public function getTitle(){return $this->Title;}
-        public function getDescription(){return $this->Description;}
-        public function getCategorie(){return $this->Categorie;}
-        public function getSkills(){return $this->Skills;}
-        public function getDifficulty(){return $this->Difficulty;}
-        public function getDuration(){return $this->Duration;}
-        public function getStatut(){return $this->Statut;}
-        public function getPublished(){return $this->Published;}
-
-        public function setTitle(string $Title){$this->Title=$Title;}
-        public function setDescription(string $Description){$this->Description=$Description;}
-        public function setCategorie(string $Categorie){$this->Categorie=$Categorie;}
-        public function setSkills(string $Skills){$this->Skills=$Skills;}
-        public function setDifficulty(string $Difficulty){$this->Difficulty=$Difficulty;}
-        public function setDuration(int $Duration){$this->Duration=$Duration;}
-        public function setStatus(string $Statut){$this->Statut=$Statut;}
-        public function setPublished(DateTime $Published){$this->Published=$Published;}
-
-        public function __construct(string $Title, string $Description, string $Categorie, string $Skills, string $Difficulty, int $Duration, string $Statut, DateTime $Published){
-            $this->Title=$Title;
-            $this->Description=$Description;
-            $this->Categorie=$Categorie;
-            $this->Skills=$Skills;
-            $this->Difficulty=$Difficulty;
-            $this->Duration=$Duration;
-            $this->Statut=$Statut;
-            $this->Published=$Published;
-        }
+    public function __construct($Title, $Description, $Categorie, $Skill, $Difficulty, $Duration, $Statut, $Published_AT, $upload_video = null) {
+        $this->Title = $Title;
+        $this->Description = $Description;
+        $this->Categorie = $Categorie;
+        $this->Skill = $Skill;
+        $this->Difficulty = $Difficulty;
+        $this->Duration = $Duration;
+        $this->Statut = $Statut;
+        $this->Published_AT = $Published_AT;
+        $this->upload_video = $upload_video;
     }
 
+    // Getters
+    public function getCourseID()        { return $this->CourseID; }
+    public function getTitle()           { return $this->Title; }
+    public function getDescription()     { return $this->Description; }
+    public function getCategorie()       { return $this->Categorie; }
+    public function getSkill()           { return $this->Skill; }
+    public function getDifficulty()      { return $this->Difficulty; }
+    public function getDuration()        { return $this->Duration; }
+    public function getStatut()          { return $this->Statut; }
+    public function getPublished_AT()    { return $this->Published_AT; }
+    public function getUploadVideo()     { return $this->upload_video; }
 
-
+    // Setters
+    public function setCourseID($id)               { $this->CourseID = $id; }
+    public function setTitle($title)               { $this->Title = $title; }
+    public function setDescription($desc)          { $this->Description = $desc; }
+    public function setCategorie($cat)             { $this->Categorie = $cat; }
+    public function setSkill($skill)               { $this->Skill = $skill; }
+    public function setDifficulty($diff)           { $this->Difficulty = $diff; }
+    public function setDuration($dur)              { $this->Duration = $dur; }
+    public function setStatut($stat)               { $this->Statut = $stat; }
+    public function setPublished_AT($date)         { $this->Published_AT = $date; }
+    public function setUploadVideo($video)         { $this->upload_video = $video; }
+}
 ?>

@@ -14,6 +14,18 @@ class controlcalendar {
         }
     }
 
+    // ── NOUVEAU : récupère un événement par son ID ──
+    public function getcalendarById($id) {
+        $db = config::getConnexion();
+        try {
+            $req = $db->prepare('SELECT * FROM calendar WHERE calendarID = ?');
+            $req->execute([$id]);
+            return $req->fetch(PDO::FETCH_ASSOC);
+        } catch(Exception $e) {
+            die('Erreur: ' . $e->getMessage());
+        }
+    }
+
     public function addcalendar($calendar) {
         $db = config::getConnexion();
         try {

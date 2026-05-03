@@ -18,6 +18,8 @@
     }
 
     if (isset($_POST['Title'])) {
+        // upload_video est géré dans ControlCourses::handleVideoUpload()
+        // on ne le passe plus dans le constructeur
         $c = new Courses(
             $_POST['Title'],
             $_POST['Description'],
@@ -26,7 +28,8 @@
             $_POST['Difficulty'],
             (int)$_POST['Duration'],
             $_POST['Statut'],
-            new DateTime($_POST['Published_AT']),
+            new DateTime($_POST['Published_AT'])
+            // pas de 9e argument — handleVideoUpload lit $_FILES directement
         );
         if (!empty($_POST['CourseID']))
             $controlC->updateCourse($c, $_GET['update']);
@@ -42,7 +45,6 @@
         exit;
     }
 
-    // ── Récupération + filtrage + tri ──
     $searchQuery = trim($_GET['search'] ?? '');
     $sortBy      = $_GET['sort'] ?? 'default';
     $coursesRaw  = $controlC->listeCourse();
@@ -68,10 +70,10 @@
 
     $sortLabels = [
         'default'    => '⇅  Tri par défaut',
-        'alpha_asc'  => 'A → Z  (alphabétique)',
-        'alpha_desc' => 'Z → A  (alphabétique inverse)',
-        'recent'     => '🕐 Plus récent en premier',
-        'oldest'     => '🕐 Plus ancien en premier',
+        'alpha_asc'  => 'Alphabétique',
+        'alpha_desc' => 'Alphabétique inverse',
+        'recent'     => 'Plus récent',
+        'oldest'     => 'Plus ancien',
     ];
 ?>
 <!DOCTYPE html>
@@ -82,17 +84,16 @@
   <title>CareerStrand Admin Courses</title>
   <link rel="stylesheet" href="assets/css/admin.css" />
   <style>
-    /* ── View mode ── */
     .view-mode input,
     .view-mode textarea,
-    .view-mode select {
+    .view-mode select,
+    .view-mode input[type="file"] {
       pointer-events: none;
       opacity: 0.75;
       border-color: rgba(126,159,228,0.15) !important;
       background: rgba(255,255,255,0.02) !important;
       cursor: default;
     }
-
     .view-badge {
       display: inline-block;
       font-size: 11px; font-weight: 700;
@@ -103,122 +104,28 @@
       border: 1px solid rgba(111,143,216,0.25);
       margin-bottom: 14px;
     }
-
     .link-btn.view {
       background: rgba(111,143,216,0.12);
       border-color: rgba(111,143,216,0.3);
       color: #95abeb;
     }
     .link-btn.view:hover { background: rgba(111,143,216,0.25); }
-
-    /* ── Toolbar ── */
-    .toolbar {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      align-items: center;
-      margin-top: 4px;
-    }
-
-    /* ── Recherche ── */
-    .search-form {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      flex: 1;
-      min-width: 200px;
-    }
-
-    .search-form input[type="text"] { flex: 1; }
-
-    .search-form button {
-      padding: 8px 16px;
-      border-radius: 999px;
-      border: none;
-      background: rgba(111,143,216,0.2);
-      color: #95abeb;
-      cursor: pointer;
-      font-size: 13px;
-      font-weight: 600;
-      transition: 0.2s;
-      white-space: nowrap;
-    }
-    .search-form button:hover { background: rgba(111,143,216,0.35); }
-
-    .clear-btn {
-      background: rgba(255,255,255,0.05);
-      color: rgba(255,255,255,0.5);
-      text-decoration: none;
-      padding: 8px 14px;
-      border-radius: 999px;
-      font-size: 13px;
-      white-space: nowrap;
-      transition: 0.2s;
-    }
-    .clear-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
-
-    /* ── Select tri natif ── */
-    .sort-form {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .sort-select {
-      appearance: none;
-      -webkit-appearance: none;
-      padding: 8px 36px 8px 14px;
-      border-radius: 999px;
-      border: 1px solid rgba(126,159,228,0.22);
-      background: rgba(255,255,255,0.04) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='rgba(149,171,235,0.7)'/%3E%3C/svg%3E") no-repeat right 14px center;
-      color: rgba(255,255,255,0.82);
-      font-size: 13px;
-      font-weight: 600;
-      font-family: inherit;
-      cursor: pointer;
-      transition: 0.2s;
-      min-width: 220px;
-    }
-
-    .sort-select:hover {
-      background-color: rgba(255,255,255,0.08);
-      border-color: rgba(126,159,228,0.4);
-    }
-
-    .sort-select:focus {
-      outline: none;
-      border-color: #95abeb;
-    }
-
-    .sort-select option {
-      background: #0d1528;
-      color: #f5f3ee;
-      font-weight: 500;
-    }
-
-    .sort-submit {
-      padding: 8px 16px;
-      border-radius: 999px;
-      border: none;
-      background: rgba(111,143,216,0.2);
-      color: #95abeb;
-      cursor: pointer;
-      font-size: 13px;
-      font-weight: 600;
-      font-family: inherit;
-      transition: 0.2s;
-      white-space: nowrap;
-    }
-    .sort-submit:hover { background: rgba(111,143,216,0.35); }
-
-    /* ── Result info ── */
-    .result-info {
-      font-size: 12px;
-      color: rgba(255,255,255,0.38);
-      margin-top: 10px;
-      padding: 0 2px;
-    }
-    .result-info strong { color: #95abeb; }
+    .toolbar { display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-top:4px; }
+    .search-form { display:flex; align-items:center; flex:1; min-width:200px; }
+    .search-form input[type="text"] { flex:1; }
+    .search-form button { display:none; }
+    .clear-btn { background:rgba(255,255,255,0.05); color:rgba(255,255,255,0.5); text-decoration:none; padding:8px 14px; border-radius:999px; font-size:13px; white-space:nowrap; margin-left:8px; transition:0.2s; }
+    .clear-btn:hover { background:rgba(255,255,255,0.1); color:#fff; }
+    .sort-form { display:flex; align-items:center; }
+    .sort-select { appearance:none; -webkit-appearance:none; padding:8px 36px 8px 14px; border-radius:999px; border:1px solid rgba(126,159,228,0.22); background:rgba(255,255,255,0.04) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='rgba(149,171,235,0.7)'/%3E%3C/svg%3E") no-repeat right 14px center; color:rgba(255,255,255,0.82); font-size:13px; font-weight:600; font-family:inherit; cursor:pointer; transition:0.2s; min-width:200px; }
+    .sort-select:hover { background-color:rgba(255,255,255,0.08); border-color:rgba(126,159,228,0.4); }
+    .sort-select:focus { outline:none; border-color:#95abeb; }
+    .sort-select option { background:#0d1528; color:#f5f3ee; }
+    .result-info { font-size:12px; color:rgba(255,255,255,0.38); margin-top:10px; padding:0 2px; }
+    .result-info strong { color:#95abeb; }
+    .field video { max-width:100%; border-radius:12px; margin-top:8px; }
+    .field a { color:#95abeb; text-decoration:none; }
+    .field a:hover { text-decoration:underline; }
   </style>
 </head>
 <body>
@@ -255,49 +162,34 @@
               <h3>Course catalog</h3>
               <p>Educational content that strengthens users before they move into practical stages.</p>
             </div>
-
             <div class="filters">
               <div class="toolbar">
-
-                <!-- ── Recherche ── -->
+                <!-- Recherche -->
                 <form method="GET" action="admin-courses.php" class="search-form">
                   <?php if ($sortBy !== 'default'): ?>
                     <input type="hidden" name="sort" value="<?= htmlspecialchars($sortBy) ?>">
                   <?php endif; ?>
-                  <input
-                    type="text"
-                    name="search"
-                    id="search-input"
+                  <input type="text" name="search" id="search-input"
                     placeholder="🔍 Recherche par titre..."
                     value="<?= htmlspecialchars($searchQuery) ?>"
-                    autocomplete="off"
-                  />
-                  <button type="submit">Chercher</button>
+                    autocomplete="off" />
+                  <button type="submit"></button>
                   <?php if ($searchQuery !== '' || $sortBy !== 'default'): ?>
                     <a href="admin-courses.php" class="clear-btn">✕ Reset</a>
                   <?php endif; ?>
                 </form>
-
-                <!-- ── Tri via select natif ── -->
+                <!-- Tri -->
                 <form method="GET" action="admin-courses.php" class="sort-form">
                   <?php if ($searchQuery !== ''): ?>
                     <input type="hidden" name="search" value="<?= htmlspecialchars($searchQuery) ?>">
                   <?php endif; ?>
                   <select name="sort" class="sort-select" onchange="this.form.submit()">
                     <?php foreach ($sortLabels as $key => $label): ?>
-                      <option value="<?= $key ?>" <?= $sortBy === $key ? 'selected' : '' ?>>
-                        <?= $label ?>
-                      </option>
+                      <option value="<?= $key ?>" <?= $sortBy === $key ? 'selected' : '' ?>><?= $label ?></option>
                     <?php endforeach; ?>
                   </select>
-                  <noscript>
-                    <button type="submit" class="sort-submit">Appliquer</button>
-                  </noscript>
                 </form>
-
-              </div><!-- /toolbar -->
-
-              <!-- Infos résultats -->
+              </div>
               <div class="result-info">
                 <?php if ($searchQuery !== ''): ?>
                   <strong><?= count($allCourses) ?></strong> résultat(s) pour "<strong><?= htmlspecialchars($searchQuery) ?></strong>"
@@ -339,6 +231,9 @@
                     <a class="link-btn view" href="admin-courses.php?view=<?= (int)$row['CourseID'] ?>">View</a>
                     <a class="link-btn" href="admin-courses.php?update=<?= (int)$row['CourseID'] ?>" onclick="return confirm('Update this course?')">Edit</a>
                     <a class="link-btn" href="admin-courses.php?delete=<?= (int)$row['CourseID'] ?>" onclick="return confirm('Delete this course?')">Delete</a>
+                    <?php if (!empty($row['upload_video'])): ?>
+                      <a class="link-btn" href="<?= htmlspecialchars($row['upload_video']) ?>" target="_blank">🎥 Vidéo</a>
+                    <?php endif; ?>
                   </td>
                 </tr>
                 <?php endforeach; ?>
@@ -359,7 +254,10 @@
             <h4>Create new course</h4>
           <?php endif; ?>
 
-          <form method="post" onsubmit="return <?= $mode === 'view' ? 'false' : 'validerCourse()' ?>" action="admin-courses.php?update=<?= $_GET['update'] ?? '' ?>">
+          <form method="post" enctype="multipart/form-data"
+            onsubmit="return <?= $mode === 'view' ? 'false' : 'validerCourse()' ?>"
+            action="admin-courses.php?update=<?= $_GET['update'] ?? '' ?>">
+
             <input type="hidden" name="CourseID" value="<?= $panelData['CourseID'] ?? '' ?>">
             <div class="field-grid">
 
@@ -423,6 +321,22 @@
                 <label>Published At</label>
                 <input type="date" id="Published_AT" name="Published_AT"
                   value="<?= htmlspecialchars(!empty($panelData['Published_AT']) ? date('Y-m-d', strtotime($panelData['Published_AT'])) : '') ?>" />
+              </div>
+
+              <!-- Upload vidéo -->
+              <div class="field">
+                <label>Upload vidéo (MP4, WebM, max 50MB)</label>
+                <input type="file" name="upload_video" accept="video/mp4,video/webm,video/ogg" />
+                <?php if (!empty($panelData['upload_video'])): ?>
+                  <div style="margin-top:8px;">
+                    <a href="<?= htmlspecialchars($panelData['upload_video']) ?>" target="_blank">📹 Voir la vidéo actuelle</a>
+                    <?php if ($mode === 'view'): ?>
+                      <video width="200" controls style="display:block;margin-top:6px;border-radius:8px;">
+                        <source src="<?= htmlspecialchars($panelData['upload_video']) ?>" type="video/mp4">
+                      </video>
+                    <?php endif; ?>
+                  </div>
+                <?php endif; ?>
               </div>
 
               <br>
