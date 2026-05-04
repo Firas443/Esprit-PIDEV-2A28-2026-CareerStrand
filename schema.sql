@@ -273,3 +273,32 @@ CREATE TABLE IF NOT EXISTS RecruiterProfile (
     opportunityTypes   VARCHAR(255),
     FOREIGN KEY (userId) REFERENCES Users(userId) ON DELETE CASCADE
 );
+
+
+ALTER TABLE Users
+  ADD COLUMN approvalStatus VARCHAR(20) NOT NULL DEFAULT 'approved';
+
+ALTER TABLE Users
+  ADD COLUMN rejectionReason VARCHAR(255) NULL;
+
+-- Existing non-recruiter accounts stay approved.
+UPDATE Users
+SET approvalStatus = 'approved'
+WHERE role <> 'manager recruiter'
+  AND (approvalStatus IS NULL OR approvalStatus = '');
+
+-- Existing recruiter requests should wait for admin approval.
+UPDATE Users
+SET approvalStatus = 'pending',
+    status = 'inactive'
+WHERE role = 'manager recruiter'
+  AND approvalStatus <> 'approved';
+
+CREATE TABLE UserQuestionnaire (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    userId INT NOT NULL,
+    question TEXT NOT NULL,
+    answer TEXT NOT NULL,
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (userId) REFERENCES Users(userId)
+);

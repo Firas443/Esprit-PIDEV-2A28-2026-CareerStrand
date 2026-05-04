@@ -3,6 +3,7 @@ require_once __DIR__ . '/../../config.php';
 require_once __DIR__ . '/../../Controller/UserController.php';
 require_once __DIR__ . '/../../Controller/ProfileController.php';
 require_once __DIR__ . '/../../Controller/RoleProfileController.php';
+require_once __DIR__ . '/../../utils/Mailer.php';
 
 session_start();
 
@@ -30,12 +31,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
 
     if ($action === 'create') {
+        $createRole = $_POST['role'] ?? 'user';
+        $createStatus = $_POST['status'] ?? 'active';
         $result = $controller->createUser([
             'fullName' => $_POST['fullName'] ?? '',
             'email'    => $_POST['email']    ?? '',
             'password' => $_POST['password'] ?? '',
-            'role'     => $_POST['role']     ?? 'user',
-            'status'   => $_POST['status']   ?? 'active',
+            'role'     => $createRole,
+            'status'   => $createStatus,
+            // Users created by admin are considered reviewed.
+            'approvalStatus' => ($createRole === 'manager recruiter' && $createStatus === 'inactive') ? 'pending' : 'approved',
         ]);
         if ($result['success']) {
             $newId = $result['userId'];
@@ -66,12 +71,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if ($action === 'update') {
+        $editRole = $_POST['role'] ?? 'user';
+        $editStatus = $_POST['status'] ?? 'active';
         $data = [
             'fullName' => $_POST['fullName'] ?? '',
             'email'    => $_POST['email']    ?? '',
-            'role'     => $_POST['role']     ?? 'user',
-            'status'   => $_POST['status']   ?? 'active',
+            'role'     => $editRole,
+            'status'   => $editStatus,
         ];
+        if ($editRole === 'manager recruiter') {
+            $data['approvalStatus'] = ($editStatus === 'active') ? 'approved' : 'pending';
+            $data['rejectionReason'] = null;
+        }
         if (!empty($_POST['password'])) $data['password'] = $_POST['password'];
         $result = $controller->updateUser((int)($_POST['userId'] ?? 0), $data);
 
@@ -109,6 +120,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $message = $result['success'] ? 'User deleted.' : 'Could not delete user.';
         $messageType = $result['success'] ? 'success' : 'error';
     }
+
+    if ($action === 'approve_recruiter') {
+        $result = $controller->approveRecruiter((int)($_POST['userId'] ?? 0));
+        $message = $result['success'] ? 'Recruiter request approved. An email was sent if mail is configured.' : 'Could not approve recruiter.';
+        $messageType = $result['success'] ? 'success' : 'error';
+        if (!$result['success']) $errors = array_values($result['errors'] ?? []);
+    }
+
+    if ($action === 'reject_recruiter') {
+        $result = $controller->rejectRecruiter((int)($_POST['userId'] ?? 0), $_POST['rejectionReason'] ?? '');
+        $message = $result['success'] ? 'Recruiter request rejected. An email was sent if mail is configured.' : 'Could not reject recruiter.';
+        $messageType = $result['success'] ? 'success' : 'error';
+        if (!$result['success']) $errors = array_values($result['errors'] ?? []);
+    }
 }
 
 // ── GET PARAMS ────────────────────────────────────────────────────────────────
@@ -116,6 +141,7 @@ $search = $_GET['search'] ?? '';
 $sort   = $_GET['sort']   ?? 'fullName';
 $order  = $_GET['order']  ?? 'ASC';
 $users  = $controller->getAll($search, $sort, $order);
+$pendingRecruiters = $controller->getPendingRecruiters();
 $stats  = $controller->getStats();
 $mode   = null;
 
@@ -191,6 +217,13 @@ if ($selectedUser) {
     /* role-fields in create form */
     .role-create-fields{display:none;}
     .role-create-fields.visible{display:block;}
+
+    .approval-card{padding:14px;border:1px solid rgba(255,255,255,.09);border-radius:16px;background:rgba(255,255,255,.03);margin-bottom:10px;}
+    .approval-card strong{color:#f5f3ee;}
+    .approval-card p{font-size:12px;color:rgba(245,243,238,.55);margin:4px 0 10px;line-height:1.45;}
+    .approval-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+    .approval-actions form{display:flex;gap:6px;align-items:center;}
+    .approval-actions input{padding:8px 10px;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:#f5f3ee;font-size:12px;}
   </style>
   <script>
     function validateForm() {
@@ -272,6 +305,45 @@ if ($selectedUser) {
 
       <!-- ── LEFT: USERS TABLE ── -->
       <article class="panel">
+        <?php if (!empty($pendingRecruiters)): ?>
+        <div style="margin-bottom:22px;">
+          <div class="panel-header" style="margin-bottom:10px;">
+            <div class="panel-title">
+              <h3>Pending recruiter requests</h3>
+              <p>Review company information, then accept or reject access.</p>
+            </div>
+            <span class="filter"><?php echo count($pendingRecruiters); ?> pending</span>
+          </div>
+          <?php foreach ($pendingRecruiters as $pr):
+            $rp = $roleController->getRecruiterProfile($pr->getUserId());
+          ?>
+            <div class="approval-card">
+              <strong><?php echo h($pr->getFullName()); ?></strong>
+              <p>
+                <?php echo h($pr->getEmail()); ?>
+                <?php if ($rp): ?>
+                  <br>Company: <?php echo h($rp->getCompanyName()); ?> · Job: <?php echo h($rp->getJobTitle()); ?> · Industry: <?php echo h($rp->getIndustry()); ?>
+                  <?php if ($rp->getCompanyWebsite()): ?><br>Website: <?php echo h($rp->getCompanyWebsite()); ?><?php endif; ?>
+                <?php endif; ?>
+              </p>
+              <div class="approval-actions">
+                <form method="POST" action="admin-users.php">
+                  <input type="hidden" name="action" value="approve_recruiter">
+                  <input type="hidden" name="userId" value="<?php echo h($pr->getUserId()); ?>">
+                  <button type="submit" class="status-chip status-active" style="border:none;cursor:pointer;">Accept</button>
+                </form>
+                <form method="POST" action="admin-users.php">
+                  <input type="hidden" name="action" value="reject_recruiter">
+                  <input type="hidden" name="userId" value="<?php echo h($pr->getUserId()); ?>">
+                  <input type="text" name="rejectionReason" placeholder="Reason for rejection">
+                  <button type="submit" class="status-chip status-inactive" style="border:none;cursor:pointer;">Reject</button>
+                </form>
+              </div>
+            </div>
+          <?php endforeach; ?>
+        </div>
+        <?php endif; ?>
+
         <div class="panel-header">
           <div class="panel-title">
             <h3>All users</h3>
@@ -291,6 +363,7 @@ if ($selectedUser) {
               <th><a href="?<?php echo http_build_query(array_merge($_GET,['sort'=>'role','order'=>(($_GET['sort']??'')==='role'&&($_GET['order']??'')==='ASC')?'DESC':'ASC'])); ?>">Role</a></th>
               <th>Completion</th>
               <th>Account</th>
+              <th>Approval</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -317,6 +390,11 @@ if ($selectedUser) {
               <td>
                 <span class="status-chip <?php echo $u->getStatus() === 'active' ? 'status-active' : 'status-inactive'; ?>">
                   <?php echo ucfirst($u->getStatus()); ?>
+                </span>
+              </td>
+              <td>
+                <span class="status-chip <?php echo $u->getApprovalStatus() === 'approved' ? 'status-active' : 'status-inactive'; ?>">
+                  <?php echo ucfirst($u->getApprovalStatus()); ?>
                 </span>
               </td>
               <td class="table-actions" onclick="event.stopPropagation();">
@@ -562,6 +640,10 @@ if ($selectedUser) {
             <?php endif; ?>
 
             <div class="info-list" style="margin:14px 0;">
+              <div class="info-item"><span>Approval</span><strong><?php echo h(ucfirst($selectedUser->getApprovalStatus())); ?></strong></div>
+              <?php if ($selectedUser->getRejectionReason()): ?>
+              <div class="info-item"><span>Reject reason</span><strong><?php echo h($selectedUser->getRejectionReason()); ?></strong></div>
+              <?php endif; ?>
               <div class="info-item"><span>Member since</span><strong><?php echo $selectedUser->getCreatedAt() ? date('d M Y', strtotime($selectedUser->getCreatedAt())) : '—'; ?></strong></div>
               <div class="info-item"><span>User ID</span><strong>#<?php echo $selectedUser->getUserId(); ?></strong></div>
             </div>

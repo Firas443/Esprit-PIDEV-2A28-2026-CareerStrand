@@ -113,6 +113,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             $user = $userController->getById($userId);
+
+            // Manager recruiter accounts must be approved by admin before login.
+            if ($role === 'manager recruiter') {
+    $_SESSION['temp_user_id'] = $userId;
+    header('Location: questionnaire.php?pending=1');
+    exit;
+}
+
             $_SESSION['userId'] = $userId;
             $_SESSION['user']   = [
                 'userId'    => $user->getUserId(),
@@ -121,8 +129,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'role'      => $user->getRole(),
                 'status'    => $user->getStatus(),
                 'createdAt' => $user->getCreatedAt(),
+                'approvalStatus' => $user->getApprovalStatus(),
             ];
-            header('Location: profile.php');
+            header('Location: questionnaire.php');
             exit;
         }
 

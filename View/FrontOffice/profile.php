@@ -64,10 +64,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         elseif (!filter_var($email, FILTER_VALIDATE_EMAIL))
             $errors['email'] = 'Please enter a valid email address.';
 
-        if ($password !== '' && strlen($password) < 6)
-            $errors['password'] = 'Password must be at least 6 characters.';
-        if ($password !== '' && $password !== $passwordConfirm)
-            $errors['passwordConfirm'] = 'Passwords do not match.';
+        // Only validate password if the user deliberately typed something
+        // (ignore browser autofill by checking both fields are non-empty)
+        $wantsNewPassword = ($password !== '' || $passwordConfirm !== '');
+        if ($wantsNewPassword) {
+            if (strlen($password) < 6)
+                $errors['password'] = 'Password must be at least 6 characters.';
+            elseif ($password !== $passwordConfirm)
+                $errors['passwordConfirm'] = 'Passwords do not match.';
+        }
 
         // Role-specific required fields
         if ($role === 'manager') {
@@ -95,7 +100,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'role'     => $role,
                 'status'   => $userArr['status'],
             ];
-            if ($password !== '') $userData['password'] = $password;
+            if ($wantsNewPassword && empty($errors['password']) && empty($errors['passwordConfirm']))
+                $userData['password'] = $password;
 
             $result = $userController->updateUser($userId, $userData);
             if (!$result['success']) {
@@ -267,6 +273,7 @@ $level = $profile ? $profile->getLevel()           : 'Starter';
     .skill-errors li{font-size:13px;color:var(--red);margin-left:16px;}
     @media(max-width:860px){.page-wrap{grid-template-columns:1fr;}.sidebar-card{position:static;}.field-grid{grid-template-columns:1fr;}.field-full,.section-sep,.section-sub-title{grid-column:span 1;}}
     @media(max-width:480px){.form-card{padding:20px;}.tabs{width:100%;}.tab-btn{flex:1;text-align:center;}}
+    @keyframes spin{to{transform:rotate(360deg)}}
   </style>
 </head>
 <body>
@@ -342,6 +349,9 @@ $level = $profile ? $profile->getLevel()           : 'Starter';
         <button class="tab-btn <?php echo $tab==='profile'?'active':''; ?>" onclick="switchTab('profile')">Profile Info</button>
         <button class="tab-btn <?php echo $tab==='skills'?'active':''; ?>" onclick="switchTab('skills')">
           Skills <span style="background:rgba(111,143,216,.2);border-radius:999px;padding:1px 7px;font-size:11px;margin-left:4px;"><?php echo count($skills); ?></span>
+        </button>
+        <button class="tab-btn <?php echo $tab==='faceid'?'active':''; ?>" onclick="switchTab('faceid')">
+          Face ID <?php if($userObj && $userObj->isFaceEnabled()): ?><span style="background:rgba(74,222,128,.2);border-radius:999px;padding:1px 7px;font-size:11px;margin-left:4px;color:#4ade80;">ON</span><?php endif; ?>
         </button>
       </div>
 
@@ -534,14 +544,14 @@ $level = $profile ? $profile->getLevel()           : 'Starter';
               <div class="field-grid">
                 <div class="field <?php echo isset($errors['password'])?'has-error':''; ?>">
                   <label>New Password</label>
-                  <input type="password" name="password" placeholder="Min. 6 characters">
+                  <input type="password" name="password" placeholder="Min. 6 characters" autocomplete="new-password">
                   <?php if (isset($errors['password'])): ?>
                     <span class="field-error"><?php echo htmlspecialchars($errors['password']); ?></span>
                   <?php endif; ?>
                 </div>
                 <div class="field <?php echo isset($errors['passwordConfirm'])?'has-error':''; ?>">
                   <label>Confirm Password</label>
-                  <input type="password" name="passwordConfirm" placeholder="Repeat password">
+                  <input type="password" name="passwordConfirm" placeholder="Repeat password" autocomplete="new-password">
                   <?php if (isset($errors['passwordConfirm'])): ?>
                     <span class="field-error"><?php echo htmlspecialchars($errors['passwordConfirm']); ?></span>
                   <?php endif; ?>
@@ -658,16 +668,263 @@ $level = $profile ? $profile->getLevel()           : 'Starter';
         </div>
       </div>
 
+      <!-- ══════════════ FACE ID TAB ══════════════ -->
+      <div id="tab-faceid" class="tab-panel <?php echo $tab==='faceid'?'active':''; ?>">
+    <div class="form-card">
+      <div class="card-header">
+        <div class="card-title">Face ID</div>
+        <div class="card-sub">Register your face to log in without a password.</div>
+      </div>
+
+      <!-- Status banner -->
+      <div id="faceid-status" style="padding:14px 18px;border-radius:14px;font-size:14px;margin-bottom:24px;display:flex;align-items:center;gap:12px;
+        background:<?php echo ($userObj && $userObj->isFaceEnabled()) ? 'rgba(74,222,128,.10)' : 'rgba(255,255,255,.03)'; ?>;
+        border:1px solid <?php echo ($userObj && $userObj->isFaceEnabled()) ? 'rgba(74,222,128,.25)' : 'rgba(255,255,255,.08)'; ?>;
+        color:<?php echo ($userObj && $userObj->isFaceEnabled()) ? 'var(--green)' : 'var(--muted)'; ?>;">
+        <span style="font-size:20px;"><?php echo ($userObj && $userObj->isFaceEnabled()) ? '✓' : '○'; ?></span>
+        <div>
+          <strong><?php echo ($userObj && $userObj->isFaceEnabled()) ? 'Face ID is active' : 'Face ID not configured'; ?></strong>
+          <div style="font-size:12px;margin-top:2px;">
+            <?php echo ($userObj && $userObj->isFaceEnabled())
+              ? 'You can log in using your face on the login page.'
+              : 'Capture your face below then enable Face ID.'; ?>
+          </div>
+        </div>
+      </div>
+
+      <!-- Camera -->
+      <div style="position:relative;width:100%;max-width:480px;margin:0 auto 20px;">
+        <video id="face-video" style="width:100%;border-radius:16px;border:2px solid var(--border);background:#000;display:block;" autoplay muted playsinline></video>
+        <canvas id="face-overlay" style="position:absolute;top:0;left:0;width:100%;height:100%;border-radius:16px;pointer-events:none;"></canvas>
+        <div id="face-loading" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(4,8,22,.7);border-radius:16px;color:var(--muted);font-size:13px;gap:10px;">
+          <div style="width:28px;height:28px;border:2px solid var(--blue);border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;"></div>
+          Loading face models…
+        </div>
+      </div>
+
+      <div id="face-msg" style="text-align:center;min-height:24px;font-size:13px;margin-bottom:16px;color:var(--muted);"></div>
+
+      <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-bottom:28px;">
+        <button id="btn-start-cam" class="btn btn-ghost" onclick="startFaceCam()" disabled>Start camera</button>
+        <button id="btn-capture"   class="btn btn-main"  onclick="captureFace()"  disabled>Capture my face</button>
+      </div>
+
+      <!-- Enable / Disable toggle -->
+      <div style="padding:18px;border-radius:16px;border:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:16px;">
+        <div>
+          <div style="font-size:14px;font-weight:600;">Enable Face ID login</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:4px;">You must capture your face first before enabling.</div>
+        </div>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+          <div style="position:relative;width:44px;height:24px;">
+            <input type="checkbox" id="faceid-toggle"
+                   <?php echo ($userObj && $userObj->isFaceEnabled()) ? 'checked' : ''; ?>
+                   onchange="toggleFaceId(this.checked)"
+                   style="position:absolute;opacity:0;width:100%;height:100%;cursor:pointer;margin:0;">
+            <div id="toggle-track" style="width:44px;height:24px;border-radius:12px;transition:background .2s;background:<?php echo ($userObj && $userObj->isFaceEnabled()) ? '#6f8fd8' : 'rgba(255,255,255,.15)'; ?>;"></div>
+            <div id="toggle-thumb" style="position:absolute;top:3px;left:<?php echo ($userObj && $userObj->isFaceEnabled()) ? '23px' : '3px'; ?>;width:18px;height:18px;border-radius:50%;background:#fff;transition:left .2s;"></div>
+          </div>
+          <span id="toggle-label" style="font-size:13px;color:var(--muted);"><?php echo ($userObj && $userObj->isFaceEnabled()) ? 'Enabled' : 'Disabled'; ?></span>
+        </label>
+      </div>
+    </div>
+  </div>
     </main>
   </div>
+
+  
 
   <script>
     function switchTab(tabName) {
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-      event.target.closest('.tab-btn').classList.add('active');
-      document.getElementById('tab-' + tabName).classList.add('active');
+
+      const activeBtn = document.querySelector('.tab-btn[onclick*="' + tabName + '"]');
+      if (activeBtn) activeBtn.classList.add('active');
+
+      const activePanel = document.getElementById('tab-' + tabName);
+      if (activePanel) activePanel.classList.add('active');
     }
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+  <script>
+  (function(){
+    const MODEL_URL = 'assets/models';
+    const API_URL   = '../../api/face.php';
+    let modelsReady = false, stream = null;
+
+    const video    = document.getElementById('face-video');
+    const overlay  = document.getElementById('face-overlay');
+    const loading  = document.getElementById('face-loading');
+    const msg      = document.getElementById('face-msg');
+    const btnStart = document.getElementById('btn-start-cam');
+    const btnCap   = document.getElementById('btn-capture');
+
+    function setMsg(text, type) {
+      if (!msg) return;
+      const colors = { info:'var(--muted)', success:'var(--green)', error:'var(--red)' };
+      msg.style.color = colors[type] || 'var(--muted)';
+      msg.textContent = text;
+    }
+
+    // Wait until faceapi is available then load models
+    async function loadFaceModels() {
+      if (typeof faceapi === 'undefined') {
+        setTimeout(loadFaceModels, 200);
+        return;
+      }
+      try {
+        await Promise.all([
+          faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
+          faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+          faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
+        ]);
+        modelsReady = true;
+        if (loading) loading.style.display = 'none';
+        if (btnStart) btnStart.disabled = false;
+        setMsg('Models ready. Click "Start camera".', 'info');
+      } catch(e) {
+        if (loading) loading.style.display = 'none';
+        setMsg('Could not load face models. Check /assets/models/ folder. Error: ' + e.message, 'error');
+        console.error('Face model load error:', e);
+      }
+    }
+
+    window.startFaceCam = async function() {
+      if (!modelsReady) { setMsg('Models still loading, please wait...', 'info'); return; }
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+        video.srcObject = stream;
+        if (btnCap)   btnCap.disabled   = false;
+        if (btnStart) btnStart.disabled = true;
+        setMsg('Camera active. Look at the camera then click "Capture my face".', 'info');
+        detectLoop();
+      } catch(e) {
+        setMsg('Camera access denied. Allow camera in browser settings.', 'error');
+        console.error('Camera error:', e);
+      }
+    };
+
+    async function detectLoop() {
+      if (!stream || !video || !overlay) return;
+      try {
+        const det = await faceapi
+          .detectSingleFace(video, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 }))
+          .withFaceLandmarks();
+        if (det) {
+          const dims = faceapi.matchDimensions(overlay, video, true);
+          faceapi.draw.drawDetections(overlay, faceapi.resizeResults(det, dims));
+        } else {
+          overlay.getContext('2d').clearRect(0, 0, overlay.width, overlay.height);
+        }
+      } catch(e) {}
+      requestAnimationFrame(detectLoop);
+    }
+
+    window.captureFace = async function() {
+      if (!modelsReady) { setMsg('Models still loading...', 'info'); return; }
+      if (!stream)      { setMsg('Start the camera first.', 'error'); return; }
+      setMsg('Detecting face...', 'info');
+      if (btnCap) btnCap.disabled = true;
+      try {
+        const det = await faceapi
+          .detectSingleFace(video, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 }))
+          .withFaceLandmarks()
+          .withFaceDescriptor();
+        if (!det) {
+          setMsg('No face detected. Make sure face is well lit and centred.', 'error');
+          if (btnCap) btnCap.disabled = false;
+          return;
+        }
+        const json = JSON.stringify(Array.from(det.descriptor));
+        const fd   = new FormData();
+        fd.append('action', 'save');
+        fd.append('descriptor', json);
+        const res  = await fetch(API_URL, { method: 'POST', body: fd });
+        const data = await res.json();
+        if (data.success) {
+          setMsg('✓ Face captured and saved! Now enable Face ID below.', 'success');
+        } else {
+          setMsg('Error: ' + (data.error || 'Could not save.'), 'error');
+        }
+      } catch(e) {
+        setMsg('Error: ' + e.message, 'error');
+        console.error(e);
+      }
+      if (btnCap) btnCap.disabled = false;
+    };
+
+    window.toggleFaceId = async function(enabled) {
+      const track = document.getElementById('toggle-track');
+      const thumb = document.getElementById('toggle-thumb');
+      const label = document.getElementById('toggle-label');
+      const fd    = new FormData();
+      fd.append('action', 'toggle');
+      fd.append('enable', enabled ? 'true' : 'false');
+      try {
+        const res  = await fetch(API_URL, { method: 'POST', body: fd });
+        const data = await res.json();
+        if (data.success) {
+          if (track) track.style.background = enabled ? '#6f8fd8' : 'rgba(255,255,255,.15)';
+          if (thumb) thumb.style.left       = enabled ? '23px'    : '3px';
+          if (label) label.textContent      = enabled ? 'Enabled'  : 'Disabled';
+          const banner = document.getElementById('faceid-status');
+          if (banner) {
+            if (enabled) {
+              banner.style.background = 'rgba(74,222,128,.10)';
+              banner.style.border     = '1px solid rgba(74,222,128,.25)';
+              banner.style.color      = 'var(--green)';
+              banner.querySelector('span').textContent   = '✓';
+              banner.querySelector('strong').textContent = 'Face ID is active';
+            } else {
+              banner.style.background = 'rgba(255,255,255,.03)';
+              banner.style.border     = '1px solid rgba(255,255,255,.08)';
+              banner.style.color      = 'var(--muted)';
+              banner.querySelector('span').textContent   = '○';
+              banner.querySelector('strong').textContent = 'Face ID not configured';
+            }
+          }
+        } else {
+          setMsg(data.error || 'Could not update Face ID.', 'error');
+          document.getElementById('faceid-toggle').checked = !enabled;
+        }
+      } catch(e) {
+        setMsg('Network error.', 'error');
+        document.getElementById('faceid-toggle').checked = !enabled;
+      }
+    };
+
+    // Stop camera when switching away from face tab
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (!btn.textContent.includes('Face') && stream) {
+          stream.getTracks().forEach(t => t.stop());
+          stream = null;
+          video.srcObject = null;
+          if (btnStart) btnStart.disabled = false;
+          if (btnCap)   btnCap.disabled   = true;
+        }
+      });
+    });
+
+    // Load models when Face ID tab is clicked
+    const origSwitch = window.switchTab;
+    window.switchTab = function(tabName) {
+      origSwitch(tabName);
+      if (tabName === 'faceid' && !modelsReady) {
+        if (loading) loading.style.display = 'flex';
+        loadFaceModels();
+      }
+    };
+
+    // Also load immediately if page loaded on faceid tab
+    if (document.getElementById('tab-faceid') && 
+        document.getElementById('tab-faceid').classList.contains('active')) {
+      loadFaceModels();
+    }
+
+  })();
   </script>
 </body>
 </html>

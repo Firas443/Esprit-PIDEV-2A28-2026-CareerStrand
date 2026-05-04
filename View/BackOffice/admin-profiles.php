@@ -2,6 +2,8 @@
 require_once __DIR__ . '/../../config.php';
 require_once __DIR__ . '/../../Controller/UserController.php';
 require_once __DIR__ . '/../../Controller/ProfileController.php';
+const MODEL_URL = '../FrontOffice/assets/models';
+const API_URL = '../../api/face.php';
 
 session_start();
 
@@ -121,6 +123,8 @@ $admin = [
     'location'  => 'Paris, France',
     'lastLogin' => date('d/m/Y H:i'),
 ];
+
+$adminUserObj = $userController->getById((int)($user['userId'] ?? 0));
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -145,6 +149,77 @@ $admin = [
       border-color: #ff6e45 !important;
       background: rgba(255,110,69,.04) !important;
     }
+
+
+    /* Face ID admin block */
+    .faceid-card {
+      margin-top: 24px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border-soft);
+    }
+    .faceid-status {
+      padding: 14px 18px;
+      border-radius: 14px;
+      font-size: 14px;
+      margin: 16px 0 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .faceid-camera-wrap {
+      position: relative;
+      width: 100%;
+      max-width: 480px;
+      margin: 0 auto 16px;
+    }
+    #admin-face-video {
+      width: 100%;
+      border-radius: 16px;
+      border: 2px solid var(--border-soft);
+      background: #000;
+      display: block;
+      min-height: 260px;
+    }
+    #admin-face-overlay {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border-radius: 16px;
+      pointer-events: none;
+    }
+    #admin-face-loading {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: rgba(4,8,22,.72);
+      border-radius: 16px;
+      color: rgba(245,243,238,.65);
+      font-size: 13px;
+      gap: 10px;
+    }
+    .face-spinner {
+      width: 28px;
+      height: 28px;
+      border: 2px solid #6f8fd8;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    .faceid-toggle-row {
+      margin-top: 20px;
+      padding: 18px;
+      border-radius: 16px;
+      border: 1px solid var(--border-soft);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
@@ -264,6 +339,66 @@ $admin = [
               </div>
             </div>
 
+
+            <!-- FACE ID SECTION -->
+            <div class="faceid-card">
+              <div class="panel-header" style="margin-bottom:12px;">
+                <div class="panel-title">
+                  <h3>Face ID</h3>
+                  <p>Register your administrator face to log in to the back-office without a password.</p>
+                </div>
+              </div>
+
+              <div id="admin-faceid-status" class="faceid-status" style="
+                background:<?php echo ($adminUserObj && $adminUserObj->isFaceEnabled()) ? 'rgba(74,222,128,.10)' : 'rgba(255,255,255,.03)'; ?>;
+                border:1px solid <?php echo ($adminUserObj && $adminUserObj->isFaceEnabled()) ? 'rgba(74,222,128,.25)' : 'rgba(255,255,255,.08)'; ?>;
+                color:<?php echo ($adminUserObj && $adminUserObj->isFaceEnabled()) ? '#4ade80' : 'rgba(245,243,238,.65)'; ?>;">
+                <span style="font-size:20px;"><?php echo ($adminUserObj && $adminUserObj->isFaceEnabled()) ? '✓' : '○'; ?></span>
+                <div>
+                  <strong><?php echo ($adminUserObj && $adminUserObj->isFaceEnabled()) ? 'Face ID is active' : 'Face ID not configured'; ?></strong>
+                  <div style="font-size:12px;margin-top:2px;">
+                    <?php echo ($adminUserObj && $adminUserObj->isFaceEnabled())
+                      ? 'This admin account can log in using Face ID.'
+                      : 'Capture your face below, then enable Face ID.'; ?>
+                  </div>
+                </div>
+              </div>
+
+              <div class="faceid-camera-wrap">
+                <video id="admin-face-video" autoplay muted playsinline></video>
+                <canvas id="admin-face-overlay"></canvas>
+                <div id="admin-face-loading">
+                  <div class="face-spinner"></div>
+                  Loading face models…
+                </div>
+              </div>
+
+              <div id="admin-face-msg" style="text-align:center;min-height:24px;font-size:13px;margin-bottom:16px;color:rgba(245,243,238,.65);"></div>
+
+              <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-bottom:20px;">
+                <button id="admin-btn-start-cam" class="btn btn-soft" type="button" onclick="startAdminFaceCam()" disabled>Start camera</button>
+                <button id="admin-btn-capture" class="btn btn-main" type="button" onclick="captureAdminFace()" disabled>Capture my face</button>
+              </div>
+
+              <div class="faceid-toggle-row">
+                <div>
+                  <div style="font-size:14px;font-weight:700;">Enable Face ID login</div>
+                  <div style="font-size:12px;color:rgba(245,243,238,.65);margin-top:4px;">You must capture your face first before enabling.</div>
+                </div>
+                <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                  <div style="position:relative;width:44px;height:24px;">
+                    <input type="checkbox" id="admin-faceid-toggle"
+                           <?php echo ($adminUserObj && $adminUserObj->isFaceEnabled()) ? 'checked' : ''; ?>
+                           onchange="toggleAdminFaceId(this.checked)"
+                           style="position:absolute;opacity:0;width:100%;height:100%;cursor:pointer;margin:0;">
+                    <div id="admin-toggle-track" style="width:44px;height:24px;border-radius:12px;transition:background .2s;background:<?php echo ($adminUserObj && $adminUserObj->isFaceEnabled()) ? '#6f8fd8' : 'rgba(255,255,255,.15)'; ?>;"></div>
+                    <div id="admin-toggle-thumb" style="position:absolute;top:3px;left:<?php echo ($adminUserObj && $adminUserObj->isFaceEnabled()) ? '23px' : '3px'; ?>;width:18px;height:18px;border-radius:50%;background:#fff;transition:left .2s;"></div>
+                  </div>
+                  <span id="admin-toggle-label" style="font-size:13px;color:rgba(245,243,238,.65);"><?php echo ($adminUserObj && $adminUserObj->isFaceEnabled()) ? 'Enabled' : 'Disabled'; ?></span>
+                </label>
+              </div>
+            </div>
+
             <button type="submit" id="adminProfileSubmit" style="display:none;"></button>
           </form>
         </article>
@@ -315,6 +450,161 @@ $admin = [
       </section>
     </main>
   </div>
+  <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+  <script>
+  (function(){
+    const MODEL_URL = '../FrontOffice/assets/models';
+    const API_URL   = '../../api/face.php';
+    let modelsReady = false;
+    let stream = null;
+
+    const video    = document.getElementById('admin-face-video');
+    const overlay  = document.getElementById('admin-face-overlay');
+    const loading  = document.getElementById('admin-face-loading');
+    const msg      = document.getElementById('admin-face-msg');
+    const btnStart = document.getElementById('admin-btn-start-cam');
+    const btnCap   = document.getElementById('admin-btn-capture');
+
+    function setMsg(text, type) {
+      if (!msg) return;
+      const colors = { info:'rgba(245,243,238,.65)', success:'#4ade80', error:'#ff6e45' };
+      msg.style.color = colors[type] || colors.info;
+      msg.textContent = text;
+    }
+
+    async function loadAdminFaceModels() {
+      if (typeof faceapi === 'undefined') {
+        setTimeout(loadAdminFaceModels, 200);
+        return;
+      }
+      try {
+        await Promise.all([
+          faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
+          faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+          faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
+        ]);
+        modelsReady = true;
+        if (loading) loading.style.display = 'none';
+        if (btnStart) btnStart.disabled = false;
+        setMsg('Models ready. Click "Start camera".', 'info');
+      } catch(e) {
+        if (loading) loading.style.display = 'none';
+        setMsg('Could not load face models. Check ../FrontOffice/assets/models folder.', 'error');
+        console.error('Admin Face ID model load error:', e);
+      }
+    }
+
+    window.startAdminFaceCam = async function() {
+      if (!modelsReady) { setMsg('Models still loading, please wait...', 'info'); return; }
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+        video.srcObject = stream;
+        video.onloadedmetadata = function() {
+          video.play();
+          if (btnCap) btnCap.disabled = false;
+          if (btnStart) btnStart.disabled = true;
+          setMsg('Camera active. Look at the camera then click "Capture my face".', 'info');
+          requestAnimationFrame(detectAdminFaceLoop);
+        };
+      } catch(e) {
+        setMsg('Camera access denied. Allow camera in browser settings.', 'error');
+        console.error('Admin Face ID camera error:', e);
+      }
+    };
+
+    async function detectAdminFaceLoop() {
+      if (!stream || !video || !overlay) return;
+      try {
+        const det = await faceapi
+          .detectSingleFace(video, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.3 }))
+          .withFaceLandmarks();
+        const ctx = overlay.getContext('2d');
+        if (det) {
+          const dims = faceapi.matchDimensions(overlay, video, true);
+          ctx.clearRect(0, 0, overlay.width, overlay.height);
+          faceapi.draw.drawDetections(overlay, faceapi.resizeResults(det, dims));
+        } else {
+          ctx.clearRect(0, 0, overlay.width, overlay.height);
+        }
+      } catch(e) {}
+      requestAnimationFrame(detectAdminFaceLoop);
+    }
+
+    window.captureAdminFace = async function() {
+      if (!modelsReady) { setMsg('Models still loading...', 'info'); return; }
+      if (!stream)      { setMsg('Start the camera first.', 'error'); return; }
+      setMsg('Detecting face...', 'info');
+      if (btnCap) btnCap.disabled = true;
+      try {
+        const det = await faceapi
+          .detectSingleFace(video, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.3 }))
+          .withFaceLandmarks()
+          .withFaceDescriptor();
+        if (!det) {
+          setMsg('No face detected. Make sure your face is well lit and centred.', 'error');
+          if (btnCap) btnCap.disabled = false;
+          return;
+        }
+        const fd = new FormData();
+        fd.append('action', 'save');
+        fd.append('descriptor', JSON.stringify(Array.from(det.descriptor)));
+
+        const res  = await fetch(API_URL, { method: 'POST', body: fd });
+        const data = await res.json();
+        if (data.success) {
+          setMsg('✓ Face captured and saved. Now enable Face ID below.', 'success');
+        } else {
+          setMsg('Error: ' + (data.error || 'Could not save face.'), 'error');
+        }
+      } catch(e) {
+        setMsg('Error: ' + e.message, 'error');
+        console.error(e);
+      }
+      if (btnCap) btnCap.disabled = false;
+    };
+
+    window.toggleAdminFaceId = async function(enabled) {
+      const track = document.getElementById('admin-toggle-track');
+      const thumb = document.getElementById('admin-toggle-thumb');
+      const label = document.getElementById('admin-toggle-label');
+      const checkbox = document.getElementById('admin-faceid-toggle');
+      const fd = new FormData();
+      fd.append('action', 'toggle');
+      fd.append('enable', enabled ? 'true' : 'false');
+      try {
+        const res  = await fetch(API_URL, { method: 'POST', body: fd });
+        const data = await res.json();
+        if (data.success) {
+          if (track) track.style.background = enabled ? '#6f8fd8' : 'rgba(255,255,255,.15)';
+          if (thumb) thumb.style.left = enabled ? '23px' : '3px';
+          if (label) label.textContent = enabled ? 'Enabled' : 'Disabled';
+
+          const banner = document.getElementById('admin-faceid-status');
+          if (banner) {
+            banner.style.background = enabled ? 'rgba(74,222,128,.10)' : 'rgba(255,255,255,.03)';
+            banner.style.border = enabled ? '1px solid rgba(74,222,128,.25)' : '1px solid rgba(255,255,255,.08)';
+            banner.style.color = enabled ? '#4ade80' : 'rgba(245,243,238,.65)';
+            banner.querySelector('span').textContent = enabled ? '✓' : '○';
+            banner.querySelector('strong').textContent = enabled ? 'Face ID is active' : 'Face ID not configured';
+          }
+          setMsg(enabled ? 'Face ID login enabled.' : 'Face ID login disabled.', 'success');
+        } else {
+          setMsg(data.error || 'Could not update Face ID.', 'error');
+          if (checkbox) checkbox.checked = !enabled;
+        }
+      } catch(e) {
+        setMsg('Network error.', 'error');
+        if (checkbox) checkbox.checked = !enabled;
+      }
+    };
+
+    window.addEventListener('beforeunload', function() {
+      if (stream) stream.getTracks().forEach(t => t.stop());
+    });
+
+    loadAdminFaceModels();
+  })();
+  </script>
   <script src="../js/admin.js"></script>
 </body>
 </html>
