@@ -21,6 +21,55 @@ class SkillHubCoreController
         return substr(str_replace('T', ' ', trim($value)), 0, 19);
     }
 
+    private function normalizeRecommendationText(?string $value): string
+    {
+        return strtolower(trim((string) $value));
+    }
+
+    private function difficultyTarget(string $difficulty): int
+    {
+        return match ($this->normalizeRecommendationText($difficulty)) {
+            'beginner' => 25,
+            'intermediate' => 55,
+            'advanced' => 85,
+            default => 50,
+        };
+    }
+
+    private function difficultyScore(?int $skillLevel, string $difficulty): int
+    {
+        if ($skillLevel === null) {
+            return 10;
+        }
+
+        $difference = abs($skillLevel - $this->difficultyTarget($difficulty));
+
+        return match (true) {
+            $difference <= 10 => 30,
+            $difference <= 22 => 22,
+            $difference <= 35 => 14,
+            default => 6,
+        };
+    }
+
+    private function skillMatchesChallenge(string $skillName, string $hubCategory, string $title, string $description): bool
+    {
+        $skill = $this->normalizeRecommendationText($skillName);
+        if ($skill === '') {
+            return false;
+        }
+
+        $haystack = implode(' ', [
+            $this->normalizeRecommendationText($hubCategory),
+            $this->normalizeRecommendationText($title),
+            $this->normalizeRecommendationText($description),
+        ]);
+
+        return str_contains($haystack, $skill)
+            || str_contains($skill, $this->normalizeRecommendationText($hubCategory))
+            || str_contains($this->normalizeRecommendationText($hubCategory), $skill);
+    }
+
     public function getAllSkillHubs(): array
     {
         $query = $this->pdo->query("SELECT * FROM SkillHub ORDER BY groupId DESC");
@@ -267,6 +316,158 @@ class SkillHubCoreController
         $query = $this->pdo->prepare($sql . $orderBy);
         $query->execute($params);
         return $query->fetchAll();
+    }
+
+    public function getRecommendedChallengesForUser(int $userId, int $limit = 4): array
+    {
+        $joinedRows = $this->pdo->prepare(
+            "SELECT gm.groupId, sh.category
+             FROM GroupMember gm
+             LEFT JOIN SkillHub sh ON sh.groupId = gm.groupId
+             WHERE gm.userId = :userId"
+        );
+        $joinedRows->execute(['userId' => $userId]);
+        $joinedHubs = $joinedRows->fetchAll();
+
+        $joinedGroupIds = [];
+        $joinedCategories = [];
+        foreach ($joinedHubs as $joinedHub) {
+            $joinedGroupIds[(int) $joinedHub['groupId']] = true;
+            $category = $this->normalizeRecommendationText($joinedHub['category'] ?? '');
+            if ($category !== '') {
+                $joinedCategories[$category] = true;
+            }
+        }
+
+        $skillRows = $this->pdo->prepare(
+            "SELECT skillName, level
+             FROM UserSkill
+             WHERE userId = :userId"
+        );
+        $skillRows->execute(['userId' => $userId]);
+        $userSkills = $skillRows->fetchAll();
+
+        $skillLevels = [];
+        $skillNames = [];
+        foreach ($userSkills as $skillRow) {
+            $skillName = trim((string) ($skillRow['skillName'] ?? ''));
+            if ($skillName !== '') {
+                $skillNames[] = $skillName;
+            }
+
+            if ($skillRow['level'] !== null && $skillRow['level'] !== '') {
+                $skillLevels[] = max(0, min(100, (int) $skillRow['level']));
+            }
+        }
+
+        $averageSkillLevel = !empty($skillLevels)
+            ? (int) round(array_sum($skillLevels) / count($skillLevels))
+            : 50;
+
+        $submittedRows = $this->pdo->prepare(
+            "SELECT DISTINCT s.challengeId
+             FROM Submission s
+             INNER JOIN GroupMember gm ON gm.groupMemberId = s.groupMemberId
+             WHERE gm.userId = :userId"
+        );
+        $submittedRows->execute(['userId' => $userId]);
+        $submittedChallengeIds = [];
+        foreach ($submittedRows->fetchAll() as $submittedRow) {
+            $submittedChallengeIds[(int) $submittedRow['challengeId']] = true;
+        }
+
+        $challengeQuery = $this->pdo->query(
+            "SELECT
+                c.*,
+                sh.name AS hubName,
+                sh.category AS hubCategory,
+                u.fullName AS managerName
+             FROM Challenge c
+             LEFT JOIN SkillHub sh ON sh.groupId = c.groupId
+             LEFT JOIN Users u ON u.userId = c.managerId
+             WHERE LOWER(COALESCE(c.status, '')) IN ('published', 'active')
+             ORDER BY c.challengeId DESC"
+        );
+
+        $recommendations = [];
+        foreach ($challengeQuery->fetchAll() as $challenge) {
+            $challengeId = (int) ($challenge['challengeId'] ?? 0);
+            if ($challengeId <= 0 || isset($submittedChallengeIds[$challengeId])) {
+                continue;
+            }
+
+            $score = 0;
+            $reasons = [];
+            $hubCategory = (string) ($challenge['hubCategory'] ?? '');
+            $title = (string) ($challenge['title'] ?? '');
+            $description = (string) ($challenge['description'] ?? '');
+
+            if (isset($joinedGroupIds[(int) ($challenge['groupId'] ?? 0)])) {
+                $score += 35;
+                $reasons[] = 'You already belong to this hub.';
+            } elseif (isset($joinedCategories[$this->normalizeRecommendationText($hubCategory)])) {
+                $score += 18;
+                $reasons[] = 'Its category matches one of your joined hubs.';
+            }
+
+            $matchedSkill = false;
+            foreach ($skillNames as $skillName) {
+                if ($this->skillMatchesChallenge($skillName, $hubCategory, $title, $description)) {
+                    $matchedSkill = true;
+                    break;
+                }
+            }
+            if ($matchedSkill) {
+                $score += 20;
+                $reasons[] = 'It lines up with one of your saved skills.';
+            }
+
+            $difficultyPoints = $this->difficultyScore($averageSkillLevel, (string) ($challenge['difficulty'] ?? ''));
+            $score += $difficultyPoints;
+            if ($difficultyPoints >= 22) {
+                $reasons[] = 'The difficulty fits your current skill level.';
+            } elseif ($difficultyPoints >= 14) {
+                $reasons[] = 'The difficulty is close to your current level.';
+            }
+
+            $deadlineRaw = trim((string) ($challenge['deadline'] ?? ''));
+            if ($deadlineRaw !== '') {
+                $deadline = strtotime($deadlineRaw);
+                if ($deadline !== false) {
+                    $daysUntilDeadline = (int) floor(($deadline - time()) / 86400);
+                    if ($daysUntilDeadline >= 0 && $daysUntilDeadline <= 21) {
+                        $score += 10;
+                        $reasons[] = 'The deadline is still within reach.';
+                    } elseif ($daysUntilDeadline > 21) {
+                        $score += 6;
+                    }
+                }
+            }
+
+            $score += 5;
+
+            $challenge['recommendationScore'] = min(100, $score);
+            $challenge['recommendationReasons'] = array_slice(array_values(array_unique($reasons)), 0, 3);
+            $challenge['skillLevelAverage'] = $averageSkillLevel;
+            $recommendations[] = $challenge;
+        }
+
+        usort($recommendations, static function (array $left, array $right): int {
+            $scoreComparison = (int) ($right['recommendationScore'] ?? 0) <=> (int) ($left['recommendationScore'] ?? 0);
+            if ($scoreComparison !== 0) {
+                return $scoreComparison;
+            }
+
+            $leftDeadline = strtotime((string) ($left['deadline'] ?? '')) ?: PHP_INT_MAX;
+            $rightDeadline = strtotime((string) ($right['deadline'] ?? '')) ?: PHP_INT_MAX;
+            if ($leftDeadline !== $rightDeadline) {
+                return $leftDeadline <=> $rightDeadline;
+            }
+
+            return (int) ($right['challengeId'] ?? 0) <=> (int) ($left['challengeId'] ?? 0);
+        });
+
+        return array_slice($recommendations, 0, max(1, $limit));
     }
 
     public function challengeTitleExists(string $title, int $groupId, ?int $excludeChallengeId = null): bool

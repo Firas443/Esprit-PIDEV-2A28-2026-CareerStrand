@@ -673,6 +673,150 @@ textarea:focus {
     var(--surface-1);
 }
 
+.student-ai-feedback-panel {
+  background:
+    radial-gradient(circle at top right, rgba(89, 211, 155, 0.1), transparent 30%),
+    radial-gradient(circle at bottom left, rgba(111, 143, 216, 0.1), transparent 28%),
+    var(--surface-1);
+}
+
+.inline-ai-feedback {
+  margin-top: 16px;
+  padding: 16px;
+  border-radius: 20px;
+  border: 1px solid rgba(89, 211, 155, 0.18);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.04),
+    0 18px 34px rgba(0, 0, 0, 0.18);
+}
+
+.student-ai-feedback-head {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+
+.student-ai-feedback-head h2 {
+  margin-bottom: 0;
+  font-size: 24px;
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+}
+
+.ai-model-badge {
+  flex-shrink: 0;
+  max-width: 210px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.04);
+  color: var(--muted);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.student-ai-feedback-box {
+  max-height: 280px;
+  overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(89, 211, 155, 0.48) rgba(255,255,255,0.04);
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(89, 211, 155, 0.18);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.012)),
+    rgba(89, 211, 155, 0.06);
+  color: rgba(245, 243, 238, 0.88);
+  line-height: 1.58;
+  font-size: 15px;
+}
+
+.student-ai-feedback-box::-webkit-scrollbar {
+  width: 9px;
+}
+
+.student-ai-feedback-box::-webkit-scrollbar-track {
+  border-radius: 999px;
+  background: rgba(255,255,255,0.04);
+}
+
+.student-ai-feedback-box::-webkit-scrollbar-thumb {
+  border: 2px solid rgba(12, 18, 32, 0.95);
+  border-radius: 999px;
+  background:
+    linear-gradient(180deg, rgba(89, 211, 155, 0.78), rgba(111, 143, 216, 0.72));
+}
+
+.student-ai-feedback-box.is-error {
+  border-color: rgba(255, 110, 69, 0.24);
+  background: rgba(255, 110, 69, 0.08);
+}
+
+.submission-button-row {
+  align-items: stretch;
+}
+
+.ai-analyze-btn,
+.submit-work-btn {
+  min-height: 50px;
+  flex: 1 1 220px;
+}
+
+.ai-analyze-btn {
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid rgba(89, 211, 155, 0.42);
+  border-radius: 999px;
+  padding: 12px 18px;
+  color: var(--text);
+  background:
+    linear-gradient(135deg, rgba(89, 211, 155, 0.16), rgba(111, 143, 216, 0.12) 48%, rgba(255, 110, 69, 0.14)),
+    rgba(11, 20, 34, 0.96);
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.06) inset,
+    0 10px 28px rgba(89, 211, 155, 0.14),
+    0 0 34px rgba(111, 143, 216, 0.12);
+  font-weight: 850;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease, background 0.22s ease;
+}
+
+.ai-analyze-btn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background:
+    radial-gradient(circle at 18% 50%, rgba(89, 211, 155, 0.34), transparent 28%),
+    radial-gradient(circle at 82% 50%, rgba(255, 110, 69, 0.24), transparent 30%);
+  opacity: 0;
+  transition: opacity 0.22s ease;
+}
+
+.ai-analyze-btn:hover {
+  transform: translateY(-2px);
+  border-color: rgba(245, 191, 101, 0.58);
+  background:
+    linear-gradient(135deg, rgba(89, 211, 155, 0.22), rgba(111, 143, 216, 0.16) 48%, rgba(255, 110, 69, 0.18)),
+    rgba(11, 20, 34, 0.98);
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.08) inset,
+    0 14px 34px rgba(89, 211, 155, 0.2),
+    0 0 48px rgba(245, 191, 101, 0.14);
+}
+
+.ai-analyze-btn:hover::before {
+  opacity: 1;
+}
+
 .submission-row,
 .discussion-head,
 .author-line,
@@ -1330,5 +1474,22 @@ textarea:focus {
 
   .thread-post-content h2 {
     font-size: 34px;
+  }
+
+  .student-ai-feedback-head {
+    flex-direction: column;
+  }
+
+  .student-ai-feedback-head h2 {
+    font-size: 22px;
+  }
+
+  .ai-model-badge {
+    max-width: 100%;
+  }
+
+  .ai-analyze-btn,
+  .submit-work-btn {
+    width: 100%;
   }
 }

@@ -10,6 +10,9 @@ $pdo = config::getConnexion();
 $threadPostErrors = ['title' => '', 'content' => '', 'postType' => ''];
 $threadCommentErrors = [];
 $submissionErrors = ['projectLink' => '', 'description' => ''];
+$submissionAiFeedback = null;
+$submissionAiFeedbackError = null;
+$submissionAiFeedbackModel = null;
 
 $users = $pdo->query("SELECT userId, fullName, role FROM Users")->fetchAll();
 $userMap = [];
@@ -185,7 +188,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $defaultUserId !== null) {
         }
     }
 
-    if ($action === 'create_submission') {
+    if ($action === 'analyze_submission' || $action === 'create_submission') {
         $targetChallengeId = (int) ($_POST['challengeId'] ?? $challengeId);
         $targetGroupId = (int) ($_POST['groupId'] ?? $groupId);
         $projectLink = trim((string) ($_POST['projectLink'] ?? ''));
@@ -211,6 +214,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $defaultUserId !== null) {
         if ($targetChallengeId > 0 && !array_filter($submissionErrors)) {
             if ($member === null) {
                 $status = 'not_member';
+            } elseif ($action === 'analyze_submission') {
+                $draftSubmission = [
+                    'submissionId' => null,
+                    'groupMemberId' => (int) $member['groupMemberId'],
+                    'challengeId' => $targetChallengeId,
+                    'projectLink' => $projectLink,
+                    'description' => $description,
+                    'submittedAt' => date('Y-m-d'),
+                    'score' => null,
+                    'submissionRank' => null,
+                    'status' => 'draft',
+                    'fullName' => (string) ($userMap[$defaultUserId]['fullName'] ?? 'This student'),
+                    'role' => (string) ($userMap[$defaultUserId]['role'] ?? 'user'),
+                ];
+                $targetChallenge = $coreController->getChallengeById($targetChallengeId);
+
+                if ($targetChallenge === null) {
+                    $submissionAiFeedbackError = 'The challenge could not be found for analysis.';
+                } else {
+                    $aiResult = $engagementController->generateSubmissionAiFeedback($targetChallenge, $draftSubmission, 'student');
+                    if (!empty($aiResult['ok'])) {
+                        $submissionAiFeedback = (string) ($aiResult['feedback'] ?? '');
+                        $submissionAiFeedbackModel = (string) ($aiResult['model'] ?? '');
+                    } else {
+                        $submissionAiFeedbackError = (string) ($aiResult['error'] ?? 'The AI review could not be generated.');
+                    }
+                }
             } elseif ($engagementController->createSubmission(
                 new SubmissionEntity(
                     null,
@@ -315,7 +345,7 @@ if ($currentMember !== null) {
         }
     }
 }
-$showSubmissionForm = ($_POST['action'] ?? '') === 'create_submission' || !empty(array_filter($submissionErrors));
+$showSubmissionForm = in_array(($_POST['action'] ?? ''), ['analyze_submission', 'create_submission'], true) || !empty(array_filter($submissionErrors));
 $submissionCount = count($submissions);
 $rankedSubmissions = $submissions;
 usort($rankedSubmissions, static function (array $left, array $right): int {
@@ -545,7 +575,7 @@ function formatDateLabel(?string $value): string
                                         </div>
                                     <?php } else { ?>
                                         <div class="submission-actions">
-                                            <p>Open the submission form when you are ready to send your final work for this challenge.</p>
+                                            <p>Open the submission form to analyze your draft first, then submit when you are ready.</p>
                                             <button
                                                 class="primary-btn full"
                                                 type="button"
@@ -558,7 +588,6 @@ function formatDateLabel(?string $value): string
                                         </div>
                                         <div id="submissionFormPanel" <?= $showSubmissionForm ? '' : 'hidden'; ?>>
                                             <form method="POST" class="submission-card submission-form-shell" id="submissionForm" novalidate>
-                                                <input type="hidden" name="action" value="create_submission">
                                                 <input type="hidden" name="challengeId" value="<?= (int) $challengeId; ?>">
                                                 <input type="hidden" name="groupId" value="<?= (int) $groupId; ?>">
                                                 <label class="discussion-input" for="projectLink">
@@ -573,8 +602,34 @@ function formatDateLabel(?string $value): string
                                                     <textarea id="submissionDescription" name="description" rows="4" placeholder="Describe the submitted work..." data-required-message="Description is required."><?= h($_POST['action'] ?? '' ? ($_POST['description'] ?? '') : ''); ?></textarea>
                                                 </label>
                                                 <small class="field-error" id="submissionDescriptionError"><?= h($submissionErrors['description']); ?></small>
-                                                <div class="discussion-actions" style="margin-top:14px;">
-                                                    <button class="primary-btn full" type="submit">Submit as group member</button>
+
+                                                <?php if ($submissionAiFeedback !== null || $submissionAiFeedbackError !== null) { ?>
+                                                    <section class="student-ai-feedback-panel inline-ai-feedback">
+                                                        <div class="student-ai-feedback-head">
+                                                            <div>
+                                                                <div class="panel-title">AI draft review</div>
+                                                                <h2>Before you submit</h2>
+                                                            </div>
+                                                            <?php if ($submissionAiFeedbackModel !== null && $submissionAiFeedbackModel !== '') { ?>
+                                                                <span class="ai-model-badge"><?= h($submissionAiFeedbackModel); ?></span>
+                                                            <?php } ?>
+                                                        </div>
+
+                                                        <?php if ($submissionAiFeedbackError !== null) { ?>
+                                                            <div class="student-ai-feedback-box is-error">
+                                                                <?= h($submissionAiFeedbackError); ?>
+                                                            </div>
+                                                        <?php } else { ?>
+                                                            <div class="student-ai-feedback-box">
+                                                                <?= nl2br(h($submissionAiFeedback)); ?>
+                                                            </div>
+                                                        <?php } ?>
+                                                    </section>
+                                                <?php } ?>
+
+                                                <div class="discussion-actions submission-button-row" style="margin-top:14px;">
+                                                    <button class="ai-analyze-btn" type="submit" name="action" value="analyze_submission">Analyze my work</button>
+                                                    <button class="primary-btn submit-work-btn" type="submit" name="action" value="create_submission">Submit as group member</button>
                                                 </div>
                                             </form>
                                         </div>

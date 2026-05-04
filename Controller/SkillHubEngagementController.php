@@ -21,6 +21,31 @@ class SkillHubEngagementController
         return substr(str_replace('T', ' ', trim($value)), 0, 19);
     }
 
+    private function extractResponseText(array $payload): string
+    {
+        $choiceText = trim((string) ($payload['choices'][0]['message']['content'] ?? ''));
+        if ($choiceText !== '') {
+            return $choiceText;
+        }
+
+        $outputText = trim((string) ($payload['output_text'] ?? ''));
+        if ($outputText !== '') {
+            return $outputText;
+        }
+
+        $parts = [];
+        foreach (($payload['output'] ?? []) as $outputItem) {
+            foreach (($outputItem['content'] ?? []) as $contentItem) {
+                $text = trim((string) ($contentItem['text'] ?? ''));
+                if ($text !== '') {
+                    $parts[] = $text;
+                }
+            }
+        }
+
+        return trim(implode("\n\n", $parts));
+    }
+
     public function getAllPosts(): array
     {
         $query = $this->pdo->query("SELECT * FROM Post ORDER BY postId DESC");
@@ -296,5 +321,132 @@ class SkillHubEngagementController
                 'submissionId' => (int) $submission['submissionId'],
             ]);
         }
+    }
+
+    public function generateSubmissionAiFeedback(array $challenge, array $submission, string $audience = 'manager'): array
+    {
+        $apiKey = config::getHuggingFaceApiKey();
+        if ($apiKey === '') {
+            $apiKey = getenv('HF_TOKEN') ?: ($_ENV['HF_TOKEN'] ?? '');
+        }
+
+        if ($apiKey === null || trim($apiKey) === '') {
+            return [
+                'ok' => false,
+                'error' => 'Add your Hugging Face API key in config.php before generating AI feedback.',
+            ];
+        }
+
+        $model = config::getHuggingFaceFeedbackModel();
+        if ($model === '') {
+            $model = getenv('HF_FEEDBACK_MODEL') ?: ($_ENV['HF_FEEDBACK_MODEL'] ?? 'google/gemma-2-2b-it:hf-inference');
+        }
+        $challengeTitle = trim((string) ($challenge['title'] ?? 'Untitled challenge'));
+        $challengeDescription = trim((string) ($challenge['description'] ?? 'No challenge description provided.'));
+        $challengeDifficulty = trim((string) ($challenge['difficulty'] ?? 'Unknown'));
+        $submissionDescription = trim((string) ($submission['description'] ?? 'No submission description provided.'));
+        $submissionLink = trim((string) ($submission['projectLink'] ?? ''));
+        $studentName = trim((string) ($submission['fullName'] ?? 'This student'));
+        $score = $submission['score'] !== null ? (string) $submission['score'] : 'Not scored yet';
+        $status = trim((string) ($submission['status'] ?? 'submitted'));
+
+        $isStudentAudience = strtolower(trim($audience)) === 'student';
+        $systemPrompt = $isStudentAudience
+            ? 'You are an academic submission reviewer inside a student skill hub platform. '
+                . 'Write short, practical feedback directly for the student who submitted the work. '
+                . 'Return exactly three short sections with these labels: Strengths, Improvements, Next step. '
+                . 'Be encouraging, specific, and concise. Avoid long markdown lists.'
+            : 'You are an academic submission reviewer inside a student skill hub platform. '
+                . 'Write short, practical feedback for a manager. '
+                . 'Return exactly three short sections with these labels: Strengths, Weaknesses, Next step. '
+                . 'Be constructive, specific, and concise. Avoid long markdown lists.';
+        $userInstruction = $isStudentAudience
+            ? 'Generate feedback for the student so they understand what worked and what to improve.'
+            : 'Generate feedback for the manager reviewing this submission.';
+
+        $payload = json_encode([
+            'model' => $model,
+            'messages' => [
+                [
+                    'role' => 'system',
+                    'content' => $systemPrompt,
+                ],
+                [
+                    'role' => 'user',
+                    'content' => "Challenge title: {$challengeTitle}\n"
+                        . "Challenge difficulty: {$challengeDifficulty}\n"
+                        . "Challenge brief: {$challengeDescription}\n\n"
+                        . "Student: {$studentName}\n"
+                        . "Submission status: {$status}\n"
+                        . "Current score: {$score}\n"
+                        . "Project link: " . ($submissionLink !== '' ? $submissionLink : 'No link provided') . "\n"
+                        . "Submission description: {$submissionDescription}\n\n"
+                        . $userInstruction,
+                ],
+            ],
+            'max_tokens' => 280,
+            'temperature' => 0.6,
+        ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+
+        if ($payload === false) {
+            return [
+                'ok' => false,
+                'error' => 'Could not prepare the AI request payload.',
+            ];
+        }
+
+        $curl = curl_init('https://router.huggingface.co/v1/chat/completions');
+        curl_setopt_array($curl, [
+            CURLOPT_POST => true,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HTTPHEADER => [
+                'Content-Type: application/json',
+                'Authorization: Bearer ' . $apiKey,
+            ],
+            CURLOPT_POSTFIELDS => $payload,
+            CURLOPT_TIMEOUT => 45,
+        ]);
+
+        $rawResponse = curl_exec($curl);
+        $curlError = curl_error($curl);
+        $httpCode = (int) curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        curl_close($curl);
+
+        if ($rawResponse === false) {
+            return [
+                'ok' => false,
+                'error' => $curlError !== '' ? $curlError : 'The AI request failed before a response was returned.',
+            ];
+        }
+
+        $decoded = json_decode($rawResponse, true);
+        if (!is_array($decoded)) {
+            return [
+                'ok' => false,
+                'error' => 'The AI response could not be decoded.',
+            ];
+        }
+
+        if ($httpCode >= 400) {
+            $apiError = $decoded['error']['message'] ?? 'The AI API returned an error.';
+            return [
+                'ok' => false,
+                'error' => (string) $apiError,
+            ];
+        }
+
+        $feedback = $this->extractResponseText($decoded);
+        if ($feedback === '') {
+            return [
+                'ok' => false,
+                'error' => 'The AI returned an empty feedback response.',
+            ];
+        }
+
+        return [
+            'ok' => true,
+            'feedback' => $feedback,
+            'model' => $model,
+        ];
     }
 }

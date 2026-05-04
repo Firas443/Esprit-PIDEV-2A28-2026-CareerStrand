@@ -101,6 +101,9 @@ $suggestedHubs = array_values(array_filter(
     $hubs,
     static fn(array $hub): bool => !isset($joinedGroupIds[(int) $hub['groupId']])
 ));
+$recommendedChallenges = $defaultUserId !== null
+    ? $coreController->getRecommendedChallengesForUser($defaultUserId, 4)
+    : [];
 
 function h(?string $value): string
 {
@@ -159,195 +162,203 @@ function hubCategoryKey(string $category): string
             </div>
         </header>
 
-        <main class="main-area">
+        <main class="main-area skillhub-remodel">
             <div class="container">
-                <section class="hero-panel">
-                    <div class="hero-copy">
-                        <div class="hero-copy-top">
-                            <div class="eyebrow">Skill Hub Directory</div>
-                            <h1>Find the communities where your work, questions, and momentum belong.</h1>
-                            <p class="hero-description">Move through live circles of makers, mentors, and projects. Each cluster below is a real workspace connected to the people and work already in your database.</p>
+                <section class="command-hero">
+                    <div class="command-copy">
+                        <div class="eyebrow">Skill Hub Command Center</div>
+                        <h1>Pick your lane, enter the hub, and turn skill practice into shipped work.</h1>
+                        <p>Every hub below is pulled from your database: joined spaces, recommended communities, live work items, and discussions ready to open.</p>
+                        <div class="command-actions">
+                            <a class="primary-btn" href="hub.php<?= !empty($joinedHubs) ? '?groupId=' . (int) $joinedHubs[0]['groupId'] : ''; ?>">Enter current hub</a>
+                            <a class="ghost-btn" href="#discoverBoard">Explore hubs</a>
                         </div>
                     </div>
-                    <div class="hero-stats">
-                        <div class="hero-stat">
-                            <strong><?= count($joinedHubs); ?></strong>
-                            <span>Shown as joined hubs</span>
-                        </div>
-                        <div class="hero-stat">
-                            <strong><?= h((string) $stats['managerCount']); ?></strong>
-                            <span>Managers and admins active</span>
-                        </div>
-                        <div class="hero-stat">
-                            <strong><?= h((string) $stats['hubCount']); ?></strong>
-                            <span>Total hubs in the database</span>
-                        </div>
+
+                    <div class="mission-card">
+                        <div class="panel-title">Launch status</div>
+                        <?php if (!empty($joinedHubs)) { ?>
+                            <?php $featuredHub = $joinedHubs[0]; ?>
+                            <h2><?= h($featuredHub['name']); ?></h2>
+                            <p><?= h($featuredHub['description']); ?></p>
+                            <div class="mission-stats">
+                                <span><?= h((string) $featuredHub['workCount']); ?> work items</span>
+                                <span><?= h((string) $featuredHub['threadCount']); ?> threads</span>
+                                <span><?= h($featuredHub['category']); ?></span>
+                            </div>
+                            <a class="mission-link" href="hub.php?groupId=<?= (int) $featuredHub['groupId']; ?>">Open workspace</a>
+                        <?php } else { ?>
+                            <h2>No joined hub yet</h2>
+                            <p>Join a suggested hub below to unlock a personal launch space for tasks, projects, and discussion.</p>
+                            <a class="mission-link" href="#discoverBoard">Browse suggestions</a>
+                        <?php } ?>
                     </div>
                 </section>
 
-                <section class="directory-shell">
-                    <aside class="left-rail">
-                        <section class="glass-panel">
-                            <div class="panel-title">Your circles</div>
-                            <div class="friend-stack">
-                                <div class="friend-row">
-                                    <div class="avatar manager">MN</div>
-                                    <div>
-                                        <strong>Maya Nwosu</strong>
-                                        <p>Active in Frontend Systems</p>
-                                    </div>
-                                </div>
-                                <div class="friend-row">
-                                    <div class="avatar user">FK</div>
-                                    <div>
-                                        <strong>Fatima Kone</strong>
-                                        <p>Posting in UI/UX Studio</p>
-                                    </div>
-                                </div>
-                                <div class="friend-row">
-                                    <div class="avatar user">OD</div>
-                                    <div>
-                                        <strong>Ola Dairo</strong>
-                                        <p>Running prompts in Storytelling Lab</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </section>
+                <section class="metric-strip" aria-label="Skill hub stats">
+                    <article>
+                        <svg class="metric-line-icon" viewBox="0 0 48 48" aria-hidden="true">
+                            <path d="M24 23a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z"></path>
+                            <path d="M10 41c2.4-8.5 8-13 14-13s11.6 4.5 14 13"></path>
+                        </svg>
+                        <span>Joined</span>
+                        <strong><?= count($joinedHubs); ?></strong>
+                    </article>
+                    <article>
+                        <svg class="metric-line-icon" viewBox="0 0 48 48" aria-hidden="true">
+                            <path d="M14 18h20l8 10-18 14L6 28l8-10Z"></path>
+                            <path d="M14 18 24 42 34 18"></path>
+                            <path d="M6 28h36"></path>
+                        </svg>
+                        <span>Hubs</span>
+                        <strong><?= h((string) $stats['hubCount']); ?></strong>
+                    </article>
+                    <article>
+                        <svg class="metric-line-icon" viewBox="0 0 48 48" aria-hidden="true">
+                            <path d="M14 17h20a6 6 0 0 1 6 6v13a5 5 0 0 1-5 5H13a5 5 0 0 1-5-5V23a6 6 0 0 1 6-6Z"></path>
+                            <path d="M18 17v-4a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v4"></path>
+                            <path d="M8 27h32"></path>
+                        </svg>
+                        <span>Work</span>
+                        <strong><?= h((string) $stats['workCount']); ?></strong>
+                    </article>
+                    <article>
+                        <svg class="metric-line-icon" viewBox="0 0 48 48" aria-hidden="true">
+                            <path d="M10 12h28a5 5 0 0 1 5 5v12a5 5 0 0 1-5 5H22l-10 8v-8h-2a5 5 0 0 1-5-5V17a5 5 0 0 1 5-5Z"></path>
+                            <path d="M15 21h18"></path>
+                            <path d="M15 27h12"></path>
+                        </svg>
+                        <span>Threads</span>
+                        <strong><?= h((string) $stats['threadCount']); ?></strong>
+                    </article>
+                </section>
 
-                        <section class="glass-panel">
-                            <div class="panel-title">Browse by theme</div>
-                            <div class="chip-grid">
-                                <button class="filter-chip active" type="button" data-filter="all">All hubs</button>
-                                <button class="filter-chip" type="button" data-filter="frontend">Frontend</button>
-                                <button class="filter-chip" type="button" data-filter="design">Design</button>
-                                <button class="filter-chip" type="button" data-filter="communication">Communication</button>
-                                <button class="filter-chip" type="button" data-filter="business">Business</button>
+                <section class="hub-console" id="discoverBoard">
+                    <section class="hub-board">
+                        <div class="board-control">
+                            <div>
+                                <div class="panel-title">Discovery board</div>
+                                <h2>Find the right room for your next move</h2>
                             </div>
-                        </section>
-                    </aside>
+                            <input id="hubSearch" class="search-input" type="text" placeholder="Search by hub, category, or description...">
+                        </div>
 
-                    <section class="directory-column">
-                        <section class="glass-panel search-panel">
-                            <div class="search-row">
-                                <input id="hubSearch" class="search-input" type="text" placeholder="Search hubs, mentors, themes, or workspaces...">
-                                <a class="ghost-btn" href="hub.php<?= !empty($joinedHubs) ? '?groupId=' . (int) $joinedHubs[0]['groupId'] : ''; ?>">Explore</a>
-                            </div>
-                        </section>
+                        <div class="filter-dock" aria-label="Hub filters">
+                            <button class="filter-chip active" type="button" data-filter="all">All</button>
+                            <button class="filter-chip" type="button" data-filter="frontend">Frontend</button>
+                            <button class="filter-chip" type="button" data-filter="design">Design</button>
+                            <button class="filter-chip" type="button" data-filter="communication">Communication</button>
+                            <button class="filter-chip" type="button" data-filter="business">Business</button>
+                        </div>
 
-                        <section class="section-block">
-                            <div class="section-head">
-                                <div>
-                                    <div class="panel-title">My hubs</div>
-                                    <h2>Spaces currently shown as joined</h2>
+                        <div class="hub-lanes">
+                            <section class="hub-lane">
+                                <div class="lane-heading">
+                                    <span>Current spaces</span>
+                                    <strong><?= count($joinedHubs); ?></strong>
                                 </div>
-                                <?php if (!empty($joinedHubs)) { ?>
-                                    <a class="section-link" href="hub.php?groupId=<?= (int) $joinedHubs[0]['groupId']; ?>">Go to current hub</a>
-                                <?php } ?>
-                            </div>
-
-                            <div class="hub-grid">
-                                <?php foreach ($joinedHubs as $hub) { ?>
-                                    <article class="hub-card joined" data-category="<?= h(hubCategoryKey((string) $hub['category'])); ?>" data-search="<?= h(strtolower($hub['name'] . ' ' . $hub['category'] . ' ' . $hub['description'])); ?>">
-                                        <div class="hub-card-top">
-                                            <div>
-                                                <div class="hub-kicker">Joined hub</div>
-                                                <h3><?= h($hub['name']); ?></h3>
+                                <div class="lane-grid">
+                                    <?php if (empty($joinedHubs)) { ?>
+                                        <article class="empty-lane-card">No joined hubs yet. Join a space from the discovery lane.</article>
+                                    <?php } ?>
+                                    <?php foreach ($joinedHubs as $hub) { ?>
+                                        <article class="hub-card remodel-card joined" data-category="<?= h(hubCategoryKey((string) $hub['category'])); ?>" data-search="<?= h(strtolower($hub['name'] . ' ' . $hub['category'] . ' ' . $hub['description'])); ?>">
+                                            <div class="remodel-card-top">
+                                                <span class="hub-kicker">Joined</span>
+                                                <span class="hub-badge"><?= h((string) $hub['memberCount']); ?> members</span>
                                             </div>
-                                            <span class="hub-badge"><?= h((string) $hub['memberCount']); ?> members</span>
-                                        </div>
-                                        <p><?= h($hub['description']); ?></p>
-                                        <div class="hub-meta">
-                                            <span><?= h((string) $hub['workCount']); ?> work items</span>
-                                            <span><?= h((string) $hub['threadCount']); ?> threads</span>
-                                            <span><?= h($hub['category']); ?></span>
-                                        </div>
-                                        <div class="hub-card-actions">
-                                            <a class="primary-btn" href="hub.php?groupId=<?= (int) $hub['groupId']; ?>">Open hub</a>
-                                            <form class="inline-action-form" method="POST">
-                                                <input type="hidden" name="action" value="leave_hub">
-                                                <input type="hidden" name="groupId" value="<?= (int) $hub['groupId']; ?>">
-                                                <button class="ghost-btn leave-btn" type="submit">Leave hub</button>
-                                            </form>
-                                        </div>
-                                    </article>
-                                <?php } ?>
-                            </div>
-                        </section>
-
-                        <section class="section-block section-frame">
-                            <div class="section-head">
-                                <div>
-                                    <div class="panel-title">Suggested hubs</div>
-                                    <h2>Recommended from your live database</h2>
-                                </div>
-                            </div>
-
-                            <div class="hub-grid">
-                                <?php foreach ($suggestedHubs as $hub) { ?>
-                                    <article class="hub-card suggested" data-category="<?= h(hubCategoryKey((string) $hub['category'])); ?>" data-search="<?= h(strtolower($hub['name'] . ' ' . $hub['category'] . ' ' . $hub['description'])); ?>">
-                                        <div class="hub-card-top">
-                                            <div>
-                                                <div class="hub-kicker">Suggested</div>
-                                                <h3><?= h($hub['name']); ?></h3>
+                                            <h3><?= h($hub['name']); ?></h3>
+                                            <p><?= h($hub['description']); ?></p>
+                                            <div class="hub-meta">
+                                                <span><?= h((string) $hub['workCount']); ?> work items</span>
+                                                <span><?= h((string) $hub['threadCount']); ?> threads</span>
+                                                <span><?= h($hub['category']); ?></span>
                                             </div>
-                                            <span class="hub-badge warm"><?= h($hub['status']); ?></span>
-                                        </div>
-                                        <p><?= h($hub['description']); ?></p>
-                                        <div class="hub-meta">
-                                            <span><?= h((string) $hub['workCount']); ?> work items</span>
-                                            <span><?= h((string) $hub['threadCount']); ?> threads</span>
-                                            <span><?= h($hub['category']); ?></span>
-                                        </div>
-                                        <div class="hub-card-actions">
-                                            <form class="inline-action-form" method="POST">
-                                                <input type="hidden" name="action" value="join_hub">
-                                                <input type="hidden" name="groupId" value="<?= (int) $hub['groupId']; ?>">
-                                                <button class="primary-btn join-btn" type="submit">Join hub</button>
-                                            </form>
-                                            <a class="ghost-btn" href="hub.php?groupId=<?= (int) $hub['groupId']; ?>">Preview</a>
-                                        </div>
-                                    </article>
-                                <?php } ?>
-                            </div>
-                        </section>
+                                            <div class="hub-card-actions">
+                                                <a class="primary-btn" href="hub.php?groupId=<?= (int) $hub['groupId']; ?>">Open</a>
+                                                <form class="inline-action-form" method="POST">
+                                                    <input type="hidden" name="action" value="leave_hub">
+                                                    <input type="hidden" name="groupId" value="<?= (int) $hub['groupId']; ?>">
+                                                    <button class="ghost-btn leave-btn" type="submit">Leave</button>
+                                                </form>
+                                            </div>
+                                        </article>
+                                    <?php } ?>
+                                </div>
+                            </section>
+
+                            <section class="hub-lane">
+                                <div class="lane-heading">
+                                    <span>Discovery lane</span>
+                                    <strong><?= count($suggestedHubs); ?></strong>
+                                </div>
+                                <div class="lane-grid">
+                                    <?php if (empty($suggestedHubs)) { ?>
+                                        <article class="empty-lane-card">You are already joined to every hub in the directory.</article>
+                                    <?php } ?>
+                                    <?php foreach ($suggestedHubs as $hub) { ?>
+                                        <article class="hub-card remodel-card suggested" data-category="<?= h(hubCategoryKey((string) $hub['category'])); ?>" data-search="<?= h(strtolower($hub['name'] . ' ' . $hub['category'] . ' ' . $hub['description'])); ?>">
+                                            <div class="remodel-card-top">
+                                                <span class="hub-kicker">Suggested</span>
+                                                <span class="hub-badge warm"><?= h($hub['status']); ?></span>
+                                            </div>
+                                            <h3><?= h($hub['name']); ?></h3>
+                                            <p><?= h($hub['description']); ?></p>
+                                            <div class="hub-meta">
+                                                <span><?= h((string) $hub['workCount']); ?> work items</span>
+                                                <span><?= h((string) $hub['threadCount']); ?> threads</span>
+                                                <span><?= h($hub['category']); ?></span>
+                                            </div>
+                                            <div class="hub-card-actions">
+                                                <form class="inline-action-form" method="POST">
+                                                    <input type="hidden" name="action" value="join_hub">
+                                                    <input type="hidden" name="groupId" value="<?= (int) $hub['groupId']; ?>">
+                                                    <button class="primary-btn join-btn" type="submit">Join</button>
+                                                </form>
+                                                <a class="ghost-btn" href="hub.php?groupId=<?= (int) $hub['groupId']; ?>">Preview</a>
+                                            </div>
+                                        </article>
+                                    <?php } ?>
+                                </div>
+                            </section>
+                        </div>
                     </section>
 
-                    <aside class="right-rail">
-                        <section class="glass-panel">
-                            <div class="panel-title">Directory health</div>
-                            <div class="mini-list">
-                                <div class="mini-row">
-                                    <strong><?= h((string) $stats['hubCount']); ?></strong>
-                                    <span>hubs available</span>
+                    <aside class="insight-rail">
+                        <section class="insight-card recommendation-panel">
+                            <div class="panel-title">Recommended work</div>
+                            <h3 class="recommendation-panel-title">Next challenges</h3>
+                            <?php if (empty($recommendedChallenges)) { ?>
+                                <div class="challenge-empty-state">Join more hubs and recommendations will appear here.</div>
+                            <?php } else { ?>
+                                <div class="recommendation-stack">
+                                    <?php foreach ($recommendedChallenges as $challenge) { ?>
+                                        <article class="recommendation-item">
+                                            <div class="recommendation-item-top">
+                                                <strong><?= h((string) ($challenge['title'] ?? 'Untitled challenge')); ?></strong>
+                                                <span class="hub-badge blue"><?= h((string) ($challenge['recommendationScore'] ?? 0)); ?>/100</span>
+                                            </div>
+                                            <p class="recommendation-summary">
+                                                <?= h((string) ($challenge['hubName'] ?? 'Unknown hub')); ?> &middot;
+                                                <?= h((string) ($challenge['difficulty'] ?? 'Open level')); ?> &middot;
+                                                <?= h((string) ($challenge['type'] ?? 'Task')); ?>
+                                            </p>
+                                            <div class="recommendation-actions">
+                                                <a class="ghost-btn compact-btn" href="thread.php?challengeId=<?= (int) $challenge['challengeId']; ?>">Open</a>
+                                                <a class="ghost-btn compact-btn" href="hub.php?groupId=<?= (int) ($challenge['groupId'] ?? 0); ?>">Hub</a>
+                                            </div>
+                                        </article>
+                                    <?php } ?>
                                 </div>
-                                <div class="mini-row">
-                                    <strong><?= h((string) $stats['workCount']); ?></strong>
-                                    <span>tasks and projects live</span>
-                                </div>
-                                <div class="mini-row">
-                                    <strong><?= h((string) $stats['threadCount']); ?></strong>
-                                    <span>threads stored</span>
-                                </div>
-                            </div>
+                            <?php } ?>
                         </section>
 
-                        <section class="glass-panel">
-                            <div class="panel-title">Friends to add</div>
-                            <div class="friend-stack compact">
-                                <div class="friend-row">
-                                    <div class="avatar user">SB</div>
-                                    <div>
-                                        <strong>Samuel Bassey</strong>
-                                        <p>Frontend Systems</p>
-                                    </div>
-                                </div>
-                                <div class="friend-row">
-                                    <div class="avatar user">AM</div>
-                                    <div>
-                                        <strong>Amira Bello</strong>
-                                        <p>Motion Lab</p>
-                                    </div>
-                                </div>
+                        <section class="insight-card">
+                            <div class="panel-title">Directory pulse</div>
+                            <div class="pulse-list">
+                                <div><strong><?= h((string) $stats['managerCount']); ?></strong><span>mentors and admins</span></div>
+                                <div><strong><?= h((string) $stats['workCount']); ?></strong><span>live work items</span></div>
+                                <div><strong><?= h((string) $stats['threadCount']); ?></strong><span>discussion threads</span></div>
                             </div>
                         </section>
                     </aside>

@@ -1005,6 +1005,51 @@ form.table-toolbar .toolbar-actions {
   justify-content: flex-end;
 }
 
+.ai-feedback-panel {
+  display: grid;
+  gap: 16px;
+  margin-top: 22px;
+}
+
+.ai-feedback-form {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.ai-feedback-box,
+.ai-feedback-placeholder {
+  padding: 18px 20px;
+  border-radius: 20px;
+  border: 1px solid rgba(144, 157, 224, 0.14);
+  background:
+    linear-gradient(180deg, rgba(18, 24, 46, 0.82), rgba(10, 15, 29, 0.94));
+  color: var(--text);
+}
+
+.ai-feedback-box.is-error {
+  border-color: rgba(255, 110, 69, 0.32);
+  background:
+    linear-gradient(180deg, rgba(45, 22, 24, 0.82), rgba(22, 10, 12, 0.94));
+}
+
+.ai-feedback-meta {
+  margin-bottom: 10px;
+  color: var(--muted-2);
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.ai-feedback-content {
+  color: var(--muted);
+  line-height: 1.72;
+}
+
+.ai-feedback-placeholder {
+  color: var(--muted);
+  line-height: 1.6;
+}
+
 @media (max-width: 1400px) {
   .detail-grid,
   .hero-grid,

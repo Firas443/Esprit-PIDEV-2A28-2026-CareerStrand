@@ -14,6 +14,9 @@ $challenge = $challengeId > 0 ? $coreController->getChallengeById($challengeId) 
 $message = null;
 $messageType = 'soft';
 $scoreErrors = [];
+$aiFeedback = null;
+$aiFeedbackError = null;
+$aiFeedbackModel = null;
 
 function h(?string $value): string
 {
@@ -109,6 +112,39 @@ $activeFormScore = (string) (
         ? ($_POST['score'] ?? '')
         : ($activeSubmission['score'] ?? '')
 );
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'generate_ai_feedback') {
+    $challengeId = (int) ($_POST['challengeId'] ?? $challengeId);
+    $submissionId = (int) ($_POST['submissionId'] ?? 0);
+
+    if ($challengeId > 0) {
+        $challenge = $coreController->getChallengeById($challengeId);
+    }
+
+    if ($challenge !== null && $submissionId > 0) {
+        foreach ($submissions as $submission) {
+            if ((int) $submission['submissionId'] === $submissionId) {
+                $activeSubmission = $submission;
+                $isEditingReviewed = $editingSubmissionId === $submissionId;
+                break;
+            }
+        }
+
+        if ($activeSubmission !== null) {
+            $aiResult = $engagementController->generateSubmissionAiFeedback($challenge, $activeSubmission);
+            if (!empty($aiResult['ok'])) {
+                $aiFeedback = (string) ($aiResult['feedback'] ?? '');
+                $aiFeedbackModel = (string) ($aiResult['model'] ?? '');
+            } else {
+                $aiFeedbackError = (string) ($aiResult['error'] ?? 'The AI feedback could not be generated.');
+            }
+        } else {
+            $aiFeedbackError = 'Select a valid submission before generating AI feedback.';
+        }
+    } else {
+        $aiFeedbackError = 'Select a valid challenge and submission before generating AI feedback.';
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -361,6 +397,39 @@ $activeFormScore = (string) (
                                     </div>
                                 </form>
                             </div>
+
+                            <section class="panel ai-feedback-panel">
+                                <div class="panel-header">
+                                    <div class="panel-title">
+                                        <h3>AI feedback assistant</h3>
+                                        <p>Generate a short review summary from the challenge brief and the submission details.</p>
+                                    </div>
+                                </div>
+
+                                <form method="POST" class="ai-feedback-form">
+                                    <input type="hidden" name="action" value="generate_ai_feedback">
+                                    <input type="hidden" name="challengeId" value="<?= (int) $challengeId; ?>">
+                                    <input type="hidden" name="submissionId" value="<?= (int) $activeSubmission['submissionId']; ?>">
+                                    <button class="btn btn-soft" type="submit">Generate AI feedback</button>
+                                </form>
+
+                                <?php if ($aiFeedbackError !== null) { ?>
+                                    <div class="ai-feedback-box is-error">
+                                        <?= h($aiFeedbackError); ?>
+                                    </div>
+                                <?php } elseif ($aiFeedback !== null) { ?>
+                                    <div class="ai-feedback-box">
+                                        <div class="ai-feedback-meta">
+                                            Generated<?= $aiFeedbackModel !== null && $aiFeedbackModel !== '' ? ' with ' . h($aiFeedbackModel) : ''; ?>
+                                        </div>
+                                        <div class="ai-feedback-content"><?= nl2br(h($aiFeedback)); ?></div>
+                                    </div>
+                                <?php } else { ?>
+                                    <div class="ai-feedback-placeholder">
+                                        Run the assistant when you want a quick written review before finalizing the evaluation.
+                                    </div>
+                                <?php } ?>
+                            </section>
                         <?php } ?>
                     </article>
                 </section>
