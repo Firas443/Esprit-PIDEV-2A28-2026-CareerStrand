@@ -126,6 +126,17 @@
     .panel-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:18px;flex-wrap:wrap}
     .panel-title h3{font-size:20px;letter-spacing:-.03em}
     .panel-title p{margin-top:5px;color:var(--muted);font-size:13px}
+    .request-desk{
+      display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;
+      margin:0 0 16px;padding:12px 14px;border-radius:16px;
+      background:rgba(111,143,216,.06);
+      border:1px solid rgba(126,159,228,.12);
+    }
+    .request-kicker{font-size:10px;text-transform:uppercase;letter-spacing:.22em;color:var(--muted-2);font-weight:800;margin-bottom:5px}
+    .request-title{font-size:15px;font-weight:800;letter-spacing:-.02em;color:var(--white)}
+    .request-title span:first-child{display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:22px;margin-right:6px;border-radius:999px;background:rgba(245,191,101,.12);border:1px solid rgba(245,191,101,.2);color:var(--yellow);font-size:12px}
+    .request-copy{margin-top:3px;font-size:12px;color:var(--muted-2);line-height:1.5}
+    .request-desk .btn[disabled]{opacity:.45;cursor:not-allowed;transform:none}
 
     /* ── STATS ROW ───────────────────────────────────────────── */
     .stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
@@ -293,7 +304,6 @@
         <p>Manage workshops, hackathons, bootcamps, and career events that connect users to real engagement outside the learning path.</p>
       </div>
       <div class="header-actions">
-        <button class="btn btn-soft" onclick="openModal('participation-create')" style="border:1px solid rgba(126,159,228,.35);color:var(--blue-2)">＋ Add Participation</button>
         <button class="btn btn-soft" onclick="openSponsorCreate()" style="border:1px solid rgba(245,191,101,.35);color:var(--yellow)">💼 Add Sponsor</button>
         <button class="btn btn-soft" onclick="openFormCreate()" style="border:1px solid rgba(89,211,155,.35);color:var(--green)">📋 Add Form</button>
         <button class="btn btn-main" onclick="openModal('event-create')">＋ Create event</button>
@@ -393,7 +403,7 @@
         <div class="panel-header">
           <div class="panel-title">
             <h3>Participations</h3>
-            <p>View, register, update and cancel user event registrations.</p>
+            <p>View, update and cancel user event registrations.</p>
           </div>
           <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
             <div class="searchbar">
@@ -407,6 +417,15 @@
               <button class="filter" onclick="setPStatusFilter('Cancelled',this)">Cancelled</button>
             </div>
           </div>
+        </div>
+
+        <div class="request-desk">
+          <div>
+            <div class="request-kicker">Request desk</div>
+            <div class="request-title"><span id="pending-requests-count">0</span> pending request<span id="pending-requests-plural">s</span></div>
+            <div class="request-copy" id="pending-requests-copy">No one is waiting right now.</div>
+          </div>
+          <button class="btn btn-success" id="accept-all-btn" onclick="acceptAllRequests()">Accept All Pending</button>
         </div>
 
         <table>
@@ -620,33 +639,15 @@
   </div>
 </div>
 
-<!-- ── CREATE / EDIT PARTICIPATION ── -->
+<!-- ── EDIT PARTICIPATION ── -->
 <div class="modal-backdrop" id="modal-participation-form">
   <div class="modal">
     <div class="modal-header">
-      <h3 id="part-form-title">Register Participation</h3>
+      <h3 id="part-form-title">Edit Participation</h3>
       <button class="modal-close" onclick="closeModal('participation-form')">✕</button>
     </div>
     <div class="field-grid">
       <div class="field-row">
-        <div class="field">
-          <label>User Name *</label>
-          <input id="pf-user" type="text" placeholder="e.g. Amira Bensalem" />
-        </div>
-        <div class="field">
-          <label>User Email</label>
-          <input id="pf-email" type="email" placeholder="user@example.com" />
-        </div>
-      </div>
-      <div class="field">
-        <label>Event *</label>
-        <select id="pf-event"></select>
-      </div>
-      <div class="field-row">
-        <div class="field">
-          <label>Registration Date</label>
-          <input id="pf-regdate" type="date" />
-        </div>
         <div class="field">
           <label>Attendance Status</label>
           <select id="pf-attendance">
@@ -677,7 +678,7 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-soft" onclick="closeModal('participation-form')">Cancel</button>
-      <button class="btn btn-main" onclick="saveParticipation()">Save</button>
+      <button class="btn btn-main" onclick="saveParticipation()">Save Changes</button>
     </div>
   </div>
 </div>
@@ -950,8 +951,8 @@ function renderParticipations(){
       <td style="color:var(--yellow)">${ratingStars(p.rating)}</td>
       <td>
         <div class="table-actions">
-          <button class="btn btn-soft btn-sm" onclick="editParticipation(${p.id})">✏️</button>
-          <button class="btn btn-danger btn-sm" onclick="confirmDelete('part',${p.id},'${p.user.replace(/'/g,"\\'")}')">🗑</button>
+          ${p.status==='Pending'?`<button class="btn btn-success btn-sm" onclick="setParticipationDecision(${p.id},'Confirmed')">Accept</button><button class="btn btn-danger btn-sm" onclick="setParticipationDecision(${p.id},'Cancelled')">Refuse</button>`:''}
+          <button class="btn btn-danger btn-sm" onclick="confirmDelete('part',${p.id},'${p.user.replace(/'/g,"\\'")}')">Kick</button>
         </div>
       </td>
     </tr>`;
@@ -960,7 +961,52 @@ function renderParticipations(){
 
 function filterParticipations(){pPage=1;renderParticipations()}
 
+function pendingParts(){
+  return participations.filter(p=>p.status==='Pending');
+}
+
+function updateRequestDesk(){
+  const pending = pendingParts();
+  const countEl = $('pending-requests-count');
+  const pluralEl = $('pending-requests-plural');
+  const copyEl = $('pending-requests-copy');
+  const btn = $('accept-all-btn');
+  if(!countEl || !pluralEl || !copyEl || !btn) return;
+  countEl.textContent = pending.length;
+  pluralEl.textContent = pending.length === 1 ? '' : 's';
+  copyEl.textContent = pending.length
+    ? 'Approve every waiting learner in one move, then the front office will show them as registered.'
+    : 'No one is waiting right now.';
+  btn.disabled = pending.length === 0;
+  btn.textContent = pending.length ? `Accept All (${pending.length})` : 'All Clear';
+}
+
+function setParticipationDecision(id, decision){
+  const p=participations.find(x=>x.id===id); if(!p)return;
+  p.attendanceStatus=decision;
+  p.status=decision;
+  toast(decision === 'Confirmed' ? 'Participation accepted ✓' : 'Participation refused','success');
+  renderParticipations();
+  updateStats();
+}
+
 /* ─── STATS ─── */
+function acceptAllRequests(){
+  const pending = pendingParts();
+  if(!pending.length){
+    toast('No pending requests to accept','info');
+    updateRequestDesk();
+    return;
+  }
+  pending.forEach(p => {
+    p.attendanceStatus = 'Confirmed';
+    p.status = 'Confirmed';
+  });
+  toast(`${pending.length} request${pending.length!==1?'s':''} accepted`,'success');
+  renderParticipations();
+  updateStats();
+}
+
 function updateStats(){
   $('stat-total').textContent=events.length;
   $('stat-upcoming').textContent=events.filter(e=>e.status==='Upcoming').length;
@@ -969,6 +1015,7 @@ function updateStats(){
   const conf=participations.filter(p=>p.status==='Confirmed').length;
   $('stat-att').textContent=totalReg?Math.round(conf/totalReg*100)+'%':'—';
   $('stat-sponsors').textContent=sponsors.filter(s=>s.status==='active').length;
+  updateRequestDesk();
 }
 
 /* ─── MODALS ─── */
@@ -1061,30 +1108,21 @@ function viewEvent(id){
   openModal('event-view');
 }
 
-/* ─── PARTICIPATION CRUD ─── */
+/* ─── PARTICIPATION MANAGEMENT ─── */
 function refreshEventSelect(){
   const opts=events.map(e=>`<option value="${e.id}">${e.title}</option>`).join('');
-  ['pf-event','sf-event','ff-event'].forEach(id=>{const el=$(id);if(el)el.innerHTML=opts;});
+  ['sf-event','ff-event'].forEach(id=>{const el=$(id);if(el)el.innerHTML=opts;});
 }
 
 function openPartCreate(){
-  editingPartId=null;
-  $('part-form-title').textContent='Register Participation';
-  $('pf-user').value='';$('pf-email').value='';
-  $('pf-regdate').value='';$('pf-attendance').value='Confirmed';
-  $('pf-status').value='Confirmed';$('pf-rating').value='';$('pf-feedback').value='';
-  refreshEventSelect();
-  openModal('participation-form');
+  toast('Participation creation is handled from the front office.','error');
 }
 
 function editParticipation(id){
   const p=participations.find(x=>x.id===id); if(!p)return;
   editingPartId=id;
   $('part-form-title').textContent='Edit Participation';
-  $('pf-user').value=p.user;$('pf-email').value=p.email;
   refreshEventSelect();
-  $('pf-event').value=p.eventId;
-  $('pf-regdate').value=p.registeredAt||'';
   $('pf-attendance').value=p.attendanceStatus||p.status||'Pending';
   $('pf-status').value=p.status;
   $('pf-rating').value=p.rating||'';
@@ -1093,32 +1131,18 @@ function editParticipation(id){
 }
 
 function saveParticipation(){
-  const user=$('pf-user').value.trim();
-  if(!user){toast('User name is required','error');return}
-  const eventId=parseInt($('pf-event').value);
-  const today=new Date().toISOString().slice(0,10);
-  if(editingPartId){
-    const p=participations.find(x=>x.id===editingPartId);
-    Object.assign(p,{
-      user,email:$('pf-email').value,eventId,
-      registeredAt:$('pf-regdate').value||p.registeredAt,
-      attendanceStatus:$('pf-attendance').value,
-      status:$('pf-status').value,
-      rating:$('pf-rating').value?parseInt($('pf-rating').value):null,
-      feedback:$('pf-feedback').value
-    });
-    toast('Participation updated ✓','success');
-  }else{
-    participations.push({
-      id:nextPid++,user,email:$('pf-email').value,eventId,
-      registeredAt:$('pf-regdate').value||today,
-      attendanceStatus:$('pf-attendance').value,
-      status:$('pf-status').value,
-      rating:$('pf-rating').value?parseInt($('pf-rating').value):null,
-      feedback:$('pf-feedback').value
-    });
-    toast('Participation registered ✓','success');
+  if(!editingPartId){
+    toast('Participation creation is handled from the front office.','error');
+    return;
   }
+  const p=participations.find(x=>x.id===editingPartId);
+  Object.assign(p,{
+    attendanceStatus:$('pf-attendance').value,
+    status:$('pf-status').value,
+    rating:$('pf-rating').value?parseInt($('pf-rating').value):null,
+    feedback:$('pf-feedback').value
+  });
+  toast('Participation updated ✓','success');
   closeModal('participation-form');
   renderParticipations();
   updateStats();
@@ -1308,12 +1332,13 @@ function saveEventForm(){
 
 /* ─── DELETE ─── */
 function confirmDelete(type,id,name){
-  $('confirm-title').textContent=`Delete "${name}"?`;
+  $('confirm-title').textContent=type==='part' ? `Kick "${name}"?` : `Delete "${name}"?`;
   const msgs={event:"This will also remove all linked participations, sponsors and forms.",
-    part:"This registration will be permanently removed.",
+    part:"This participant will be removed from the event.",
     sponsor:"This sponsor will be permanently removed.",
     form:"This form will be permanently removed."};
   $('confirm-body').textContent=msgs[type]||"This action cannot be undone.";
+  $('confirm-ok-btn').textContent=type==='part' ? 'Yes, Kick' : 'Yes, Delete';
   $('confirm-ok-btn').onclick=()=>doDelete(type,id);
   openModal('confirm');
 }
@@ -1329,7 +1354,7 @@ function doDelete(type,id){
   }else if(type==='part'){
     participations=participations.filter(p=>p.id!==id);
     renderParticipations();
-    toast('Participation removed','success');
+    toast('Participant kicked','success');
   }else if(type==='sponsor'){
     sponsors=sponsors.filter(s=>s.id!==id);
     renderSponsors();
@@ -1360,8 +1385,8 @@ function openModal(name){
 }
 
 /* ─── OVERRIDE the + buttons to use correct open fns ─── */
-document.querySelector('[onclick="openModal(\'event-create\')"]').onclick=openEventCreate;
-document.querySelector('[onclick="openModal(\'participation-create\')"]').onclick=openPartCreate;
+const eventCreateButton = document.querySelector('[onclick="openModal(\'event-create\')"]');
+if (eventCreateButton) eventCreateButton.onclick = openEventCreate;
 
 /* ─── INIT ─── */
 refreshEventSelect();

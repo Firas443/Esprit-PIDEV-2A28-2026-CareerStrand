@@ -27,6 +27,7 @@ $time        = trim($_POST['time']         ?? '');
 $eventMode   = trim($_POST['eventMode'] ?? 'Online');
 $sponsorId   = !empty($_POST['sponsorId']) ? (int)$_POST['sponsorId'] : null;
 $duration    = isset($_POST['duration'])   ? (int)$_POST['duration']  : 0;
+$formLink    = trim($_POST['formLink'] ?? '');
 
 if (empty($name) || empty($type) || empty($date)) {  // Validation côté serveur
     http_response_code(422);// 422 = Données invalides
@@ -44,9 +45,9 @@ try {
     $time,
     $eventMode,
     $sponsorId,
-    $duration
+    $duration,
+    $formLink
 );
-
     if ($eventIdRaw !== '') {
         $event->setEventId((int)$eventIdRaw);
     }

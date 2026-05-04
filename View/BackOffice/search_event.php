@@ -1,9 +1,11 @@
 <?php
 require_once __DIR__ . '/../../Controller/EventsController.php';
+require_once __DIR__ . '/../../Controller/ParticipationController.php';
 
 header('Content-Type: application/json');
 
 $eventC  = new EventsController();
+$participationC = new ParticipationController();
 $keyword = trim($_GET['q']    ?? '');
 $type    = trim($_GET['type'] ?? '');
 
@@ -15,7 +17,7 @@ if ($keyword !== '') {
     $events = $eventC->listerEvents();
 }
 
-$data = array_map(function($e) {
+$data = array_map(function($e) use ($participationC) {
     return [
         'eventId'     => $e->getEventId(),
         'managerId'   => $e->getManagerId(),
@@ -24,6 +26,7 @@ $data = array_map(function($e) {
         'type'        => $e->getType(),
         'location'    => $e->getLocation(),
         'capacity'    => $e->getCapacity(),
+        'registrations' => $participationC->countByEvent($e->getEventId()),
         'date'        => $e->getDate(),
         'status'      => $e->getStatus(),
         'createdAt'   => $e->getCreatedAt(),
@@ -33,6 +36,7 @@ $data = array_map(function($e) {
         'eventMode'   => $e->getEventMode(),
         'sponsorId' => $e->getSponsorId(),
         'duration' => $e->getDuration(),
+        'formLink' => $e->getFormLink(),
     ];
 }, $events);
 

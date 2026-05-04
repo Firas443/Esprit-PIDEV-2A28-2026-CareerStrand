@@ -1,7 +1,9 @@
 <?php
 require_once __DIR__ . '/../../Controller/EventsController.php';
+require_once __DIR__ . '/../../Controller/ParticipationController.php';
 
 $eventC = new EventsController();
+$participationC = new ParticipationController();
 
 // ── Handle flash messages ──────────────────────────────
 $flashMsg  = '';
@@ -19,7 +21,7 @@ if (isset($_GET['error'])) {
 $dbEvents = $eventC->listerEvents();
 
 // ── Serialize to JS-safe JSON ──────────────────────────
-$eventsJson = json_encode(array_map(function($e) {
+$eventsJson = json_encode(array_map(function($e) use ($participationC) {
     return [
         'id'          => $e->getEventId(),
         'title'       => $e->getName(),
@@ -31,11 +33,12 @@ $eventsJson = json_encode(array_map(function($e) {
         'status'      => $e->getStatus(),
         'createdAt'   => $e->getCreatedAt(),
         'managerId'   => $e->getManagerId(),
-        'registrations' => 0,
+        'registrations' => $participationC->countByEvent($e->getEventId()),
         'time'        => '',
         'tags'        => $e->getTags(),
         'organiser'   => $e->getOrganiser(),
         'eventMode'   => $e->getEventMode(),
+        'formLink'    => $e->getFormLink(),
     ];
 }, $dbEvents), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT);
 ?>
@@ -90,9 +93,7 @@ $eventsJson = json_encode(array_map(function($e) {
         <p>Manage workshops, hackathons, bootcamps, and career events that connect users to real engagement outside the learning path.</p>
       </div>
       <div class="header-actions">
-        <button class="btn btn-soft" onclick="openModal('participation-create')">＋ Add Participation</button>
         <button class="btn btn-soft" onclick="openSponsorCreate()" >＋ Add Sponsor</button>
-        <button class="btn btn-soft" onclick="openFormCreate()">＋ Add Form</button>
         <button class="btn btn-main" onclick="openModal('event-create')">＋ Create event</button>
       </div>
     </div>
@@ -132,7 +133,7 @@ $eventsJson = json_encode(array_map(function($e) {
         <button class="tab active" onclick="switchTab('events',this)">🗓 Events</button>
         <button class="tab" onclick="switchTab('participations',this)">👥 Participations</button>
         <button class="tab" onclick="switchTab('sponsors',this)">💼 Sponsors</button>
-        <button class="tab" onclick="switchTab('forms',this)">📋 Event Forms</button>
+        <button class="tab" onclick="switchTab('ai-analyzer',this)">AI Analyzer</button>
       </div>
     </div>
 
@@ -191,7 +192,7 @@ $eventsJson = json_encode(array_map(function($e) {
         <div class="panel-header">
           <div class="panel-title">
             <h3>Participations</h3>
-            <p>View, register, update and cancel user event registrations.</p>
+            <p>View, update and cancel user event registrations.</p>
           </div>
           <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
             <div class="searchbar">
@@ -205,6 +206,15 @@ $eventsJson = json_encode(array_map(function($e) {
               <button class="filter" onclick="setPStatusFilter('Cancelled',this)">Cancelled</button>
             </div>
           </div>
+        </div>
+
+        <div class="request-desk">
+          <div>
+            <div class="request-kicker">Request desk</div>
+            <div class="request-title"><span id="pending-requests-count">0</span> pending request<span id="pending-requests-plural">s</span></div>
+            <div class="request-copy" id="pending-requests-copy">No one is waiting right now.</div>
+          </div>
+          <button class="btn btn-success" id="accept-all-btn" onclick="acceptAllRequests()">Accept All Pending</button>
         </div>
 
         <table>
@@ -271,48 +281,98 @@ $eventsJson = json_encode(array_map(function($e) {
       </div>
     </div>
 
-    <!-- ─── EVENT FORMS TABLE ─── -->
-    <div id="tab-forms" style="display:none">
+    <!-- AI FEEDBACK ANALYZER -->
+    <div id="tab-ai-analyzer" style="display:none">
       <div class="panel">
-        <div class="panel-header">
-          <div class="panel-title">
-            <h3>Event Forms</h3>
-            <p>Manage registration and application forms linked to events.</p>
+        <div class="ai-hero">
+          <div>
+            <div class="ai-kicker">Feedback intelligence</div>
+            <h3>AI Feedback Analyzer</h3>
+            <p>Analyze sentiment, detect complaint patterns, find loved events, and turn feedback into admin actions.</p>
           </div>
-          <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
-            <div class="searchbar" id="search-forms-wrap">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--muted-2);flex-shrink:0"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-              <input id="search-forms" type="text" placeholder="Search forms…" oninput="filterForms()" onfocus="this.parentElement.classList.add('is-focused')" onblur="this.parentElement.classList.remove('is-focused')" />
-            </div>
-            <div class="filters" id="form-status-filters">
-              <button class="filter is-selected" onclick="setFormFilter('all',this)">All</button>
-              <button class="filter" onclick="setFormFilter('open',this)">Open</button>
-              <button class="filter" onclick="setFormFilter('closed',this)">Closed</button>
-              <button class="filter" onclick="setFormFilter('draft',this)">Draft</button>
-            </div>
+          <div class="ai-hero-actions">
+            <div class="ai-live-pill">Live DB Analysis</div>
+            <button class="btn btn-main" onclick="loadAiFeedbackAnalyzer()">Refresh Analysis</button>
           </div>
         </div>
-        <table>
-          <thead>
-            <tr>
-              <th>Title</th>
-              <th>Event</th>
-              <th>Description</th>
-              <th>Form Link</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody id="forms-tbody"></tbody>
-        </table>
-        <div class="table-foot">
-          <span id="forms-count">— forms</span>
+
+        <div class="ai-grid">
+          <div class="ai-card ai-card-total">
+            <div class="ai-card-top">
+              <span>Total Feedbacks</span>
+              <b>DATA</b>
+            </div>
+            <div class="ai-metric" id="ai-total-feedbacks">0</div>
+            <div class="ai-caption">Feedback with text or rating</div>
+          </div>
+          <div class="ai-card">
+            <div class="ai-card-top">
+              <span>Positive</span>
+              <b class="ai-good">GOOD</b>
+            </div>
+            <div class="ai-metric ai-good" id="ai-positive-percent">0%</div>
+            <div class="ai-bar"><div class="ai-bar-fill ai-bar-good" id="ai-positive-bar"></div></div>
+            <div class="ai-caption" id="ai-positive-count">0 reviews</div>
+          </div>
+          <div class="ai-card">
+            <div class="ai-card-top">
+              <span>Negative</span>
+              <b class="ai-bad">RISK</b>
+            </div>
+            <div class="ai-metric ai-bad" id="ai-negative-percent">0%</div>
+            <div class="ai-bar"><div class="ai-bar-fill ai-bar-bad" id="ai-negative-bar"></div></div>
+            <div class="ai-caption" id="ai-negative-count">0 reviews</div>
+          </div>
+          <div class="ai-card">
+            <div class="ai-card-top">
+              <span>Neutral</span>
+              <b class="ai-warn">WATCH</b>
+            </div>
+            <div class="ai-metric ai-warn" id="ai-neutral-percent">0%</div>
+            <div class="ai-bar"><div class="ai-bar-fill ai-bar-warn" id="ai-neutral-bar"></div></div>
+            <div class="ai-caption" id="ai-neutral-count">0 reviews</div>
+          </div>
+        </div>
+
+        <div class="ai-action-strip">
+          <div>
+            <div class="ai-kicker">Action Priority</div>
+            <h3 id="ai-priority-title">Waiting for analysis</h3>
+            <p id="ai-priority-copy">Open this tab or refresh analysis to generate admin priorities from feedback.</p>
+          </div>
+          <div class="ai-score-ring">
+            <span id="ai-health-score">0</span>
+            <small>Health</small>
+          </div>
+        </div>
+
+        <div class="ai-panel-grid">
+          <div class="ai-section">
+            <div class="ai-section-head">
+              <h3>Top Complaints This Month</h3>
+              <p>Most frequent negative topics detected from feedback.</p>
+            </div>
+            <div class="ai-list" id="ai-complaints-list"></div>
+          </div>
+
+          <div class="ai-section">
+            <div class="ai-section-head">
+              <h3>Most Liked Events</h3>
+              <p>Ranked by average rating and positive feedback count.</p>
+            </div>
+            <div class="ai-list" id="ai-liked-events-list"></div>
+          </div>
+        </div>
+
+        <div class="ai-section section-gap">
+          <div class="ai-section-head">
+            <h3>AI Suggestions</h3>
+            <p>Automatic recommendations based on negative feedback patterns.</p>
+          </div>
+          <div class="ai-suggestions" id="ai-suggestions-list"></div>
         </div>
       </div>
     </div>
-
-  </main>
-</div>
 
 <!-- ══════════ MODALS ══════════ -->
 
@@ -351,7 +411,7 @@ $eventsJson = json_encode(array_map(function($e) {
       <div class="field-row">
         <div class="field">
           <label>Date *</label>
-          <input id="ef-date" type="date" />
+          <input id="ef-date" type="date" onchange="autoCheckDateStatus()" />
         </div>
         <div class="field">
           <label>Time</label>
@@ -362,17 +422,17 @@ $eventsJson = json_encode(array_map(function($e) {
     <label>Event Mode *</label>
     <div style="display:flex;gap:16px;margin-top:6px">
         <label style="display:flex;align-items:center;gap:6px">
-            <input type="radio" name="event-mode" value="Online" checked> Online
-        </label>
-        <label style="display:flex;align-items:center;gap:6px">
-            <input type="radio" name="event-mode" value="In-person"> In‑person
-        </label>
+    <input type="radio" name="event-mode" value="Online" id="online-radio" checked> Online
+</label>
+<label style="display:flex;align-items:center;gap:6px">
+    <input type="radio" name="event-mode" value="In-person" id="inperson-radio"> In‑person
+</label>
     </div>
 </div>
       <div class="field-row">
         <div class="field">
           <label>Location / Platform</label>
-          <input id="ef-location" type="text" placeholder="Online or venue name" />
+          <input id="ef-location" type="text" placeholder="venue name" />
         </div>
         <div class="field">
           <label>Capacity</label>
@@ -395,17 +455,37 @@ $eventsJson = json_encode(array_map(function($e) {
       </div>
       <div class="field-row">
         <div class="field">
-          <label>Manager ID </label>
-          <input id="ef-manager" type="number" placeholder="User ID of manager" />
+           <label>Manager *</label>
+              <select id="ef-manager" required>
+                  <option value="">Select a manager</option>
+                  <?php
+                  $userStmt = config::getConnexion()->query("SELECT userId, fullName FROM user WHERE role = 'manager' ORDER BY fullName");
+                  $managers = $userStmt->fetchAll(PDO::FETCH_ASSOC);
+                  foreach ($managers as $mgr): ?>
+                      <option value="<?= $mgr['userId'] ?>"><?= htmlspecialchars($mgr['fullName']) ?> (ID: <?= $mgr['userId'] ?>)</option>
+                  <?php endforeach; ?>
+              </select>
         </div>
         <div class="field">
-          <label>Sponsor ID *</label>
-          <input id="ef-sponsor" type="number" min="1" placeholder="e.g. 1" />
+          <label>Sponsor *</label>
+          <select id="ef-sponsor">
+              <option value="">None</option>
+              <?php
+              $sponsorStmt = config::getConnexion()->query("SELECT sponsorId, name, company FROM sponsor ORDER BY name");
+              $sponsors = $sponsorStmt->fetchAll(PDO::FETCH_ASSOC);
+              foreach ($sponsors as $sp): ?>
+                  <option value="<?= $sp['sponsorId'] ?>"><?= htmlspecialchars($sp['name']) ?> (<?= htmlspecialchars($sp['company']) ?>)</option>
+              <?php endforeach; ?>
+          </select>
         </div>
         <div class="field">
           <label>Duration (minutes) *</label>
           <input id="ef-duration" type="number" min="1" placeholder="e.g. 60" />
         </div>
+        <div class="field">
+        <label>Form Link (URL) *</label>
+        <input id="ef-formlink" type="url" placeholder="https://forms.google.com/…" />
+      </div>
       </div>
     </div>
     <div class="modal-footer">
@@ -430,33 +510,30 @@ $eventsJson = json_encode(array_map(function($e) {
   </div>
 </div>
 
-<!-- ── CREATE / EDIT PARTICIPATION ── -->
+<!-- ── VIEW PARTICIPATION ── -->
+<div class="modal-backdrop" id="modal-participation-view">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="part-view-title">Participation Details</h3>
+      <button class="modal-close" onclick="closeModal('participation-view')">✕</button>
+    </div>
+    <div id="part-view-body"></div>
+    <div class="modal-footer">
+      <button class="btn btn-soft" onclick="closeModal('participation-view')">Close</button>
+      <button class="btn btn-main" id="part-view-edit-btn">Edit Participation</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── EDIT PARTICIPATION ── -->
 <div class="modal-backdrop" id="modal-participation-form">
   <div class="modal">
     <div class="modal-header">
-      <h3 id="part-form-title">Register Participation</h3>
+      <h3 id="part-form-title">Edit Participation</h3>
       <button class="modal-close" onclick="closeModal('participation-form')">✕</button>
     </div>
     <div class="field-grid">
       <div class="field-row">
-        <div class="field">
-          <label>User Name *</label>
-          <input id="pf-user" type="text" placeholder="e.g. Amira Bensalem" />
-        </div>
-        <div class="field">
-          <label>User Email</label>
-          <input id="pf-email" type="email" placeholder="user@example.com" />
-        </div>
-      </div>
-      <div class="field">
-        <label>Event ID *</label>
-<input id="pf-event" type="number" min="1" placeholder="e.g. 3" />
-      </div>
-      <div class="field-row">
-        <div class="field">
-          <label>Registration Date</label>
-          <input id="pf-regdate" type="date" />
-        </div>
         <div class="field">
           <label>Attendance Status</label>
           <select id="pf-attendance">
@@ -487,7 +564,7 @@ $eventsJson = json_encode(array_map(function($e) {
     </div>
     <div class="modal-footer">
       <button class="btn btn-soft" onclick="closeModal('participation-form')">Cancel</button>
-      <button class="btn btn-main" onclick="saveParticipation()">Save</button>
+      <button class="btn btn-main" onclick="saveParticipation()">Save Changes</button>
     </div>
   </div>
 </div>
@@ -525,54 +602,22 @@ $eventsJson = json_encode(array_map(function($e) {
           <input id="sf-amount" type="number" min="0" step="0.01" placeholder="e.g. 5000" />
         </div>
         <div class="field">
-          <label>User ID </label>
-          <input id="sf-user" type="number" min="1" placeholder="e.g. 1" />
-        </div>
+          <label>User *</label>
+          <select id="sf-user" required>
+              <option value="">Select a user</option>
+              <?php
+              $userStmt = config::getConnexion()->query("SELECT userId, fullName FROM user ORDER BY fullName");
+              $users = $userStmt->fetchAll(PDO::FETCH_ASSOC);
+              foreach ($users as $usr): ?>
+                  <option value="<?= $usr['userId'] ?>"><?= htmlspecialchars($usr['fullName']) ?> (ID: <?= $usr['userId'] ?>)</option>
+              <?php endforeach; ?>
+          </select>
+      </div>
       </div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-soft" onclick="closeModal('sponsor-form')">Cancel</button>
       <button class="btn btn-main" onclick="saveSponsor()">Save Sponsor</button>
-    </div>
-  </div>
-</div>
-
-<!-- ── CREATE / EDIT EVENT FORM ── -->
-<div class="modal-backdrop" id="modal-eventform-form">
-  <div class="modal">
-    <div class="modal-header">
-      <h3 id="eventform-form-title">Add Event Form</h3>
-      <button class="modal-close" onclick="closeModal('eventform-form')">✕</button>
-    </div>
-    <div class="field-grid">
-      <div class="field">
-        <label>Form Title *</label>
-        <input id="ff-title" type="text" placeholder="e.g. Registration Form – Portfolio Lab" />
-      </div>
-      <div class="field">
-        <label>Event ID *</label>
-       <input id="ff-event" type="number" min="1" placeholder="e.g. 3" />
-      </div>
-      <div class="field">
-        <label>Description</label>
-        <textarea id="ff-desc" placeholder="What is this form for?"></textarea>
-      </div>
-      <div class="field">
-        <label>Form Link (URL) *</label>
-        <input id="ff-link" type="url" placeholder="https://forms.google.com/…" />
-      </div>
-      <div class="field">
-        <label>Status</label>
-        <select id="ff-status">
-          <option value="open">Open</option>
-          <option value="closed">Closed</option>
-          <option value="draft">Draft</option>
-        </select>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-soft" onclick="closeModal('eventform-form')">Cancel</button>
-      <button class="btn btn-main" onclick="saveEventForm()">Save Form</button>
     </div>
   </div>
 </div>

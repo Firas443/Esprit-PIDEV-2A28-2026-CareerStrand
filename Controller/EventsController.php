@@ -73,10 +73,10 @@ class EventsController {
         if ($event->getEventId() !== null) {
             $sql = "INSERT INTO event
         (eventId, managerId, sponsorId, title, description, type, location,
-         capacity, tags, organiser, time, eventMode, duration, date, status, createdAt)
+         capacity, tags, organiser, time, eventMode, duration, formLink, date, status, createdAt)
         VALUES
         (:eventId, :managerId, :sponsorId, :title, :description, :type, :location,
-         :capacity, :tags, :organiser, :time, :eventMode, :duration, :date, :status, CURDATE())";
+         :capacity, :tags, :organiser, :time, :eventMode, :duration, :formLink, :date, :status, CURDATE())";
             $params = [
                 'eventId'     => $event->getEventId(),
                 'managerId'   => $event->getManagerId(),
@@ -91,16 +91,17 @@ class EventsController {
                 'time'        => $event->getTime(),
                 'eventMode' => $event->getEventMode(),
                 'duration'    => $event->getDuration(),
+                'formLink'    => $event->getFormLink(),
                 'date'        => $event->getDate(),
                 'status'      => $event->getStatus(),
             ];
         } else {
-           $sql = "INSERT INTO event
+         $sql = "INSERT INTO event
         (managerId, sponsorId, title, description, type, location,
-         capacity, tags, organiser, time, eventMode, duration, date, status, createdAt)
+         capacity, tags, organiser, time, eventMode, duration, formLink, date, status, createdAt)
         VALUES
         (:managerId, :sponsorId, :title, :description, :type, :location,
-         :capacity, :tags, :organiser, :time, :eventMode, :duration, :date, :status, CURDATE())";
+         :capacity, :tags, :organiser, :time, :eventMode, :duration, :formLink, :date, :status, CURDATE())";
             $params = [
                 'managerId'   => $event->getManagerId(),
                 'sponsorId'   => $event->getSponsorId(),
@@ -114,6 +115,7 @@ class EventsController {
                 'time'        => $event->getTime(),
                 'eventMode' => $event->getEventMode(),
                 'duration'    => $event->getDuration(),
+                'formLink'    => $event->getFormLink(),
                 'date'        => $event->getDate(),
                 'status'      => $event->getStatus(),
             ];
@@ -142,6 +144,7 @@ class EventsController {
             time        = :time,
             eventMode   = :eventMode,
             duration    = :duration,
+            formLink    = :formLink,
             date        = :date,
             status      = :status
         WHERE eventId = :id";
@@ -161,6 +164,7 @@ class EventsController {
                 'time'        => $event->getTime(),
                 'eventMode' => $event->getEventMode(),
                 'duration'    => $event->getDuration(),
+                'formLink'    => $event->getFormLink(),
                 'date'        => $event->getDate(),
                 'status'      => $event->getStatus(),
             ]);
@@ -221,7 +225,8 @@ class EventsController {
             $row['time']        ?? '',
             $row['eventMode'] ?? 'Online',
             isset($row['sponsorId']) ? (int)$row['sponsorId'] : null,
-            (int)($row['duration'] ?? 0)
+            (int)($row['duration'] ?? 0),
+            $row['formLink']    ?? ''
         );
         $e->setEventId((int)$row['eventId']);
         return $e;

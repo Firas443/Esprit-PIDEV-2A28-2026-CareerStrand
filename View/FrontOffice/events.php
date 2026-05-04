@@ -1,10 +1,12 @@
 <?php
 require_once __DIR__ . '/../../Controller/EventsController.php';
+require_once __DIR__ . '/../../Controller/ParticipationController.php';
 
 $eventC  = new EventsController();
+$participationC = new ParticipationController();
 $dbEvents = $eventC->listerEvents();
 
-$eventsJson = json_encode(array_map(function($e) {
+$eventsJson = json_encode(array_map(function($e) use ($participationC) {
     return [
         'id'          => $e->getEventId(),
         'title'       => $e->getName(),
@@ -18,13 +20,14 @@ $eventsJson = json_encode(array_map(function($e) {
         'managerId'   => $e->getManagerId(),
         'sponsorId'   => $e->getSponsorId(),
         'duration'    => $e->getDuration(),
-        'registrations' => 0,
+        'registrations' => $participationC->countByEvent($e->getEventId()),
         'time'        => $e->getTime(),
         'tags'        => explode(',', $e->getTags()),
         'organiser'   => $e->getOrganiser(),
         'trending'    => false,
         'popular'     => false,
         'eventMode'   => $e->getEventMode(),
+        'formLink'    => $e->getFormLink(),
     ];
 }, $dbEvents), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT);
 ?>
@@ -40,6 +43,44 @@ $eventsJson = json_encode(array_map(function($e) {
 </head>
 </head>
 <body>
+<!-- ══ PAGE SIGN-IN ══ -->
+<div id="page-signin" style="
+  position:fixed;inset:0;z-index:9999;
+  display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(circle at top left,rgba(111,143,216,.14),transparent 24%),
+    linear-gradient(135deg,#02050f 0%,#071126 42%,#0b1022 100%);">
+  <div style="width:100%;max-width:420px;padding:36px;border-radius:30px;
+    background:linear-gradient(180deg,rgba(10,18,40,.99),rgba(6,12,26,1));
+    border:1px solid rgba(126,159,228,.2);box-shadow:0 40px 120px rgba(0,0,0,.6)">
+    <div style="text-align:center;margin-bottom:28px">
+      <div style="font-size:40px;margin-bottom:12px">🎟</div>
+      <h2 style="font-size:24px;font-weight:900;letter-spacing:-.03em;color:#f5f3ee">Welcome to CareerStrand</h2>
+      <p style="margin-top:8px;font-size:13px;color:rgba(245,243,238,.6)">Sign in to join events and track your participations.</p>
+    </div>
+    <div style="display:grid;gap:14px">
+      <div style="display:grid;gap:7px">
+        <label style="font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:rgba(245,243,238,.46)">Full Name *</label>
+        <input id="signin-name" type="text" placeholder="e.g. Amira Bensalem"
+          style="border:1px solid rgba(126,159,228,.18);border-radius:14px;padding:13px 16px;
+            background:rgba(111,143,216,.08);color:#f5f3ee;outline:none;font-family:inherit;font-size:14px" />
+      </div>
+      <div style="display:grid;gap:7px">
+        <label style="font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:rgba(245,243,238,.46)">Email *</label>
+        <input id="signin-email" type="email" placeholder="you@example.com"
+          style="border:1px solid rgba(126,159,228,.18);border-radius:14px;padding:13px 16px;
+            background:rgba(111,143,216,.08);color:#f5f3ee;outline:none;font-family:inherit;font-size:14px" />
+      </div>
+      <button onclick="doSignIn()"
+        style="margin-top:6px;border:none;border-radius:999px;padding:15px;cursor:pointer;
+          background:linear-gradient(90deg,#6f8fd8,#ff6e45);color:#f5f3ee;
+          font-weight:800;font-size:15px;font-family:inherit;
+          box-shadow:0 12px 30px rgba(255,110,69,.2)">
+        Enter Platform →
+      </button>
+    </div>
+    <p id="signin-error" style="display:none;margin-top:12px;text-align:center;font-size:12px;color:#ff6e45"></p>
+  </div>
+</div>
 
 <!-- ══ HEADER ══ -->
 <header class="site-header">
@@ -57,8 +98,7 @@ $eventsJson = json_encode(array_map(function($e) {
         <button class="nav-btn" onclick="">Opportunities</button>
       </nav>
       <div class="header-right">
-        <button class="btn btn-ghost btn-sm" id="nav-sponsors" onclick="showPage('sponsors')">💼 Sponsors</button>
-        <button class="btn btn-ghost btn-sm" id="nav-forms" onclick="showPage('forms')">📋 Forms</button>
+        <button class="btn btn-ghost btn-sm" id="nav-sponsors" onclick="showPage('sponsors')"> Sponsors</button>
         <button class="btn btn-ghost btn-sm" id="nav-my" onclick="showPage('my')">My Events</button>
         <div class="user-av" title="Logged in as: Alex">AY</div>
       </div>
@@ -142,23 +182,29 @@ $eventsJson = json_encode(array_map(function($e) {
         <div class="feedback-section" id="feedback-wrap">
           <div class="feedback-title" id="feedback-section-title">⭐ Ratings & Feedback</div>
 
-          <!-- Rating form (only for joined + past) -->
+          <div id="feedback-status-wrap"></div>
+
+          <!-- Rating form (only for confirmed + past) -->
           <div id="feedback-form-wrap" style="display:none">
-            <p style="font-size:13px;color:var(--muted);margin-bottom:14px">Share your experience with this event:</p>
+            <p class="feedback-form-copy" id="feedback-form-copy">Share your experience with this event:</p>
             <div class="feedback-form">
               <div>
-                <div style="font-size:11px;text-transform:uppercase;letter-spacing:.16em;color:var(--muted-2);margin-bottom:8px">Your Rating</div>
-                <div class="stars-input" id="rating-input">
-                  <span class="star empty" onclick="setRating(1)">★</span>
-                  <span class="star empty" onclick="setRating(2)">★</span>
-                  <span class="star empty" onclick="setRating(3)">★</span>
-                  <span class="star empty" onclick="setRating(4)">★</span>
-                  <span class="star empty" onclick="setRating(5)">★</span>
+                <div class="feedback-label">Your Rating</div>
+                <div class="rating-row">
+                  <button type="button" class="rating-zero is-selected" id="rating-zero-btn" onclick="setRating(0)">0</button>
+                  <div class="stars-input" id="rating-input">
+                    <span class="star empty" onclick="setRating(1)">★</span>
+                    <span class="star empty" onclick="setRating(2)">★</span>
+                    <span class="star empty" onclick="setRating(3)">★</span>
+                    <span class="star empty" onclick="setRating(4)">★</span>
+                    <span class="star empty" onclick="setRating(5)">★</span>
+                  </div>
+                  <span class="rating-hint" id="rating-hint">0 / 5</span>
                 </div>
               </div>
               <textarea class="feedback-textarea" id="feedback-text" placeholder="Write your feedback…"></textarea>
               <div style="display:flex;justify-content:flex-end">
-                <button class="btn btn-main btn-sm" onclick="submitFeedback()">Submit Feedback</button>
+                <button class="btn btn-main btn-sm" id="feedback-submit-btn" onclick="submitFeedback()">Submit Feedback</button>
               </div>
             </div>
           </div>
@@ -265,32 +311,6 @@ $eventsJson = json_encode(array_map(function($e) {
   </div>
 </div>
 
-<!-- ══════════ PAGE: FORMS ══════════ -->
-<div class="page" id="page-forms">
-  <div class="container" style="padding:40px 0">
-    <div style="display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-bottom:28px">
-      <div>
-        <div style="font-size:11px;text-transform:uppercase;letter-spacing:.22em;color:var(--muted-2);margin-bottom:10px">Registration Forms</div>
-        <h2 style="font-size:clamp(28px,4vw,40px);font-weight:900;letter-spacing:-.04em">Event Forms</h2>
-        <p style="margin-top:8px;color:var(--muted);font-size:14px;line-height:1.75">Open registration and application forms for upcoming events.</p>
-      </div>
-      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-        <div class="searchbar" id="sb-forms-wrap" style="min-width:220px">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--muted-2);flex-shrink:0"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-          <input id="search-forms-front" type="text" placeholder="Search forms…" oninput="renderForms()" onfocus="document.getElementById('sb-forms-wrap').classList.add('focused')" onblur="document.getElementById('sb-forms-wrap').classList.remove('focused')" />
-        </div>
-        <div class="filters" id="form-status-filters-front">
-          <button class="filter is-selected" onclick="setFormStatusFilter('all',this)">All</button>
-          <button class="filter" onclick="setFormStatusFilter('open',this)">Open</button>
-          <button class="filter" onclick="setFormStatusFilter('closed',this)">Closed</button>
-          <button class="filter" onclick="setFormStatusFilter('draft',this)">Draft</button>
-        </div>
-      </div>
-    </div>
-    <div id="forms-list" style="display:grid;gap:16px"></div>
-  </div>
-</div>
-
 <!-- ══ MODALS ══ -->
 
 <!-- Join Confirm -->
@@ -307,13 +327,13 @@ $eventsJson = json_encode(array_map(function($e) {
         <div style="font-size:13px;color:var(--muted);line-height:1.7" id="join-modal-meta">—</div>
       </div>
       <div style="padding:16px;border-radius:16px;background:rgba(89,211,155,.07);border:1px solid rgba(89,211,155,.16)">
-        <div style="font-size:13px;color:var(--green);font-weight:600;margin-bottom:4px">✓ Your spot will be confirmed immediately</div>
-        <div style="font-size:12px;color:var(--muted)">You can cancel anytime from My Participations.</div>
+        <div style="font-size:13px;color:var(--green);font-weight:600;margin-bottom:4px">Your request will be sent to the admin for approval</div>
+        <div style="font-size:12px;color:var(--muted)">Your status will stay Pending until it is accepted or refused.</div>
       </div>
     </div>
     <div class="modal-ftr">
       <button class="btn btn-ghost" onclick="closeModal('join')">Cancel</button>
-      <button class="btn btn-main" id="join-confirm-btn">Confirm Registration</button>
+      <button class="btn btn-main" id="join-confirm-btn">Send Request</button>
     </div>
   </div>
 </div>
@@ -349,17 +369,10 @@ $eventsJson = json_encode(array_map(function($e) {
 let events = <?php echo $eventsJson; ?>;
 
 /* Participations: {eventId, status, joinedAt} */
-let myParticipations = [
-  {eventId:3,status:"Confirmed",joinedAt:"2025-07-20"},
-  {eventId:6,status:"Confirmed",joinedAt:"2025-07-08"},
-];
+let myParticipations = []; // loaded from DB after sign-in
 
 /* Feedbacks: {eventId, user, rating, text, date} */
-let feedbacks = [
-  {eventId:3,user:"Alex Y.",rating:4,text:"Really useful session. Got direct feedback on my portfolio.",date:"2025-07-31"},
-  {eventId:3,user:"Rim K.",rating:5,text:"Best career event I've attended. Managers were very engaged.",date:"2025-07-31"},
-  {eventId:6,user:"Omar M.",rating:4,text:"Great energy! Loved the open source community vibe.",date:"2025-07-13"},
-];
+let feedbacks = []; // loaded from DB via loadFeedbacksFromDB()
 
 let currentFilter = "all";
 let currentMyFilter = "all";
@@ -367,6 +380,7 @@ let currentDetailId = null;
 let currentRating = 0;
 let pendingJoinId = null;
 let pendingCancelId = null;
+let participationPollTimer = null;
 
 /* ───── HELPERS ───── */
 const $ = id => document.getElementById(id);
@@ -395,11 +409,24 @@ function avgRating(eid){
   return (fb.reduce((s,f)=>s+f.rating,0)/fb.length).toFixed(1);
 }
 
-function isJoined(eid){return myParticipations.some(p=>p.eventId===eid&&p.status!=="Cancelled")}
 function getParticipation(eid){return myParticipations.find(p=>p.eventId===eid)}
+function participationStatus(p){return (p?.status || '').toLowerCase()}
+function hasActiveParticipation(eid){
+  const p=getParticipation(eid);
+  return !!p && participationStatus(p)!=="cancelled";
+}
+function isPending(eid){
+  const p=getParticipation(eid);
+  return !!p && participationStatus(p)==="pending";
+}
+function isJoined(eid){
+  const p=getParticipation(eid);
+  return !!p && participationStatus(p)==="confirmed";
+}
 
 function hasFeedback(eid){
-  return feedbacks.some(f=>f.eventId===eid&&f.user==="Alex Y.");
+  if(!currentUser) return false;
+  return feedbacks.some(f=>f.eventId===eid&&f.user===currentUser.name);
 }
 
 /* ───── FILTER ───── */
@@ -426,12 +453,64 @@ function getFiltered(){
   });
 }
 
+/* ───── SIGN-IN TEMPORAIRE ───── */
+let currentUser = null; // { name, email }
+
+function doSignIn(){
+  const name  = document.getElementById('signin-name').value.trim();
+  const email = document.getElementById('signin-email').value.trim();
+  const err   = document.getElementById('signin-error');
+
+  if(!name || !email){
+    err.textContent = 'Veuillez remplir tous les champs.';
+    err.style.display = 'block';
+    return;
+  }
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+    err.textContent = 'Email invalide.';
+    err.style.display = 'block';
+    return;
+  }
+
+  // Verify against DB
+  const fd = new FormData();
+  fd.append('name',  name);
+  fd.append('email', email);
+
+  fetch('verify_user.php', { method:'POST', body:fd })
+    .then(r => r.json())
+    .then(data => {
+      if(!data.success){
+        err.textContent = data.error || 'Utilisateur introuvable.';
+        err.style.display = 'block';
+        return;
+      }
+      // Store full user info including userId from DB
+      currentUser = { userId: data.userId, name: data.fullName, email: data.email };
+      const av = document.getElementById('header-av');
+      if(av){
+        av.textContent = data.fullName.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+        av.title = data.fullName;
+      }
+      document.getElementById('page-signin').style.display = 'none';
+      err.style.display = 'none';
+      loadMyParticipationsFromDB();
+      startParticipationNotifications();
+      renderAll();
+    })
+    .catch(() => {
+      err.textContent = 'Erreur réseau. Vérifiez votre connexion.';
+      err.style.display = 'block';
+    });
+}
+
+
 /* ───── RECOMMENDATIONS ───── */
 function getRecommended(){
-  const joinedTypes=myParticipations.filter(p=>p.status!=="Cancelled").map(p=>events.find(e=>e.id===p.eventId)?.type).filter(Boolean);
+  const joinedTypes=myParticipations.filter(p=>p.status==="Confirmed").map(p=>events.find(e=>e.id===p.eventId)?.type).filter(Boolean);
   return events.filter(e=>{
     if(e.status==="Past") return false;
-    if(isJoined(e.id)) return false;
+    if(hasActiveParticipation(e.id)) return false;
     if(joinedTypes.includes(e.type)) return true;
     if(e.popular&&pct(e.registrations,e.capacity)>70) return true;
     return false;
@@ -441,6 +520,7 @@ function getRecommended(){
 /* ───── RENDER CARD ───── */
 function renderCard(e, showRec=false){
   const joined=isJoined(e.id);
+  const pending=isPending(e.id);
   const p=pct(e.registrations,e.capacity);
   const avg=avgRating(e.id);
   const isFull=e.registrations>=e.capacity;
@@ -453,6 +533,7 @@ function renderCard(e, showRec=false){
   if(showRec) recBanner=`<div class="recommended-banner"><span>⭐</span> Recommended based on your interests</div>`;
 
   let joinedBadge="";
+  if(pending) joinedBadge=`<span class="chip chip-yellow" style="margin-left:auto">Pending approval</span>`;
   if(joined) joinedBadge=`<span class="chip chip-green" style="margin-left:auto">✓ Joined</span>`;
 
   let ratingHtml="";
@@ -484,9 +565,11 @@ function renderCard(e, showRec=false){
           <div class="cap-info"><span>Capacity</span><span>${p}%</span></div>
           <div class="cap-bar"><div class="cap-fill" style="width:${p}%"></div></div>
         </div>
+        ${pending ? `<button class="btn btn-pending btn-sm" onclick="event.stopPropagation();openCancelModal(${e.id})">Pending approval</button>` : `
         <button class="btn ${joined?'btn-success':'btn-main'} btn-sm" onclick="event.stopPropagation();${joined?`openCancelModal(${e.id})`:`openJoinModal(${e.id})`}" ${e.status==='Past'||(!joined&&isFull)?'disabled style="opacity:.5;cursor:not-allowed"':''}>
           ${e.status==='Past'?'Past':joined?'✓ Joined':isFull?'Full':'Join →'}
         </button>
+        `}
       </div>
     </div>
   `;
@@ -521,7 +604,7 @@ function renderAll(){
   // Hero stats
   $('hs-total').textContent=events.length;
   $('hs-upcoming').textContent=events.filter(e=>e.status==="Upcoming").length;
-  $('hs-joined').textContent=myParticipations.filter(p=>p.status!=="Cancelled").length;
+  $('hs-joined').textContent=myParticipations.filter(p=>p.status==="Confirmed").length;
 }
 
 /* ───── MY PARTICIPATIONS ───── */
@@ -566,6 +649,7 @@ function openDetail(id, scrollToFeedback=false){
   const e=events.find(ev=>ev.id===id);
   if(!e) return;
   const joined=isJoined(id);
+  const pending=isPending(id);
   const part=getParticipation(id);
   const isFull=e.registrations>=e.capacity;
   const p=pct(e.registrations,e.capacity);
@@ -574,6 +658,7 @@ function openDetail(id, scrollToFeedback=false){
   $('detail-types').innerHTML=`
     <span class="chip ${typeChipColor(e.type)}">${e.type}</span>
     ${statusChip(e.status)}
+    ${pending?'<span class="chip chip-yellow">Request pending approval</span>':''}
     ${joined?'<span class="chip chip-green">✓ You are registered</span>':''}
     ${e.trending?'<span class="chip chip-red">🔥 Trending</span>':''}
     ${e.popular?'<span class="chip chip-blue">⭐ Popular</span>':''}
@@ -591,8 +676,10 @@ $('detail-meta').innerHTML=`
     <div class="detail-meta-item"><div class="lbl">Format</div><div class="val">${e.eventMode === 'Online' ? '🖥️ Online' : '📍 In-person'}</div></div>
     <div class="detail-meta-item"><div class="lbl">Sponsor ID</div><div class="val">${e.sponsorId || '—'}</div></div>
     <div class="detail-meta-item"><div class="lbl">Duration (min)</div><div class="val">${e.duration || '—'}</div></div>
+    <div class="detail-meta-item"><div class="lbl">Registration Form</div><div class="val"><a href="${e.formLink}" target="_blank">${e.formLink || '—'}</a></div></div>
     <div class="detail-meta-item"><div class="lbl">Tags</div><div class="val">${e.tags&&e.tags.length?e.tags.join(', '):'—'}</div></div>
     <div class="detail-meta-item"><div class="lbl">Created At</div><div class="val">📆 ${e.createdAt||'—'}</div></div>
+
   `;
 
   // Join count
@@ -605,6 +692,8 @@ $('detail-meta').innerHTML=`
   let joinBtnHtml="";
   if(e.status==="Past"){
     joinBtnHtml=`<button class="btn btn-ghost" disabled style="width:100%;justify-content:center;opacity:.5">Event Ended</button>`;
+  }else if(pending){
+    joinBtnHtml=`<button class="btn btn-pending" style="width:100%;justify-content:center" onclick="openCancelModal(${e.id})">Request pending approval - Cancel?</button>`;
   }else if(joined){
     joinBtnHtml=`<button class="btn btn-success" style="width:100%;justify-content:center" onclick="openCancelModal(${e.id})">✓ Registered — Cancel?</button>`;
   }else if(isFull){
@@ -634,11 +723,21 @@ $('detail-meta').innerHTML=`
   // Feedback section
   const avg=avgRating(id);
   const eventFeedbacks=feedbacks.filter(f=>f.eventId===id);
-  const myFeedback=feedbacks.find(f=>f.eventId===id&&f.user==="Alex Y.");
-  const showForm=e.status==="Past"&&joined&&!myFeedback;
+  const myFeedback=feedbacks.find(f=>f.eventId===id&&(currentUser?f.user===currentUser.name:false));
+  const canLeaveFeedback=e.status==="Past"&&joined;
+  const showForm=canLeaveFeedback;
 
   $('feedback-section-title').textContent=e.status==="Past"?"⭐ Ratings & Feedback":"💬 Community (feedback available after event)";
+  $('feedback-status-wrap').innerHTML = joined && e.status!=="Past"
+    ? `<div class="feedback-status"><div class="feedback-status-dot"></div><div><div class="feedback-status-title">Feedback unlocks after the event</div><div class="feedback-status-copy">You are registered. Once this event moves to Past, this space becomes your review desk with a 0-5 rating and notes.</div></div></div>`
+    : pending
+      ? `<div class="feedback-status"><div class="feedback-status-dot"></div><div><div class="feedback-status-title">Request pending approval</div><div class="feedback-status-copy">Feedback is reserved for confirmed participants after the event ends.</div></div></div>`
+      : '';
   $('feedback-form-wrap').style.display=showForm?'block':'none';
+  if(showForm){
+    $('feedback-form-copy').textContent = myFeedback ? 'Update your feedback for this event:' : 'Share your experience with this event:';
+    $('feedback-submit-btn').textContent = myFeedback ? 'Update Feedback' : 'Submit Feedback';
+  }
 
   // Avg display
   if(avg){
@@ -677,11 +776,8 @@ $('detail-meta').innerHTML=`
   }
 
   // Reset rating input
-  currentRating=0;
-  document.querySelectorAll('#rating-input .star').forEach((s,i)=>{
-    s.className='star empty';s.onclick=()=>setRating(i+1);
-  });
-  $('feedback-text').value='';
+  setRating(myFeedback && myFeedback.rating !== null ? myFeedback.rating : 0);
+  $('feedback-text').value=myFeedback ? myFeedback.text : '';
 
   showPage('detail');
   if(scrollToFeedback) setTimeout(()=>$('feedback-wrap').scrollIntoView({behavior:'smooth'}),300);
@@ -693,14 +789,41 @@ function setRating(n){
   document.querySelectorAll('#rating-input .star').forEach((s,i)=>{
     s.className=`star ${i<n?'filled':'empty'}`;
   });
+  const zero=$('rating-zero-btn');
+  if(zero) zero.classList.toggle('is-selected', n===0);
+  const hint=$('rating-hint');
+  if(hint) hint.textContent=`${n} / 5`;
 }
 
 function submitFeedback(){
-  if(!currentRating){toast('Please select a rating','error');return}
-  const text=$('feedback-text').value.trim();
-  feedbacks.push({eventId:currentDetailId,user:"Alex Y.",rating:currentRating,text:text||"Great event!",date:new Date().toISOString().slice(0,10)});
-  toast('Feedback submitted ✓','success');
-  openDetail(currentDetailId);
+  const text = $('feedback-text').value.trim();
+  const part = myParticipations.find(p => p.eventId === currentDetailId);
+  if(!part || !part.participationId){
+    toast('Impossible de trouver votre participation.','error');
+    return;
+  }
+  const fd = new FormData();
+  fd.append('participationId', part.participationId);
+  fd.append('rating',          currentRating);
+  fd.append('comment',         text);
+
+  fetch('submit_feedback_front.php', { method:'POST', body:fd })
+    .then(r => r.json())
+    .then(data => {
+      if(data.success){
+        part.rating   = currentRating;
+        part.feedback = text;
+        const idx = feedbacks.findIndex(f => f.eventId===currentDetailId && f.user===currentUser.name);
+        const fb = { eventId:currentDetailId, user:currentUser.name, rating:currentRating, text:text||'', date:new Date().toISOString().slice(0,10) };
+        if(idx >= 0) feedbacks[idx] = fb;
+        else feedbacks.push(fb);
+        toast(idx >= 0 ? 'Feedback updated ✓' : 'Feedback submitted ✓','success');
+        openDetail(currentDetailId);
+      } else {
+        toast(data.error || "Erreur lors de l'envoi.",'error');
+      }
+    })
+    .catch(() => toast('Erreur réseau.','error'));
 }
 
 /* ───── JOIN / CANCEL ───── */
@@ -714,18 +837,46 @@ function openJoinModal(id){
 }
 
 function confirmJoin(){
+  if(!currentUser){ toast('Please sign in first','error'); return; }
   const e=events.find(ev=>ev.id===pendingJoinId);
   if(!e) return;
-  const existing=myParticipations.find(p=>p.eventId===pendingJoinId);
-  if(existing){existing.status="Confirmed";}
-  else{myParticipations.push({eventId:pendingJoinId,status:"Confirmed",joinedAt:new Date().toISOString().slice(0,10)});}
-  e.registrations=Math.min(e.registrations+1,e.capacity);
-  closeModal('join');
-  toast(`You've joined "${e.title}" 🎉`,'success');
-  const countEl=$('detail-join-count');
-  if(countEl){countEl.textContent=e.registrations;countEl.classList.add('join-anim');setTimeout(()=>countEl.classList.remove('join-anim'),400);}
-  renderAll();
-  if(currentDetailId===pendingJoinId) openDetail(pendingJoinId);
+
+  const formData = new FormData();
+  formData.append('eventId',          pendingJoinId);
+  formData.append('userId',           currentUser.userId);
+  formData.append('userName',         currentUser.name);
+  formData.append('userEmail',        currentUser.email);
+  formData.append('registrationDate', new Date().toISOString().slice(0,10));
+
+  fetch('create_participation_front.php', { method:'POST', body:formData })
+    .then(r => r.json())
+    .then(data => {
+      if(data.success){
+        const existing = myParticipations.find(p=>p.eventId===pendingJoinId);
+        if(existing){ existing.status='Pending'; }
+        else{
+          myParticipations.push({
+            participationId: null,   // will be set on next DB reload
+            eventId:  pendingJoinId,
+            status:   'Pending',
+            joinedAt: new Date().toISOString().slice(0,10),
+            rating:   0,
+            feedback: '',
+          });
+        }
+        closeModal('join');
+        renderAll();
+        renderMy();
+        toast("Demande envoyée ! En attente de confirmation de l'admin 🎉", 'success');
+        // Reload from DB to get real participationId
+        loadMyParticipationsFromDB();
+        if(currentDetailId===pendingJoinId) openDetail(pendingJoinId);
+      } else {
+        closeModal('join');
+        toast(data.error || 'Erreur lors de la demande.', 'error');
+      }
+    })
+    .catch(() => { closeModal('join'); toast('Erreur réseau.','error'); });
 }
 
 function openCancelModal(id){
@@ -740,13 +891,35 @@ function confirmCancel(){
   const e=events.find(ev=>ev.id===pendingCancelId);
   if(!e) return;
   const p=myParticipations.find(x=>x.eventId===pendingCancelId);
-  if(p){p.status="Cancelled";}
-  e.registrations=Math.max(0,e.registrations-1);
-  closeModal('cancel');
-  toast(`Participation cancelled`,'info');
-  renderAll();
-  renderMy();
-  if(currentDetailId===pendingCancelId) openDetail(pendingCancelId);
+  if(!currentUser || !p){
+    closeModal('cancel');
+    toast('Impossible de trouver votre participation.','error');
+    return;
+  }
+
+  const oldStatus = p.status;
+  const fd = new FormData();
+  fd.append('participationId', p.participationId || '');
+  fd.append('eventId', pendingCancelId);
+  fd.append('userId', currentUser.userId);
+
+  fetch('cancel_participation_front.php', { method:'POST', body:fd })
+    .then(r => r.json())
+    .then(data => {
+      if(!data.success){
+        toast(data.error || 'Erreur lors de l\'annulation.','error');
+        return;
+      }
+      p.status="Cancelled";
+      if(oldStatus === "Confirmed") e.registrations=Math.max(0,e.registrations-1);
+      closeModal('cancel');
+      toast('Participation cancelled','info');
+      renderAll();
+      renderMy();
+      loadMyParticipationsFromDB();
+      if(currentDetailId===pendingCancelId) openDetail(pendingCancelId);
+    })
+    .catch(() => toast('Erreur réseau.','error'));
 }
 
 /* ───── NAVIGATION ───── */
@@ -755,14 +928,16 @@ function showPage(name){
   $('page-'+name).classList.add('active');
   document.querySelectorAll('nav.nav .nav-btn').forEach(b=>b.classList.remove('active'));
   const nb=$('nav-'+name);if(nb) nb.classList.add('active');
-  ['nav-my','nav-sponsors','nav-forms'].forEach(bid=>{
+  ['nav-my','nav-sponsors'].forEach(bid=>{
     const b=$(bid);
     if(b){const active=bid==='nav-'+name;b.style.background=active?'rgba(111,143,216,.18)':'rgba(255,255,255,.05)';b.style.borderColor=active?'rgba(126,159,228,.28)':'rgba(255,255,255,.1)';}
   });
   if(name==='listing') renderAll();
-  if(name==='my') renderMy();
+  if(name==='my'){
+    loadMyParticipationsFromDB();
+    renderMy();
+  }
   if(name==='sponsors') loadSponsorsFromDB();
-  if(name==='forms') loadEventFormsFromDB();
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
@@ -774,7 +949,7 @@ function closeModal(n){$('modal-'+n).classList.remove('open')}
 function toast(msg,type='success'){
   const w=$('toast-wrap'),el=document.createElement('div');
   el.className=`toast ${type}`;el.innerHTML=`<div class="toast-dot"></div>${msg}`;
-  w.appendChild(el);setTimeout(()=>el.remove(),3200);
+  w.appendChild(el);setTimeout(()=>el.remove(),5200);
 }
 
 /* ───── SPONSORS & FORMS DATA ───── */
@@ -791,7 +966,67 @@ function loadSponsorsFromDB(){
     })
     .catch(() => renderSponsors());
 }
-let eventForms = [];
+
+/* ───── CHARGER MES PARTICIPATIONS DEPUIS DB ───── */
+
+function notifyParticipationDecision(status, eventTitle){
+  if(status === 'Confirmed'){
+    toast(`Your request for "${eventTitle}" was accepted. You are now registered.`, 'success');
+  } else if(status === 'Cancelled'){
+    toast(`Your request for "${eventTitle}" was refused.`, 'error');
+  }
+}
+
+function startParticipationNotifications(){
+  if(participationPollTimer) clearInterval(participationPollTimer);
+  participationPollTimer = setInterval(() => {
+    loadMyParticipationsFromDB();
+  }, 8000);
+}
+
+function loadMyParticipationsFromDB(){
+  if(!currentUser || !currentUser.userId) return;
+  fetch('get_my_participations.php?userId=' + currentUser.userId)
+    .then(r => r.json())
+    .then(data => {
+      // Notify on status changes
+      data.forEach(p => {
+        const existing = myParticipations.find(x => x.eventId === p.eventId);
+        const newStatus = p.attendanceStatus || p.status;
+        if(existing && existing.status !== newStatus){
+          const ev = events.find(e => e.id === p.eventId);
+          const evTitle = ev ? ev.title : 'Event #' + p.eventId;
+          if(existing.status === 'Pending') notifyParticipationDecision(newStatus, evTitle);
+        }
+      });
+
+      myParticipations = data.map(p => ({
+        participationId: p.participationId,
+        eventId:  p.eventId,
+        status:   p.attendanceStatus || p.status,
+        joinedAt: p.registrationDate,
+        rating:   (p.rating === null || p.rating === undefined || p.rating === '') ? null : parseInt(p.rating),
+        feedback: p.feedback || '',
+      }));
+
+      // Rebuild feedbacks[] from DB data (participations that have a rating or comment)
+      feedbacks = myParticipations
+        .filter(p => p.rating !== null || (p.feedback || '').trim() !== '')
+        .map(p => ({
+          eventId: p.eventId,
+          user:    currentUser.name,
+          rating:  p.rating,
+          text:    p.feedback || '',
+          date:    p.joinedAt,
+        }));
+
+      renderAll();
+      renderMy();
+    })
+    .catch(() => {});
+}
+
+
 
 /* ───── SPONSOR SORT ───── */
 function setSponsorSort(val,btn){
@@ -801,13 +1036,6 @@ function setSponsorSort(val,btn){
   renderSponsors();
 }
 
-/* ───── FORMS STATUS FILTER ───── */
-function setFormStatusFilter(val,btn){
-  formStatusFilter=val;
-  document.querySelectorAll('#form-status-filters-front .filter').forEach(f=>f.classList.remove('is-selected'));
-  btn.classList.add('is-selected');
-  renderForms();
-}
 
 /* ───── SPONSORS RENDER ───── */
 function renderSponsors(){
@@ -837,43 +1065,8 @@ function renderSponsors(){
 }).join('');
 }
 
-function loadEventFormsFromDB(){
-  fetch('search_eventform_front.php')
-    .then(r => r.json())
-    .then(data => {
-      eventForms = data;
-      renderForms();   // refresh the UI
-    })
-    .catch(err => console.error('loadEventFormsFromDB:', err));
-}
 
-/* ───── FORMS RENDER ───── */
-function renderForms(){
-  const listEl=document.getElementById('forms-list');
-  const q=(document.getElementById('search-forms-front')?.value||'').toLowerCase();
-  let filtered=eventForms.filter(f=>{
-    if(formStatusFilter!=='all'&&f.status!==formStatusFilter) return false;
-    if(q&&!f.title.toLowerCase().includes(q)&&!f.description.toLowerCase().includes(q)) return false;
-    return true;
-  });
-  if(!filtered.length){listEl.innerHTML='<div class="empty-state"><div class="empty-icon">📋</div><h3>No forms found</h3></div>';return}
-  listEl.innerHTML=filtered.map(f=>{
-    const ev=events.find(e=>e.id===f.eventId);
-    const isOpen=f.status==='open';
-    return `<div style="padding:22px;border-radius:24px;background:linear-gradient(180deg,rgba(12,22,46,.92),rgba(7,13,29,.94));border:1px solid ${isOpen?'rgba(89,211,155,.18)':'rgba(126,159,228,.14)'};box-shadow:0 14px 40px rgba(0,0,0,.2);display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
-      <div>
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-          <span style="font-size:16px;font-weight:800;color:var(--white)">${f.title}</span>
-          <span class="chip ${isOpen?'chip-green':'chip-red'}">${f.status}</span>
-        </div>
-        <div style="font-size:13px;color:var(--muted);margin-bottom:6px">${f.description}</div>
-        <div style="font-size:12px;color:var(--muted-2)">📅 Event: ${ev?ev.title:'—'}</div>
-      </div>
-      ${isOpen?`<a href="${f.formLink}" target="_blank" class="btn btn-main btn-sm" style="text-decoration:none">Fill Form →</a>`
-              :`<span class="btn btn-ghost btn-sm" style="opacity:.5;cursor:not-allowed">Closed</span>`}
-    </div>`;
-  }).join('');
-}
+
 
 /* ───── LOAD FROM DB ───── */
 function loadEventsFromDB(){
@@ -884,18 +1077,17 @@ function loadEventsFromDB(){
         id:e.eventId, title:e.name, description:e.description,
         type:e.type, location:e.location, capacity:e.capacity,
         date:e.date, status:e.status, createdAt:e.createdAt,
-        managerId:e.managerId, registrations:0,
-        time:e.time||'', tags:(e.tags||'').split(',').map(t=>t.trim()).filter(Boolean), organiser:e.organiser||'', trending:false, popular:false , eventMode:e.eventMode
+        managerId:e.managerId, registrations:parseInt(e.registrations)||0,
+        time:e.time||'', tags:(e.tags||'').split(',').map(t=>t.trim()).filter(Boolean), organiser:e.organiser||'', trending:false, popular:false , eventMode:e.eventMode , formLink:e.formLink
       }));
-      renderAll();renderSponsors();renderForms();loadEventFormsFromDB();
+      renderAll();renderSponsors();
     })
-    .catch(()=>{ renderAll();renderSponsors();renderForms(); });
+    .catch(()=>{ renderAll();renderSponsors(); });
 }
 
 /* ───── INIT ───── */
 renderAll();
 loadSponsorsFromDB();
-renderForms();
 </script>
 <script src="assets/js/frontoffice.js"></script>
 </body>

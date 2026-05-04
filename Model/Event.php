@@ -16,39 +16,42 @@ class Event {
     private string $eventMode = 'Online';   // 'Online' or 'In-person'
     private ?int $sponsorId = null;
     private int $duration   = 0;
+    private string $formLink = '';   // URL for registration form (merged from eventForm)
 
-    public function __construct(
-        string $name,
-        string $description,
-        string $type,
-        string $location,
-        int    $capacity,
-        string $date,
-        string $status,
-        ?int   $managerId = null,
-        string $tags      = '',
-        string $organiser = '',
-        string $time      = '',
-        string $eventMode = 'Online',
-        ?int   $sponsorId = null,
-        int    $duration  = 0
-    ) {
-        $this->name        = $name;
-        $this->description = $description;
-        $this->type        = $type;
-        $this->location    = $location;
-        $this->capacity    = $capacity;
-        $this->date        = $date;
-        $this->status      = $status;
-        $this->createdAt   = date('Y-m-d'); // toujours la date du jour
-        $this->managerId   = $managerId;
-        $this->tags        = $tags;
-        $this->organiser   = $organiser;
-        $this->time        = $time;
-        $this->eventMode   = $eventMode;
-        $this->sponsorId   = $sponsorId;
-        $this->duration    = $duration;
-    }
+   public function __construct(
+    string $name,
+    string $description,
+    string $type,
+    string $location,
+    int    $capacity,
+    string $date,
+    string $status,
+    ?int   $managerId = null,
+    string $tags      = '',
+    string $organiser = '',
+    string $time      = '',
+    string $eventMode = 'Online',
+    ?int   $sponsorId = null,
+    int    $duration  = 0,
+    string $formLink  = ''
+) {
+    $this->name        = $name;
+    $this->description = $description;
+    $this->type        = $type;
+    $this->location    = $location;
+    $this->capacity    = $capacity;
+    $this->date        = $date;
+    $this->status      = $status;
+    $this->createdAt   = date('Y-m-d');
+    $this->managerId   = $managerId;
+    $this->tags        = $tags;
+    $this->organiser   = $organiser;
+    $this->time        = $time;
+    $this->eventMode   = $eventMode;
+    $this->sponsorId   = $sponsorId;
+    $this->duration    = $duration;
+    $this->formLink    = $formLink;
+}
 
     // ── Getters ──────────────────────────────────────
     public function getEventId(): ?int       { return $this->eventId; }
@@ -67,6 +70,7 @@ class Event {
     public function getEventMode(): string { return $this->eventMode; }
     public function getSponsorId(): ?int      { return $this->sponsorId; }
     public function getDuration(): int        { return $this->duration; }
+    public function getFormLink(): string    { return $this->formLink; }
 
     // ── Setters ──────────────────────────────────────
     public function setEventId(int $id): void        { $this->eventId = $id; }
@@ -85,5 +89,6 @@ class Event {
     public function setEventMode(string $v): void { $this->eventMode = $v; }
     public function setSponsorId(?int $v): void        { $this->sponsorId = $v; }
     public function setDuration(int $v): void          { $this->duration = $v; }
+    public function setFormLink(string $v): void    { $this->formLink = $v; }
 }
 ?>

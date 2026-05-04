@@ -3,16 +3,8 @@
 let events = []; // chargé depuis la BDD via loadEventsFromDB()
 let eventsLoaded = true;
 
-let participations = [
-  {id:1,user:"Amira Bensalem",email:"amira@example.com",eventId:1,registeredAt:"2025-08-01",status:"Confirmed",rating:5,feedback:"Amazing session!"},
-  {id:2,user:"Yassine Triki",email:"yassine@example.com",eventId:2,registeredAt:"2025-08-03",status:"Pending",rating:null,feedback:""},
-  {id:3,user:"Fatma Souissi",email:"fatma@example.com",eventId:1,registeredAt:"2025-08-02",status:"Confirmed",rating:4,feedback:"Very useful."},
-  {id:4,user:"Omar Mejri",email:"omar@example.com",eventId:3,registeredAt:"2025-07-28",status:"Confirmed",rating:3,feedback:"Good but short."},
-  {id:5,user:"Sarra Ben Ali",email:"sarra@example.com",eventId:4,registeredAt:"2025-08-10",status:"Cancelled",rating:null,feedback:""},
-  {id:6,user:"Rim Khalfallah",email:"rim@example.com",eventId:2,registeredAt:"2025-08-05",status:"Confirmed",rating:5,feedback:"Best event!"},
-  {id:7,user:"Hamza Agrebi",email:"hamza@example.com",eventId:5,registeredAt:"2025-08-12",status:"Pending",rating:null,feedback:""},
-  {id:8,user:"Nour Chaabane",email:"nour@example.com",eventId:6,registeredAt:"2025-07-10",status:"Confirmed",rating:4,feedback:"Great energy."},
-];
+
+  let participations = []; // chargé depuis la DB
 
 let nextEid = 8, nextPid = 9;
 const PER_PAGE = 5;
@@ -31,6 +23,7 @@ function statusChip(s){
 }
 function typeChip(t){return `<span class="type-badge">${t}</span>`}
 function ratingStars(r){if(!r)return '<span style="color:var(--muted-2)">—</span>';return '★'.repeat(r)+'☆'.repeat(5-r)}
+function ratingStarsForView(r){if(r===null||r===undefined||r==='')return '<span style="color:var(--muted-2)">No rating yet</span>';const n=Math.max(0,Math.min(5,parseInt(r)||0));return '★'.repeat(n)+'☆'.repeat(5-n)}
 
 function pct(reg,cap){return cap?Math.min(100,Math.round(reg/cap*100)):0}
 
@@ -41,9 +34,10 @@ function switchTab(name,btn){
   $('tab-events').style.display = name==='events'?'':'none';
   $('tab-participations').style.display = name==='participations'?'':'none';
   $('tab-sponsors').style.display = name==='sponsors'?'':'none';
-  $('tab-forms').style.display = name==='forms'?'':'none';
+  if($('tab-ai-analyzer')) $('tab-ai-analyzer').style.display = name==='ai-analyzer'?'':'none';
+  if(name==='participations') loadParticipationsFromDB();
   if(name==='sponsors') loadSponsorsFromDB();
-  if(name==='forms') loadEventFormsFromDB();
+  if(name==='ai-analyzer') loadAiFeedbackAnalyzer();
 }
 
 /* ─── FILTERS ─── */
@@ -81,7 +75,7 @@ function renderEvents(){
 
   const tb=$('events-tbody');
   if(!slice.length){
-    tb.innerHTML=`<tr><td colspan="8"><div class="empty"><div class="empty-icon">🗓</div><h4>No events found</h4><p>Try changing filters or create one.</p></div></td></tr>`;
+    tb.innerHTML=`<tr><td colspan="9"><div class="empty"><div class="empty-icon">🗓</div><h4>No events found</h4><p>Try changing filters or create one.</p></div></td></tr>`;
     return;
   }
   tb.innerHTML=slice.map(e=>{
@@ -97,6 +91,7 @@ function renderEvents(){
       </td>
       <td><span style="color:var(--green);font-weight:700">${p}%</span></td>
       <td>${statusChip(e.status)}</td>
+      </td>
       <td>
         <div class="table-actions">
           <button class="btn btn-soft btn-sm" onclick="viewEvent(${e.id})">👁</button>
@@ -116,13 +111,14 @@ function filterEvents(){
     fetch('search_event.php?q='+encodeURIComponent(q)+'&type='+encodeURIComponent(eFilter))
       .then(r=>r.json())
       .then(data=>{
-        events=data.map(e=>({
+       events=data.map(e=>({
     id:e.eventId,title:e.name,description:e.description,
     type:e.type,location:e.location,capacity:e.capacity,
     date:e.date,status:e.status,createdAt:e.createdAt,
-    managerId:e.managerId,registrations:0,time:e.time||'',tags:e.tags||'',organiser:e.organiser||'',
-    eventMode:e.eventMode
-      }));
+    managerId:e.managerId,registrations:parseInt(e.registrations)||0,time:e.time||'',tags:e.tags||'',organiser:e.organiser||'',
+    eventMode:e.eventMode,
+    formLink:e.formLink
+}));
         renderEvents();refreshEventSelect();updateStats();
       });
   }else{
@@ -170,8 +166,9 @@ function renderParticipations(){
       <td style="color:var(--yellow)">${ratingStars(p.rating)}</td>
       <td>
         <div class="table-actions">
-          <button class="btn btn-soft btn-sm" onclick="editParticipation(${p.id})">✏️</button>
-          <button class="btn btn-danger btn-sm" onclick="confirmDelete('part',${p.id},'${p.user.replace(/'/g,"\\'")}')">🗑</button>
+          <button class="btn btn-soft btn-sm" onclick="viewParticipation(${p.id})">👁</button>
+          ${p.status==='Pending'?`<button class="btn btn-success btn-sm" onclick="setParticipationDecision(${p.id},'Confirmed')">Accept</button><button class="btn btn-danger btn-sm" onclick="setParticipationDecision(${p.id},'Cancelled')">Refuse</button>`:''}
+          <button class="btn btn-danger btn-sm" onclick="confirmDelete('part',${p.id},'${p.user.replace(/'/g,"\\'")}')">Kick</button>
         </div>
       </td>
     </tr>`;
@@ -180,7 +177,105 @@ function renderParticipations(){
 
 function filterParticipations(){pPage=1;renderParticipations()}
 
+function viewParticipation(id){
+  const p=participations.find(x=>x.id===id); if(!p)return;
+  const ev=getEvent(p.eventId);
+  const eventTitle=ev ? ev.title : 'Event #' + p.eventId;
+  const feedback=(p.feedback || '').trim();
+  $('part-view-title').textContent='Participation Details';
+  $('part-view-body').innerHTML=`
+    <div class="info-grid">
+      <div class="info-item"><div class="lbl">User Name</div><div class="val">${p.user || '—'}</div></div>
+      <div class="info-item"><div class="lbl">User Email</div><div class="val">${p.email || '—'}</div></div>
+      <div class="info-item"><div class="lbl">Event Title</div><div class="val">${eventTitle}</div></div>
+      <div class="info-item"><div class="lbl">Event Date</div><div class="val">${ev ? ev.date : '—'}</div></div>
+      <div class="info-item"><div class="lbl">Event Type</div><div class="val">${ev ? ev.type : '—'}</div></div>
+      <div class="info-item"><div class="lbl">Location</div><div class="val">${ev ? ev.location : '—'}</div></div>
+      <div class="info-item"><div class="lbl">Participation Status</div><div class="val">${statusChip(p.status)}</div></div>
+      <div class="info-item"><div class="lbl">Attendance Status</div><div class="val">${statusChip(p.attendanceStatus || p.status)}</div></div>
+      <div class="info-item"><div class="lbl">Registered At</div><div class="val">${p.registeredAt || '—'}</div></div>
+      <div class="info-item"><div class="lbl">Rating</div><div class="val" style="color:var(--yellow);font-size:18px">${ratingStarsForView(p.rating)}</div></div>
+    </div>
+    <div style="margin-top:14px" class="info-item">
+      <div class="lbl">Feedback</div>
+      <div class="val" style="line-height:1.7;white-space:pre-wrap">${feedback || 'No feedback yet.'}</div>
+    </div>
+  `;
+  $('part-view-edit-btn').onclick=()=>{closeModal('participation-view');editParticipation(id)};
+  openModal('participation-view');
+}
+
+function pendingParts(){
+  return participations.filter(p=>p.status==='Pending');
+}
+
+function updateRequestDesk(){
+  const pending = pendingParts();
+  const countEl = $('pending-requests-count');
+  const pluralEl = $('pending-requests-plural');
+  const copyEl = $('pending-requests-copy');
+  const btn = $('accept-all-btn');
+  if(!countEl || !pluralEl || !copyEl || !btn) return;
+  countEl.textContent = pending.length;
+  pluralEl.textContent = pending.length === 1 ? '' : 's';
+  copyEl.textContent = pending.length
+    ? 'Approve every waiting learner in one move, then the front office will show them as registered.'
+    : 'No one is waiting right now.';
+  btn.disabled = pending.length === 0;
+  btn.textContent = pending.length ? `Accept All (${pending.length})` : 'All Clear';
+}
+
+function setParticipationDecision(id, decision){
+  const p=participations.find(x=>x.id===id); if(!p)return;
+  const formData = new FormData();
+  formData.append('attendanceStatus', decision);
+  formData.append('status', decision);
+  formData.append('rating', p.rating ?? '');
+  formData.append('feedback', p.feedback || '');
+
+  fetch('update_participation.php?id=' + id, { method:'POST', body:formData })
+    .then(r => r.json())
+    .then(data => {
+      if(data.success){
+        toast(decision === 'Confirmed' ? 'Participation accepted ✓' : 'Participation refused', 'success');
+        loadParticipationsFromDB();
+        loadEventsFromDB();
+      } else {
+        toast(data.error || 'Erreur','error');
+      }
+    })
+    .catch(() => toast('Erreur réseau','error'));
+}
+
 /* ─── STATS ─── */
+function acceptAllRequests(){
+  const pending = pendingParts();
+  if(!pending.length){
+    toast('No pending requests to accept','info');
+    updateRequestDesk();
+    return;
+  }
+  const btn = $('accept-all-btn');
+  if(btn){ btn.disabled = true; btn.textContent = 'Approving...'; }
+  Promise.all(pending.map(p => {
+    const formData = new FormData();
+    formData.append('attendanceStatus', 'Confirmed');
+    formData.append('status', 'Confirmed');
+    formData.append('rating', p.rating ?? '');
+    formData.append('feedback', p.feedback || '');
+    return fetch('update_participation.php?id=' + p.id, { method:'POST', body:formData })
+      .then(r => r.json())
+      .then(data => ({ id:p.id, ok:!!data.success, error:data.error || '' }))
+      .catch(() => ({ id:p.id, ok:false, error:'Network error' }));
+  })).then(results => {
+    const ok = results.filter(r=>r.ok).length;
+    const failed = results.length - ok;
+    toast(failed ? `${ok} accepted, ${failed} failed` : `${ok} request${ok!==1?'s':''} accepted`, failed ? 'error' : 'success');
+    loadParticipationsFromDB();
+    loadEventsFromDB();
+  });
+}
+
 function updateStats(){
   $('stat-total').textContent=events.length;
   $('stat-upcoming').textContent=events.filter(e=>e.status==='Upcoming').length;
@@ -189,6 +284,7 @@ function updateStats(){
   const conf=participations.filter(p=>p.status==='Confirmed').length;
   $('stat-att').textContent=totalReg?Math.round(conf/totalReg*100)+'%':'—';
   $('stat-sponsors').textContent=sponsors.length;
+  updateRequestDesk();
 }
 
 /* ─── MODALS ─── */
@@ -199,7 +295,7 @@ function closeModal(name){$('modal-'+name).classList.remove('open')}
 function openEventCreate(){
   editingEventId=null;
   $('event-form-title').textContent='Create Event';
-  ['ef-title','ef-location','ef-capacity','ef-desc','ef-tags','ef-organiser','ef-date','ef-time','ef-manager','ef-sponsor','ef-duration'].forEach(id=>$(id)&&($(id).value=''));
+  ['ef-title','ef-location','ef-capacity','ef-desc','ef-tags','ef-organiser','ef-date','ef-time','ef-manager','ef-sponsor','ef-duration','ef-formlink'].forEach(id=>$(id)&&($(id).value=''));
   $('ef-type').value='Workshop';
   $('ef-status').value='Upcoming';
   ['ef-title','ef-type','ef-date','ef-location','ef-capacity','ef-desc','ef-organiser'].forEach(id=>{const el=$(id);if(el)el.style.borderColor='';});
@@ -212,8 +308,12 @@ function editEvent(id){
   $('event-form-title').textContent='Edit Event';
   $('ef-title').value=e.title;
   $('ef-type').value=e.type;
-  $('ef-status').value=e.status;
   $('ef-date').value=e.date;
+  autoCheckDateStatus();
+  // garde le status original si pas "Past" automatique
+  if($('ef-status').value !== 'Past'){
+    $('ef-status').value=e.status;
+  }
   $('ef-time').value=e.time;
   $('ef-location').value=e.location;
   $('ef-capacity').value=e.capacity;
@@ -223,13 +323,14 @@ function editEvent(id){
   $('ef-manager').value=e.managerId||'';
   $('ef-sponsor').value=e.sponsorId||'';
   $('ef-duration').value=e.duration||'';
+  $('ef-formlink').value = e.formLink || '';
   // Set eventMode radio based on the loaded event
 if (e.eventMode === 'In-person') {
     document.querySelector('input[name="event-mode"][value="In-person"]').checked = true;
 } else {
     document.querySelector('input[name="event-mode"][value="Online"]').checked = true;
 }
-  ['ef-title','ef-type','ef-date','ef-location','ef-capacity','ef-desc','ef-organiser'].forEach(id=>{const el=$(id);if(el)el.style.borderColor='';});
+  ['ef-title','ef-type','ef-status','ef-date','ef-time','ef-location','ef-capacity','ef-desc','ef-tags','ef-organiser','ef-duration','ef-formlink'].forEach(id=>{const el=$(id);if(el)el.style.borderColor='';});
   openModal('event-form');
 }
 
@@ -241,7 +342,7 @@ function verifEvents() {
   // Réinitialiser toutes les bordures
   ['ef-title','ef-type','ef-status','ef-date','ef-time',
    'ef-location','ef-capacity','ef-desc','ef-tags',
-   'ef-organiser','ef-manager','ef-sponsor','ef-duration'
+   'ef-organiser','ef-manager','ef-sponsor','ef-duration', 'ef-formlink'
   ].forEach(function(id) {
     var el = $(id);
     if (el) { el.style.borderColor = ''; el.title = ''; }
@@ -402,6 +503,31 @@ if (!sponsorId) {
     $('ef-duration').style.borderColor = 'var(--red)';
   }
 
+  // ── Form Link : obligatoire si mode Online ──
+  var eventModeRadio = document.querySelector('input[name="event-mode"]:checked');
+  var isOnline = !eventModeRadio || eventModeRadio.value === 'Online';
+  var formLink = $('ef-formlink').value.trim();
+
+  if (isOnline) {
+    if (!formLink) {
+      errors.push('Le lien du formulaire est obligatoire pour les événements en ligne.');
+      $('ef-formlink').style.borderColor = 'var(--red)';
+      valid = false;
+    } else if (!/^https?:\/\/.{3,}/.test(formLink)) {
+      errors.push('Le lien doit être une URL valide (ex: https://forms.google.com/...).');
+      $('ef-formlink').style.borderColor = 'var(--red)';
+      valid = false;
+    } else if (formLink.length > 255) {
+      errors.push('Le lien ne peut pas dépasser 255 caractères.');
+      $('ef-formlink').style.borderColor = 'var(--red)';
+      valid = false;
+    } else {
+      $('ef-formlink').style.borderColor = '';
+    }
+  } else {
+    $('ef-formlink').style.borderColor = '';
+  }
+  // Si In-person : formLink optionnel
   
   // Afficher toutes les erreurs une par une via toast
   if (errors.length > 0) {
@@ -410,6 +536,24 @@ if (!sponsorId) {
     return false;
   }
   return true;
+}
+
+/* ─── AUTO STATUS: si date < aujourd'hui → status = "Past" ─── */
+function autoCheckDateStatus(){
+  var dateVal = $('ef-date').value;
+  if(!dateVal) return;
+  var eventDate = new Date(dateVal);
+  var today = new Date();
+  today.setHours(0,0,0,0);
+  eventDate.setHours(0,0,0,0);
+  if(eventDate < today){
+    $('ef-status').value = 'Past';
+  } else {
+    // seulement si le status était "Past" avant, le remettre à "Upcoming"
+    if($('ef-status').value === 'Past'){
+      $('ef-status').value = 'Upcoming';
+    }
+  }
 }
 
 function saveEvent(){
@@ -432,6 +576,7 @@ function saveEvent(){
   fd.append('managerId',   $('ef-manager').value||'');
   fd.append('sponsorId',   $('ef-sponsor').value||'');
   fd.append('duration',    $('ef-duration').value||'');
+  fd.append('formLink', $('ef-formlink').value||'');
 
   const url = editingEventId
     ? 'update_event.php?id='+editingEventId
@@ -475,40 +620,85 @@ function viewEvent(id){
     <div class="info-item"><div class="lbl">Sponsor ID</div><div class="val">${e.sponsorId || '—'}</div></div>
     <div class="info-item"><div class="lbl">Duration (minutes)</div><div class="val">${e.duration || '—'}</div></div>
     <div class="info-item"><div class="lbl">Created At</div><div class="val">${e.createdAt||'—'}</div></div>
+    <div class="info-item"><div class="lbl">Form Link</div><div class="val">${e.formLink ? `<a href="${e.formLink}" target="_blank" rel="noopener noreferrer" style="color:var(--blue-2)">🔗 Open</a>` : '—'}</div></div>
   </div>
   <div style="margin-top:14px">
     <div class="progress-bar"><div class="progress-fill" style="width:${p}%"></div></div>
     <div style="margin-top:6px;font-size:12px;color:var(--muted-2)">${p}% filled</div>
   </div>
   ${e.tags?`<div style="margin-top:16px"><div style="font-size:11px;color:var(--muted-2);text-transform:uppercase;letter-spacing:.16em;margin-bottom:8px">Tags</div><div style="display:flex;gap:8px;flex-wrap:wrap">${e.tags.split(',').map(t=>`<span class="type-badge">${t.trim()}</span>`).join('')}</div></div>`:''}
+  <div class="info-item" style="margin-top:16px">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+      <div>
+        <div class="lbl">QR Attendance Check-in</div>
+        <div class="val" style="font-size:13px;color:var(--muted);font-weight:500">Generate a secure QR code for participants to confirm attendance.</div>
+      </div>
+      <button class="btn btn-main btn-sm" onclick="generateEventQr(${e.id})">Generate QR Code</button>
+    </div>
+    <div id="event-qr-wrap" style="margin-top:14px"></div>
+  </div>
 `;
   $('ev-view-edit-btn').onclick=()=>{closeModal('event-view');editEvent(id)};
   openModal('event-view');
+  loadEventQr(id);
 }
 
-/* ─── PARTICIPATION CRUD ─── */
-  function refreshEventSelect(){
-  // pf-event, sf-event, ff-event sont des inputs number (eventId)
-    // pas besoin de les remplir
-  }
+/* ─── PARTICIPATION MANAGEMENT ─── */
+function loadEventQr(eventId){
+  fetch('generate_event_qr.php?eventId=' + eventId)
+    .then(r => r.json())
+    .then(data => {
+      if(data.success && data.token) renderEventQr(data);
+    })
+    .catch(() => {});
+}
 
-function openPartCreate(){
-  editingPartId=null;
-  $('part-form-title').textContent='Register Participation';
-  $('pf-user').value='';$('pf-email').value='';
-  $('pf-regdate').value='';$('pf-attendance').value='Confirmed';
-  $('pf-status').value='Confirmed';$('pf-rating').value='';$('pf-feedback').value='';
-  $('pf-event').value='';
-  openModal('participation-form');
+function generateEventQr(eventId){
+  fetch('generate_event_qr.php?eventId=' + eventId + '&generate=1')
+    .then(r => r.json())
+    .then(data => {
+      if(data.success){
+        renderEventQr(data);
+        toast('QR code ready for check-in ✓','success');
+      }else{
+        toast(data.error || 'Unable to generate QR code','error');
+      }
+    })
+    .catch(err => toast('QR error: ' + err.message,'error'));
+}
+
+function renderEventQr(data){
+  const wrap=$('event-qr-wrap');
+  if(!wrap) return;
+  wrap.innerHTML=`
+    <div style="display:grid;grid-template-columns:180px 1fr;gap:16px;align-items:center">
+      <div style="padding:12px;border-radius:18px;background:#fff;display:grid;place-items:center">
+        <img src="${data.qrImageUrl}" alt="Event QR Code" style="width:150px;height:150px;display:block">
+      </div>
+      <div>
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:.16em;color:var(--muted-2);margin-bottom:8px">Secure Scan URL</div>
+        <div style="font-size:12px;line-height:1.6;color:var(--muted);word-break:break-all">${data.scanUrl}</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
+          <a class="btn btn-soft btn-sm" href="${data.qrImageUrl}" download="event-${data.eventId}-qr.png" target="_blank" rel="noopener noreferrer">Download QR</a>
+          <a class="btn btn-soft btn-sm" href="${data.scanUrl}" target="_blank" rel="noopener noreferrer">Test Scan</a>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function refreshEventSelect(){
+  // Participation creation belongs to the front office.
+}
+
+function openPartCreate() {
+  toast('Participation creation is handled from the front office.', 'error');
 }
 
 function editParticipation(id){
   const p=participations.find(x=>x.id===id); if(!p)return;
   editingPartId=id;
   $('part-form-title').textContent='Edit Participation';
-  $('pf-user').value=p.user;$('pf-email').value=p.email;
-  $('pf-event').value=p.eventId;
-  $('pf-regdate').value=p.registeredAt||'';
   $('pf-attendance').value=p.attendanceStatus||p.status||'Pending';
   $('pf-status').value=p.status;
   $('pf-rating').value=p.rating||'';
@@ -517,74 +707,17 @@ function editParticipation(id){
 }
 /* ════════════════════════════════════════════
    1. verifParticipation()
-   Champs : userId, eventId, registrationDate,
-            attendanceStatus, status, rating, feedback
+   Champs : attendanceStatus, status, rating, feedback
    ════════════════════════════════════════════ */
 function verifParticipation() {
 
   // Réinitialiser toutes les bordures
-  ['pf-user','pf-email','pf-event','pf-regdate',
-   'pf-attendance','pf-status','pf-rating','pf-feedback'
-  ].forEach(function(id) {
+  ['pf-attendance','pf-status','pf-rating','pf-feedback'].forEach(function(id) {
     var el = $(id);
     if (el) { el.style.borderColor = ''; el.title = ''; }
   });
 
   var errors = [];
-
-  // ── Nom d'utilisateur : obligatoire, pas que chiffres, 2–100 caractères ──
-  var user = $('pf-user').value.trim();
-  if (!user) {
-    errors.push('Le nom d\'utilisateur est obligatoire.');
-    $('pf-user').style.borderColor = 'var(--red)';
-  } else if (user.length < 2 || user.length > 100) {
-    errors.push('Le nom doit contenir entre 2 et 100 caractères.');
-    $('pf-user').style.borderColor = 'var(--red)';
-  } else if (/^\d+$/.test(user)) {
-    errors.push('Le nom d\'utilisateur ne peut pas être uniquement des chiffres.');
-    $('pf-user').style.borderColor = 'var(--red)';
-  }
-
-  // ── Email : obligatoire, format valide ──
-  var email = $('pf-email').value.trim();
-  if (!email) {
-    errors.push('L\'email est obligatoire.');
-    $('pf-email').style.borderColor = 'var(--red)';
-  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    errors.push('L\'email est invalide (ex: user@example.com).');
-    $('pf-email').style.borderColor = 'var(--red)';
-  }
-
-  // ── Event ID : obligatoire, entier positif ──
-  var eventId = $('pf-event').value.trim();
-  if (!eventId) {
-    errors.push('L\'Event ID est obligatoire.');
-    $('pf-event').style.borderColor = 'var(--red)';
-  } else if (isNaN(eventId) || parseInt(eventId) <= 0 || !Number.isInteger(parseFloat(eventId))) {
-    errors.push('L\'Event ID doit être un entier positif (ex: 1, 2, 3).');
-    $('pf-event').style.borderColor = 'var(--red)';
-  }
-
-  // ── Date d'inscription : obligatoire, date valide ──
-  var regDate = $('pf-regdate').value;
-  var regDateObj = null;
-  if (!regDate) {
-    errors.push('La date d\'inscription est obligatoire.');
-    $('pf-regdate').style.borderColor = 'var(--red)';
-  } else {
-    regDateObj = new Date(regDate);
-    if (isNaN(regDateObj.getTime())) {
-      errors.push('La date d\'inscription est invalide (format attendu : JJ/MM/AAAA).');
-      $('pf-regdate').style.borderColor = 'var(--red)';
-      regDateObj = null;
-    }
-  }
-
-  // ── LOGIQUE : la date d'inscription ne peut pas être dans le futur ──
-  if (regDateObj && regDateObj > new Date()) {
-    errors.push('La date d\'inscription ne peut pas être dans le futur.');
-    $('pf-regdate').style.borderColor = 'var(--red)';
-  }
 
   // ── Attendance Status : obligatoire, valeur parmi la liste ──
   var attendance = $('pf-attendance').value;
@@ -722,126 +855,32 @@ if (!userId) {
 }
 
 
-/* ════════════════════════════════════════════
-   3. verifEventForm()
-   Champs : title, eventId, description,
-            formLink, status
-   ════════════════════════════════════════════ */
-function verifEventForm() {
-
-  // Réinitialiser toutes les bordures
-  ['ff-title','ff-event','ff-desc','ff-link','ff-status'
-  ].forEach(function(id) {
-    var el = $(id);
-    if (el) { el.style.borderColor = ''; el.title = ''; }
-  });
-
-  var errors = [];
-
-  // ── Titre du formulaire : obligatoire, pas que chiffres, 3–100 caractères ──
-  var title = $('ff-title').value.trim();
-  if (!title) {
-    errors.push('Le titre du formulaire est obligatoire.');
-    $('ff-title').style.borderColor = 'var(--red)';
-  } else if (title.length < 3 || title.length > 100) {
-    errors.push('Le titre doit contenir entre 3 et 100 caractères.');
-    $('ff-title').style.borderColor = 'var(--red)';
-  } else if (/^\d+$/.test(title)) {
-    errors.push('Le titre ne peut pas être uniquement des chiffres.');
-    $('ff-title').style.borderColor = 'var(--red)';
-  }
-
-  // ── Event ID : obligatoire, entier positif ──
-  var eventId = $('ff-event').value.trim();
-  if (!eventId) {
-    errors.push('L\'Event ID est obligatoire.');
-    $('ff-event').style.borderColor = 'var(--red)';
-  } else if (isNaN(eventId) || parseInt(eventId) <= 0 || !Number.isInteger(parseFloat(eventId))) {
-    errors.push('L\'Event ID doit être un entier positif (ex: 1, 2, 3).');
-    $('ff-event').style.borderColor = 'var(--red)';
-  }
-
-  // ── Description : obligatoire, 5–255 caractères ──
-  var desc = $('ff-desc').value.trim();
-  if (!desc) {
-    errors.push('La description est obligatoire.');
-    $('ff-desc').style.borderColor = 'var(--red)';
-  } else if (desc.length < 5) {
-    errors.push('La description doit contenir au moins 5 caractères.');
-    $('ff-desc').style.borderColor = 'var(--red)';
-  } else if (desc.length > 255) {
-    errors.push('La description ne peut pas dépasser 255 caractères.');
-    $('ff-desc').style.borderColor = 'var(--red)';
-  }
-
-  // ── Form Link : obligatoire, URL valide (doit commencer par http:// ou https://) ──
- // ── Conditional validation based on event mode ──
-var eventId = parseInt($('ff-event').value);
-var eventObj = events.find(e => e.id === eventId);
-var isOnline = eventObj && eventObj.eventMode === 'Online';
-
-if (isOnline) {
-    var link = $('ff-link').value.trim();
-    if (!link) {
-        errors.push('Le lien du formulaire est obligatoire pour les événements en ligne.');
-        $('ff-link').style.borderColor = 'var(--red)';
-    } else if (!/^https?:\/\/.{3,}/.test(link)) {
-        errors.push('Le lien doit être une URL valide commençant par http:// ou https://.');
-        $('ff-link').style.borderColor = 'var(--red)';
-    } else if (link.length > 255) {
-        errors.push('Le lien ne peut pas dépasser 255 caractères.');
-        $('ff-link').style.borderColor = 'var(--red)';
-    }
-}
-// If event is In-person, link is optional → no validation
-
-  // ── Status : obligatoire, valeur parmi la liste ──
-  var status = $('ff-status').value;
-  var validStatuses = ['open', 'closed', 'draft'];
-  if (!status || !validStatuses.includes(status)) {
-    errors.push('Le statut est obligatoire (open, closed, draft).');
-    $('ff-status').style.borderColor = 'var(--red)';
-  }
-
-  // Afficher le premier message d'erreur via toast
-  if (errors.length > 0) {
-    toast(errors[0], 'error');
-    return false;
-  }
-  return true;
-}
-
 
 function saveParticipation(){
-  if (!verifParticipation()) return;
-  const user=$('pf-user').value.trim();
-  if(!user){toast('User name is required','error');return}
-  const eventId=parseInt($('pf-event').value);
-  const today=new Date().toISOString().slice(0,10);
-  if(editingPartId){
-    const p=participations.find(x=>x.id===editingPartId);
-    Object.assign(p,{
-      user,email:$('pf-email').value,eventId,
-      registeredAt:$('pf-regdate').value||p.registeredAt,
-      attendanceStatus:$('pf-attendance').value,
-      status:$('pf-status').value,
-      rating:$('pf-rating').value?parseInt($('pf-rating').value):null,
-      feedback:$('pf-feedback').value
-    });
-    toast('Participation updated ✓','success');
-  }else{
-    participations.push({
-      id:nextPid++,user,email:$('pf-email').value,eventId,
-      registeredAt:$('pf-regdate').value||today,
-      attendanceStatus:$('pf-attendance').value,
-      status:$('pf-status').value,
-      rating:$('pf-rating').value?parseInt($('pf-rating').value):null,
-      feedback:$('pf-feedback').value
-    });
-    toast('Participation registered ✓','success');
+  if(!editingPartId){
+    toast('Participation creation is handled from the front office.', 'error');
+    return;
   }
-  closeModal('participation-form');
-  renderParticipations();
+  if (!verifParticipation()) return;
+  const status  = $('pf-status').value;
+  const rating  = $('pf-rating').value ? parseInt($('pf-rating').value) : null;
+  const feedback= $('pf-feedback').value;
+  const attendance = $('pf-attendance').value;
+
+  const formData = new FormData();
+  formData.append('attendanceStatus', attendance);
+  formData.append('status',           status);
+  formData.append('rating',           rating ?? '');
+  formData.append('feedback',         feedback);
+
+  fetch('update_participation.php?id=' + editingPartId, { method:'POST', body:formData })
+    .then(r => r.json())
+    .then(data => {
+      if(data.success){ toast('Participation updated ✓','success'); loadParticipationsFromDB(); }
+      else toast(data.error || 'Erreur','error');
+      closeModal('participation-form');
+    })
+    .catch(() => toast('Erreur réseau','error'));
   updateStats();
 }
 
@@ -849,17 +888,11 @@ function saveParticipation(){
 /* ─── SPONSORS FILTER STATE ─── */
 let sponsorFilter = 'all';   // 'all' | 'asc' | 'desc'
 let sponsorSearch = '';
-let formFilter = 'all';
-let formSearch = '';
 
 /* ─── SPONSORS DATA ─── */
 let sponsors = []; // chargé depuis la BDD via loadSponsorsFromDB()
 let editingSponsorId = null;
 
-/* ─── EVENT FORMS DATA ─── */
-let eventForms = [];
-let nextFid = 4;
-let editingFormId = null;
 
 /* ─── SPONSORS RENDER ─── */
 function getFilteredSponsors(){
@@ -954,123 +987,14 @@ function saveSponsor(){
     .catch(err => toast('Erreur réseau : ' + err.message, 'error'));
 }
 
-/* ─── EVENT FORMS RENDER ─── */
-function getFilteredForms(){
-  return eventForms.filter(f=>{
-    if(formFilter!=='all'&&f.status!==formFilter) return false;
-    const q=formSearch.toLowerCase();
-    if(q&&!f.title.toLowerCase().includes(q)&&!f.description.toLowerCase().includes(q)) return false;
-    return true;
-  });
-}
-function setFormFilter(val,btn){
-  formFilter=val;
-  document.querySelectorAll('#form-status-filters .filter').forEach(f=>f.classList.remove('is-selected'));
-  btn.classList.add('is-selected');
-  renderEventForms();
-}
-function filterForms(){
-  formSearch=$('search-forms').value;
-  renderEventForms();
-}
-
-function loadEventFormsFromDB(){
-  fetch('search_eventform.php')
-    .then(r => r.json())
-    .then(data => {
-      eventForms = data;
-      renderEventForms();
-    })
-    .catch(err => console.error('loadEventFormsFromDB:', err));
-}
-
-function renderEventForms(){
-  const list=getFilteredForms();
-  $('forms-count').textContent=`${list.length} form${list.length!==1?'s':''}`;
-  if(!list.length){
-    $('forms-tbody').innerHTML=`<tr><td colspan="6"><div class="empty"><div class="empty-icon">📋</div><h4>No forms found</h4></div></td></tr>`;
-    return;
-  }
-  $('forms-tbody').innerHTML=list.map(f=>{
-    const ev=getEvent(f.eventId);
-    const fStatusChip=f.status==='open'?'<span class="chip chip-green">Open</span>':f.status==='closed'?'<span class="chip chip-red" style="background:rgba(255,110,69,.12);color:var(--red)">Closed</span>':'<span class="chip chip-yellow" style="background:rgba(245,191,101,.13);color:var(--yellow)">Draft</span>';
-    return `<tr>
-      <td><strong>${f.title}</strong></td>
-      <td>${ev?ev.title:'—'}</td>
-      <td style="max-width:180px;color:var(--muted);font-size:12px">${f.description}</td>
-      <td><a href="${f.formLink}" target="_blank" style="color:var(--blue-2);font-size:12px">🔗 Open</a></td>
-      <td>${fStatusChip}</td>
-      <td>
-        <div class="table-actions">
-          <button class="btn btn-soft btn-sm" onclick="editEventForm(${f.formId})">✏️</button>
-          <button class="btn btn-danger btn-sm" onclick="confirmDelete('form',${f.formId},'${f.title.replace(/'/g,"\'")}')">🗑</button>
-        </div>
-      </td>
-    </tr>`;
-  }).join('');
-}
-
-/* ─── EVENT FORMS CRUD ─── */
-function openFormCreate(){
-  editingFormId=null;
-  $('eventform-form-title').textContent='Add Event Form';
-  ['ff-title','ff-desc','ff-link'].forEach(id=>$(id).value='');
-  $('ff-status').value='open';
-  openModal('eventform-form');
-}
-
-function editEventForm(id){
-  const f=eventForms.find(x=>x.formId===id); if(!f)return;
-  editingFormId=id;
-  $('eventform-form-title').textContent='Edit Form';
-  $('ff-title').value=f.title;
-  $('ff-desc').value=f.description;
-  $('ff-link').value=f.formLink;
-  $('ff-status').value=f.status;
-  $('ff-event').value=f.eventId;
-  openModal('eventform-form');
-}
-
-function saveEventForm(){
-  if (!verifEventForm()) return;
-  const title = $('ff-title').value.trim();
-  const link = $('ff-link').value.trim();
-  if(!title){toast('Title is required','error');return}
-  
-  const fd = new FormData();
-  fd.append('eventId', parseInt($('ff-event').value));
-  fd.append('title', title);
-  fd.append('description', $('ff-desc').value);
-  fd.append('formLink', link);
-  fd.append('status', $('ff-status').value);
-  
-  const url = editingFormId
-    ? 'update_eventform.php?id=' + editingFormId
-    : 'create_eventform.php';
-  if(editingFormId) fd.append('formId', editingFormId);
-  
-  fetch(url, {method:'POST', body:fd})
-    .then(r => r.json())
-    .then(data => {
-      if(data.success){
-        toast(data.message, 'success');
-        closeModal('eventform-form');
-        loadEventFormsFromDB();
-      } else {
-        toast('Erreur : '+(data.error||'Inconnue'), 'error');
-      }
-    })
-    .catch(err => toast('Erreur réseau : '+err.message, 'error'));
-}
-
 /* ─── DELETE ─── */
 function confirmDelete(type,id,name){
-  $('confirm-title').textContent=`Delete "${name}"?`;
+  $('confirm-title').textContent=type==='part' ? `Kick "${name}"?` : `Delete "${name}"?`;
   const msgs={event:"This will also remove all linked participations, sponsors and forms.",
-    part:"This registration will be permanently removed.",
-    sponsor:"This sponsor will be permanently removed.",
-    form:"This form will be permanently removed."};
+    part:"This participant will be removed from the event.",
+    sponsor:"This sponsor will be permanently removed."};
   $('confirm-body').textContent=msgs[type]||"This action cannot be undone.";
+  $('confirm-ok-btn').textContent=type==='part' ? 'Yes, Kick' : 'Yes, Delete';
   $('confirm-ok-btn').onclick=()=>doDelete(type,id);
   openModal('confirm');
 }
@@ -1091,9 +1015,19 @@ function doDelete(type,id){
     closeModal('confirm');
     return;
   }else if(type==='part'){
-    participations=participations.filter(p=>p.id!==id);
-    renderParticipations();
-    toast('Participation removed','success');
+    fetch('delete_participation.php?id='+id)
+      .then(r => r.json())
+      .then(data => {
+        if(data.success){
+          toast('Participant kicked ✓','success');
+          loadParticipationsFromDB();
+        } else {
+          toast('Erreur : '+(data.error||'Inconnue'),'error');
+        }
+      })
+      .catch(err => toast('Erreur réseau : '+err.message,'error'));
+    closeModal('confirm');
+    return;
   }else if(type==='sponsor'){
     fetch('delete_sponsor.php?id='+id)
       .then(r => r.json())
@@ -1108,21 +1042,7 @@ function doDelete(type,id){
       .catch(err=>toast('Erreur réseau : '+err.message,'error'));
     closeModal('confirm');
     return;
-  }else if (type === 'form') {
-  fetch('delete_eventform.php?id=' + id)
-    .then(r => r.json())
-    .then(data => {
-      if (data.success) {
-        toast('Form deleted', 'success');
-        loadEventFormsFromDB();   // refreshes the list from database
-      } else {
-        toast('Erreur : ' + (data.error || 'Inconnue'), 'error');
-      }
-    })
-    .catch(err => toast('Erreur réseau : ' + err.message, 'error'));
-  closeModal('confirm');
-  return;
-}
+  }
   updateStats();
   closeModal('confirm');
 }
@@ -1144,10 +1064,96 @@ function openModal(name){
 }
 
 /* ─── OVERRIDE the + buttons to use correct open fns ─── */
-document.querySelector('[onclick="openModal(\'event-create\')"]').onclick=openEventCreate;
-document.querySelector('[onclick="openModal(\'participation-create\')"]').onclick=openPartCreate;
+const eventCreateButton = document.querySelector('[onclick="openModal(\'event-create\')"]');
+if (eventCreateButton) eventCreateButton.onclick = openEventCreate;
 
 /* ─── LOAD EVENTS FROM DB ─── */
+function aiEmpty(text){
+  return `<div class="empty" style="padding:28px 12px"><h4>${text}</h4></div>`;
+}
+
+function aiPercent(value){
+  return `${Math.round(Number(value || 0))}%`;
+}
+
+function loadAiFeedbackAnalyzer(){
+  const totalEl = $('ai-total-feedbacks');
+  if(totalEl) totalEl.textContent = '...';
+
+  fetch('ai_feedback_analyzer.php')
+    .then(r => r.json())
+    .then(data => {
+      if(data.error){
+        toast(data.error, 'error');
+        return;
+      }
+      renderAiFeedbackAnalyzer(data);
+    })
+    .catch(err => toast('AI analysis error: ' + err.message, 'error'));
+}
+
+function renderAiFeedbackAnalyzer(data){
+  const stats = data.stats || {};
+  $('ai-total-feedbacks').textContent = stats.totalFeedbacks || 0;
+  $('ai-positive-percent').textContent = aiPercent(stats.positivePercent);
+  $('ai-negative-percent').textContent = aiPercent(stats.negativePercent);
+  $('ai-neutral-percent').textContent = aiPercent(stats.neutralPercent);
+  $('ai-positive-count').textContent = `${stats.positive || 0} review${stats.positive === 1 ? '' : 's'}`;
+  $('ai-negative-count').textContent = `${stats.negative || 0} review${stats.negative === 1 ? '' : 's'}`;
+  $('ai-neutral-count').textContent = `${stats.neutral || 0} review${stats.neutral === 1 ? '' : 's'}`;
+  if($('ai-positive-bar')) $('ai-positive-bar').style.width = `${Number(stats.positivePercent || 0)}%`;
+  if($('ai-negative-bar')) $('ai-negative-bar').style.width = `${Number(stats.negativePercent || 0)}%`;
+  if($('ai-neutral-bar')) $('ai-neutral-bar').style.width = `${Number(stats.neutralPercent || 0)}%`;
+
+  const health = Math.max(0, Math.min(100, Math.round((stats.positivePercent || 0) - (stats.negativePercent || 0) + 50)));
+  if($('ai-health-score')) $('ai-health-score').textContent = health;
+  if($('ai-priority-title') && $('ai-priority-copy')){
+    if((stats.negative || 0) > 0){
+      $('ai-priority-title').textContent = 'Fix negative patterns first';
+      $('ai-priority-copy').textContent = 'Start with the most repeated complaint, then compare the next event feedback to see if the issue decreased.';
+    }else if((stats.positive || 0) > (stats.neutral || 0)){
+      $('ai-priority-title').textContent = 'Strong feedback health';
+      $('ai-priority-copy').textContent = 'Use the most liked events as examples for future event planning and repeat what worked well.';
+    }else{
+      $('ai-priority-title').textContent = 'Collect more detailed feedback';
+      $('ai-priority-copy').textContent = 'Ask users for more specific comments after each event so the analyzer can detect clearer patterns.';
+    }
+  }
+
+  const complaints = data.topComplaints || [];
+  $('ai-complaints-list').innerHTML = complaints.length
+    ? complaints.map(item => `
+        <div class="ai-list-item">
+          <div>
+            <strong>${item.topic}</strong>
+            <span>${item.examples && item.examples.length ? item.examples.join(' | ') : 'Detected in negative feedback'}</span>
+          </div>
+          <b>${item.count}</b>
+        </div>
+      `).join('')
+    : aiEmpty('No negative complaint patterns found this month.');
+
+  const liked = data.mostLikedEvents || [];
+  $('ai-liked-events-list').innerHTML = liked.length
+    ? liked.map(item => `
+        <div class="ai-list-item">
+          <div>
+            <strong>${item.title}</strong>
+            <span>Average rating: ${Number(item.averageRating || 0).toFixed(1)} / 5</span>
+          </div>
+          <b>${item.positiveReviews} positive</b>
+        </div>
+      `).join('')
+    : aiEmpty('No liked events yet.');
+
+  const suggestions = data.suggestions || [];
+  $('ai-suggestions-list').innerHTML = suggestions.length
+    ? suggestions.map(text => `<div class="ai-suggestion">${text}</div>`).join('')
+    : aiEmpty('No suggestions yet. More feedback will make the analyzer smarter.');
+
+  loadParticipationsFromDB();
+}
+
 function loadEventsFromDB(){
   fetch('search_event.php')
     .then(r=>r.json())
@@ -1158,7 +1164,8 @@ function loadEventsFromDB(){
         date:e.date,status:e.status,createdAt:e.createdAt,
         managerId:e.managerId, sponsorId:e.sponsorId, duration:e.duration,
         eventMode:e.eventMode,
-       registrations:0, time:e.time||'', tags:e.tags||'', organiser:e.organiser||''
+        formLink:e.formLink,
+       registrations:parseInt(e.registrations)||0, time:e.time||'', tags:e.tags||'', organiser:e.organiser||''
       }));
       renderEvents();refreshEventSelect();updateStats();
     })
@@ -1177,8 +1184,30 @@ function loadSponsorsFromDB(){
     .catch(err => console.error('loadSponsorsFromDB:', err));
 }
 
+/* ─── LOAD PARTICIPATIONS FROM DB ─── */
+function loadParticipationsFromDB(){
+  fetch('search_participation.php')
+    .then(r => r.json())
+    .then(data => {
+      participations = data.map(p => ({
+        id:          p.participationId,
+        user:        p.userName  || 'User #' + (p.userId||'?'),
+        email:       p.userEmail || '',
+        eventId:     p.eventId,
+        registeredAt:p.registrationDate,
+        attendanceStatus:p.attendanceStatus,
+        status:      p.attendanceStatus || p.status,
+        rating:      p.rating ? parseInt(p.rating) : null,
+        feedback:    p.feedbackText || '',
+      }));
+      renderParticipations();
+      updateStats();
+    })
+    .catch(err => { console.error('loadParticipationsFromDB:', err); renderParticipations(); });
+}
+
 /* ─── INIT ─── */
 loadEventsFromDB();
 loadSponsorsFromDB();
-renderParticipations();
+loadParticipationsFromDB();
 updateStats();
