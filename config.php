@@ -36,5 +36,6 @@ class config
     {
         $model = trim(self::$huggingFaceFeedbackModel);
         return $model !== '' ? $model : 'katanemo/Arch-Router-1.5B';
+
     }
 }

@@ -1,0 +1,57 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CareerStrand Admin Profiles</title>
+  <link rel="stylesheet" href="assets/css/admin.css" />
+</head>
+<body>
+  <div class="admin-shell">
+    <aside class="admin-sidebar">
+      <div class="brand"><div class="brand-badge"></div><div><h1>CareerStrand Admin</h1><p>Back office console</p></div></div>
+      <div class="side-label">Main Menu</div>
+      <nav class="nav-list">
+        <a class="nav-item" href="admin-dashboard.html"><span>Dashboard</span><span>Home</span></a>
+        <a class="nav-item" href="admin-users.html"><span>Users</span><span>1.2k</span></a>
+        <a class="nav-item active" href="admin-profiles.html"><span>Profiles</span><span>842</span></a>
+        <a class="nav-item" href="admin-questions.html"><span>Courses</span><span>24</span></a>
+        <a class="nav-item" href="admin-skills.html"><span>Challenges</span><span>18</span></a>
+        <a class="nav-item" href="admin-opportunities.php"><span>Opportunities</span><span>36</span></a>
+        <a class="nav-item" href="admin-applications.html"><span>Applications</span><span>128</span></a>
+        <a class="nav-item" href="admin-analytics.html"><span>ADN Analytics</span><span>Live</span></a>
+        <a class="nav-item" href="admin-feedback.html"><span>Events</span><span>12</span></a>
+        <a class="nav-item" href="admin-settings.html"><span>Settings</span><span>New</span></a>
+      </nav>
+    </aside>
+    <main class="admin-main">
+      <header class="page-header">
+        <div><h2>Profiles</h2><p>Inspect how complete user profiles are, which sections are missing, and how profile readiness affects ADN generation and opportunity matching.</p></div>
+        <div class="header-actions"><button class="btn btn-soft">Completion audit</button><button class="btn btn-main">Send reminder batch</button></div>
+      </header>
+      <section class="split-grid">
+        <article class="panel">
+          <div class="panel-header"><div class="panel-title"><h3>Profile readiness tiers</h3><p>Track how close users are to ADN eligibility.</p></div></div>
+          <div class="bars">
+            <div class="bar-row"><span>90-100%</span><div class="bar-track"><div class="bar-fill" style="width: 46%;"></div></div><strong>312</strong></div>
+            <div class="bar-row"><span>70-89%</span><div class="bar-track"><div class="bar-fill" style="width: 62%;"></div></div><strong>401</strong></div>
+            <div class="bar-row"><span>40-69%</span><div class="bar-track"><div class="bar-fill" style="width: 38%;"></div></div><strong>291</strong></div>
+            <div class="bar-row"><span>Below 40%</span><div class="bar-track"><div class="bar-fill" style="width: 18%;"></div></div><strong>280</strong></div>
+          </div>
+        </article>
+        <article class="panel">
+          <div class="panel-header"><div class="panel-title"><h3>Missing sections</h3><p>Where users drop off most often.</p></div></div>
+          <div class="list">
+            <div class="list-item"><strong>Skills mapping</strong><p class="subtle">31% of incomplete users have not finished their skills library section.</p></div>
+            <div class="list-item"><strong>Preferences</strong><p class="subtle">22% have no work-style preferences selected yet.</p></div>
+            <div class="list-item"><strong>Experience history</strong><p class="subtle">18% are missing projects, internships, or learning proof.</p></div>
+          </div>
+        </article>
+      </section>
+    </main>
+  </div>
+  <script src="assets/js/admin.js"></script>
+</body>
+</html>
+
+
