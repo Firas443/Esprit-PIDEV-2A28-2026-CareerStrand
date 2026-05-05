@@ -9,7 +9,7 @@ class config
     {
         if (self::$pdo === null) {
             $host = "localhost";
-            $dbName = "careerstrand";
+            $dbName = "";
             $username = "root";
             $password = "";
 
