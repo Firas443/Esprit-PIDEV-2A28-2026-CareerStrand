@@ -65,6 +65,25 @@ private function checkTitle(): void {
         }
     }
 
+    private function parseSkills(array $row): array {
+        $skills = [];
+        if (!empty($row['skillsRaw'])) {
+            foreach (explode(';;;', $row['skillsRaw']) as $entry) {
+                $parts = explode('|||', $entry);
+                if (count($parts) === 3 && $parts[0] !== '') {
+                    $skills[] = [
+                        'skillName'     => $parts[0],
+                        'requiredLevel' => (int)$parts[1],
+                        'isPrimary'     => (int)$parts[2],
+                    ];
+                }
+            }
+        }
+        $row['skills'] = $skills;
+        unset($row['skillsRaw']);
+        return $row;
+    }
+
     private function getOpportunities(): void {
         $filters = [];
         if (!empty($_GET['status']))        $filters['status']        = $_GET['status'];
@@ -72,9 +91,11 @@ private function checkTitle(): void {
         if (!empty($_GET['requiredLevel'])) $filters['requiredLevel'] = $_GET['requiredLevel'];
         if (!empty($_GET['search']))        $filters['search']        = $_GET['search'];
 
-        $data = $this->source === 'back'
+        $rows = $this->source === 'back'
             ? $this->model->getAll($filters)
             : $this->model->getPublished($filters);
+
+        $data = array_map([$this, 'parseSkills'], $rows);
 
         ob_end_clean();
         echo json_encode(['success' => true, 'data' => $data]);
@@ -203,8 +224,9 @@ private function checkTitle(): void {
         }
 
         $db = $this->model->getDb();
-        $db->prepare("DELETE FROM Application WHERE opportunityId = :id")->execute(['id' => $this->id]);
-        $db->prepare("DELETE FROM Opportunity WHERE opportunityId = :id")->execute(['id' => $this->id]);
+       $db->prepare("DELETE FROM opportunity_skill WHERE opportunityId = :id")->execute(['id' => $this->id]);
+$db->prepare("DELETE FROM Application WHERE opportunityId = :id")->execute(['id' => $this->id]);
+$db->prepare("DELETE FROM Opportunity WHERE opportunityId = :id")->execute(['id' => $this->id]);
 
         ob_end_clean();
         echo json_encode(['success' => true, 'message' => 'Opportunity deleted.']);

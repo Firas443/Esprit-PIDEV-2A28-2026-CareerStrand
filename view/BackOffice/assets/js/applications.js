@@ -1,4 +1,4 @@
-const API_BASE = '/Careerstrand/Controller/ApplicationController.php';
+const API_BASE = '/Careerstrand/controller/ApplicationController.php';
 let allApps         = [];
 let filterStatus    = '';
 let currentDetailId = null;
@@ -24,8 +24,12 @@ function escHtml(str) {
 
 //fetch all applications from the backend
 async function loadApplications() {
+  const search         = document.getElementById('searchInput').value.trim();
+  const searchPosition = document.getElementById('searchPosition').value.trim();
   const params = new URLSearchParams({ source: 'back' });
-  if (filterStatus) params.set('status', filterStatus);
+  if (filterStatus)    params.set('status',         filterStatus);
+  if (search)          params.set('search',          search);
+  if (searchPosition)  params.set('searchPosition',  searchPosition);
   try {
     const res         = await fetch(`${API_BASE}?${params}`);
     const contentType = res.headers.get('content-type') || '';
@@ -100,6 +104,10 @@ function openDetail(id) {
   document.getElementById('dDate').textContent       = date;
   document.getElementById('dStatus').innerHTML       = `<span class="status-chip ${sCls}">${a.status}</span>`;
   document.getElementById('dMotivation').textContent = a.motivation || '—';
+  document.getElementById('dDescription').textContent = a.opportunityDescription || '—';
+  document.getElementById('aiSummaryBox').innerHTML = `<p class="ai-empty">Click summarize to review the portfolio, motivation, and job description.</p>`;
+  document.getElementById('detailSummarize').disabled = false;
+  document.getElementById('detailSummarize').textContent = 'Summarize with AI';
   const portEl = document.getElementById('dPortfolio');
   if (a.portfolio) {
     portEl.innerHTML = `<a href="${escHtml(a.portfolio)}" target="_blank" rel="noopener">${escHtml(a.portfolio)}</a>`;
@@ -109,6 +117,67 @@ function openDetail(id) {
   document.getElementById('detailAccept').style.display = a.status === 'pending' ? '' : 'none';
   document.getElementById('detailReject').style.display = a.status === 'pending' ? '' : 'none';
   openModal('detailModal');
+}
+
+function renderAiSummary(data) {
+  const list = items => (items || []).length
+    ? `<ul>${items.map(item => `<li>${escHtml(item)}</li>`).join('')}</ul>`
+    : `<p class="ai-muted">No items found.</p>`;
+
+  document.getElementById('aiSummaryBox').innerHTML = `
+    <div class="ai-fit-row">
+      <span class="ai-fit-pill">${escHtml(data.fitDecision)}</span>
+      <strong>${escHtml(data.fitScore)}%</strong>
+    </div>
+    <div class="ai-section">
+      <h4>Summary</h4>
+      <p>${escHtml(data.summary)}</p>
+    </div>
+    <div class="ai-section">
+      <h4>Portfolio</h4>
+      <p>${escHtml(data.portfolioSummary)}</p>
+    </div>
+    <div class="ai-two-col">
+      <div class="ai-section">
+        <h4>Strengths</h4>
+        ${list(data.strengths)}
+      </div>
+      <div class="ai-section">
+        <h4>Concerns</h4>
+        ${list(data.concerns)}
+      </div>
+    </div>
+    <div class="ai-section">
+      <h4>Recommendation</h4>
+      <p>${escHtml(data.recommendation)}</p>
+    </div>`;
+}
+
+async function summarizeApplication() {
+  if (!currentDetailId) return;
+  const btn = document.getElementById('detailSummarize');
+  const box = document.getElementById('aiSummaryBox');
+  btn.disabled = true;
+  btn.textContent = 'Summarizing...';
+  box.innerHTML = `<p class="ai-empty">Reviewing application with AI...</p>`;
+
+  try {
+    const res = await fetch(`${API_BASE}?id=${currentDetailId}&action=summarize`, { method: 'POST' });
+    const contentType = res.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      const raw = await res.text();
+      throw new Error('Server error: ' + raw.substring(0, 200));
+    }
+    const json = await res.json();
+    if (!json.success) throw new Error(json.message);
+    renderAiSummary(json.data);
+  } catch (e) {
+    box.innerHTML = `<p class="ai-error">Could not summarize: ${escHtml(e.message)}</p>`;
+    showToast('AI summary failed: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Summarize with AI';
+  }
 }
 
 //change status and refresh table
@@ -140,6 +209,7 @@ document.getElementById('detailModalCancel').addEventListener('click', () => clo
 document.getElementById('detailModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal('detailModal'); });
 document.getElementById('detailAccept').addEventListener('click', () => updateStatus(currentDetailId, 'accepted'));
 document.getElementById('detailReject').addEventListener('click', () => updateStatus(currentDetailId, 'rejected'));
+document.getElementById('detailSummarize').addEventListener('click', summarizeApplication);
 
 document.querySelectorAll('.filter-status-btn').forEach(btn => {
   btn.addEventListener('click', function () {
@@ -150,6 +220,12 @@ document.querySelectorAll('.filter-status-btn').forEach(btn => {
   });
 });
 
-document.getElementById('searchInput').addEventListener('input', () => {});
+let searchTimer;
+function debounceSearch() {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(loadApplications, 350);
+}
+document.getElementById('searchInput').addEventListener('input', debounceSearch);
+document.getElementById('searchPosition').addEventListener('input', debounceSearch);
 
 loadApplications();

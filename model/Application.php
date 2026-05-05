@@ -20,6 +20,7 @@ class Application {
     private const OPP_PK          = 'opportunityId';
     private const OPP_TITLE       = 'title';
     private const OPP_TYPE        = 'type';
+    private const OPP_DESC        = 'description';
 
     private const VALID_STATUSES  = ['pending', 'accepted', 'rejected'];
 
@@ -34,7 +35,8 @@ public function getDb(): PDO {
                     a.*,
                     u." . self::USER_NAME . " AS applicantName,
                     o." . self::OPP_TITLE . " AS opportunityTitle,
-                    o." . self::OPP_TYPE  . " AS opportunityType
+                    o." . self::OPP_TYPE  . " AS opportunityType,
+                    o." . self::OPP_DESC  . " AS opportunityDescription
                 FROM " . self::TABLE . " a
                 LEFT JOIN " . self::TABLE_USER . " u ON a." . self::FK_USER . " = u." . self::USER_PK . "
                 LEFT JOIN " . self::TABLE_OPP  . " o ON a." . self::FK_OPPORTUNITY . " = o." . self::OPP_PK . "
@@ -78,7 +80,8 @@ public function getDb(): PDO {
         $sql = "SELECT 
                     a.*,
                     u." . self::USER_NAME . " AS applicantName,
-                    o." . self::OPP_TITLE . " AS opportunityTitle
+                    o." . self::OPP_TITLE . " AS opportunityTitle,
+                    o." . self::OPP_DESC  . " AS opportunityDescription
                 FROM " . self::TABLE . " a
                 LEFT JOIN " . self::TABLE_USER . " u ON a." . self::FK_USER . " = u." . self::USER_PK . "
                 LEFT JOIN " . self::TABLE_OPP  . " o ON a." . self::FK_OPPORTUNITY . " = o." . self::OPP_PK . "
@@ -102,6 +105,10 @@ public function getDb(): PDO {
             $where[]          = 'u.' . self::USER_NAME . ' LIKE :search';
             $params['search'] = '%' . $filters['search'] . '%';
         }
+        if (!empty($filters['searchPosition'])) {
+            $where[]                    = 'o.' . self::OPP_TITLE . ' LIKE :searchPosition';
+            $params['searchPosition']   = '%' . $filters['searchPosition'] . '%';
+        }
         if (!empty($filters[self::FK_USER])) {
             $where[]               = 'a.' . self::FK_USER . ' = :userId';
             $params['userId']      = $filters[self::FK_USER];
@@ -115,7 +122,8 @@ public function getDb(): PDO {
                     a.*,
                     u." . self::USER_NAME . " AS applicantName,
                     o." . self::OPP_TITLE . " AS opportunityTitle,
-                    o." . self::OPP_TYPE  . " AS opportunityType
+                    o." . self::OPP_TYPE  . " AS opportunityType,
+                    o." . self::OPP_DESC  . " AS opportunityDescription
                 FROM " . self::TABLE . " a
                 LEFT JOIN " . self::TABLE_USER . " u ON a." . self::FK_USER        . " = u." . self::USER_PK . "
                 LEFT JOIN " . self::TABLE_OPP  . " o ON a." . self::FK_OPPORTUNITY . " = o." . self::OPP_PK . "

@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CareerStrand Admin — Applications</title>
-  <link rel="stylesheet" href="assets/css/admin.css" />
-  <link rel="stylesheet" href="assets/css/applications.css" />
+  <link rel="stylesheet" href="assets/css/admin.css?v=3" />
+  <link rel="stylesheet" href="assets/css/applications.css?v=2" />
 </head>
 <body>
 <div class="admin-shell">
@@ -33,11 +33,19 @@
         <p>Review student applications, check ADN compatibility scores, and manage accept/reject decisions.</p>
       </div>
       <div class="header-actions">
-        <div class="searchbar">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
-            <circle cx="7" cy="7" r="4.5"/><line x1="10.2" y1="10.2" x2="13.5" y2="13.5"/>
-          </svg>
-          <input type="text" id="searchInput" placeholder="Search by applicant name..." />
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div class="searchbar">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+              <circle cx="7" cy="7" r="4.5"/><line x1="10.2" y1="10.2" x2="13.5" y2="13.5"/>
+            </svg>
+            <input type="text" id="searchInput" placeholder="Search by applicant name..." />
+          </div>
+          <div class="searchbar">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+              <circle cx="7" cy="7" r="4.5"/><line x1="10.2" y1="10.2" x2="13.5" y2="13.5"/>
+            </svg>
+            <input type="text" id="searchPosition" placeholder="Search by position..." />
+          </div>
         </div>
       </div>
     </header>
@@ -135,6 +143,19 @@
         <span class="detail-label">Motivation</span>
         <div class="detail-value" id="dMotivation" style="min-height:80px;">—</div>
       </div>
+      <div class="detail-field" style="grid-column: 1 / -1;">
+        <span class="detail-label">Opportunity description</span>
+        <div class="detail-value" id="dDescription" style="min-height:80px;">—</div>
+      </div>
+      <div class="detail-field" style="grid-column: 1 / -1;">
+        <div class="ai-summary-head">
+          <span class="detail-label">AI fit summary</span>
+          <button class="btn-summarize" id="detailSummarize" type="button">Summarize with AI</button>
+        </div>
+        <div class="ai-summary-box" id="aiSummaryBox">
+          <p class="ai-empty">Click summarize to review the portfolio, motivation, and job description.</p>
+        </div>
+      </div>
     </div>
     <div class="modal-actions" id="detailActions">
       <button class="btn-close-detail" id="detailModalCancel">Close</button>
@@ -147,6 +168,6 @@
 <div class="toast" id="toast"></div>
 
 <script src="assets/js/admin.js"></script>
-<script src="assets/js/applications.js"></script>
+<script src="assets/js/applications.js?v=3"></script>
 </body>
 </html>

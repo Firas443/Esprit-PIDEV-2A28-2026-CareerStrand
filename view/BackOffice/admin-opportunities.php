@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CareerStrand Admin — Opportunities</title>
-  <link rel="stylesheet" href="assets/css/admin.css" />
-  <link rel="stylesheet" href="assets/css/opportunities.css" />
+  <link rel="stylesheet" href="assets/css/admin.css?v=4" />
+  <link rel="stylesheet" href="assets/css/opportunities.css?v=3" />
 </head>
 <body>
 <div class="admin-shell">
@@ -55,7 +55,7 @@
           <p id="tableCaption">Loading...</p>
         </div>
         <div class="filter-row">
-          <select id="filterCategory">
+          <select class="pill-select" id="filterCategory">
             <option value="">All categories</option>
             <option>Technical</option>
             <option>Creativity</option>
@@ -63,7 +63,7 @@
             <option>Communication</option>
             <option>Leadership</option>
           </select>
-          <select id="filterLevel">
+          <select class="pill-select" id="filterLevel">
             <option value="">All levels</option>
             <option>Beginner</option>
             <option>Intermediate</option>
@@ -116,7 +116,7 @@
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
         <div class="field">
           <label>Type</label>
-          <select id="fType">
+          <select class="pill-select" id="fType">
             <option value="internship">Internship</option>
             <option value="job">Job</option>
             <option value="freelance">Freelance</option>
@@ -125,7 +125,7 @@
         </div>
         <div class="field">
           <label>Category</label>
-          <select id="fCategory">
+          <select class="pill-select" id="fCategory">
             <option>Technical</option>
             <option>Creativity</option>
             <option>Business</option>
@@ -135,7 +135,7 @@
         </div>
         <div class="field">
           <label>Required level</label>
-          <select id="fLevel">
+          <select class="pill-select" id="fLevel">
             <option>Beginner</option>
             <option>Intermediate</option>
             <option>Advanced</option>
@@ -148,11 +148,19 @@
       </div>
       <div class="field">
         <label>Status</label>
-        <select id="fStatus">
+        <select class="pill-select" id="fStatus">
           <option value="draft">Draft</option>
           <option value="published">Published</option>
           <option value="archived">Archived</option>
         </select>
+      </div>
+
+      <div class="field">
+        <label>Required skills</label>
+        <div id="skillsList" class="skills-list">
+  <p id="skillsEmptyMsg" style="color:var(--muted);font-size:13px;margin:4px 0 0;">No skills added yet.</p>
+</div>
+        <button type="button" class="btn-add-skill" id="btnAddSkill">+ Add skill</button>
       </div>
     </div>
     <div class="modal-actions">
@@ -184,6 +192,6 @@
 <div class="toast" id="toast"></div>
 
 <script src="assets/js/admin.js"></script>
-<script src="assets/js/opportunities.js"></script>
+<script src="assets/js/opportunities.js?v=6"></script>
 </body>
 </html>

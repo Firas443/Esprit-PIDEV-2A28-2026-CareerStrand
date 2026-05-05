@@ -18,6 +18,7 @@ class Opportunity {
     // Join tables
     private const TABLE_USER     = 'User';
     private const TABLE_APP      = 'Application';
+    private const TABLE_SKILL    = 'opportunity_skill';
     private const USER_PK        = 'userId';
     private const USER_NAME      = 'fullName';
     private const APP_PK         = 'applicationId';
@@ -53,11 +54,12 @@ class Opportunity {
             $params['requiredLevel'] = $filters['requiredLevel'];
         }
         if (!empty($filters['search'])) {
-            $where[]          = '(o.' . self::COL_TITLE . ' LIKE :search OR o.' . self::COL_DESC . ' LIKE :search)';
-            $params['search'] = '%' . $filters['search'] . '%';
+            $where[]               = '(o.' . self::COL_TITLE . ' LIKE :searchTitle OR o.' . self::COL_DESC . ' LIKE :searchDesc)';
+            $params['searchTitle'] = '%' . $filters['search'] . '%';
+            $params['searchDesc']  = '%' . $filters['search'] . '%';
         }
 
-        $sql = "SELECT 
+        $sql = "SELECT
                     o." . self::PK . ",
                     o." . self::FK_MANAGER . ",
                     o." . self::COL_TITLE . ",
@@ -69,10 +71,16 @@ class Opportunity {
                     o." . self::COL_STATUS . ",
                     o." . self::COL_CREATED . ",
                     u." . self::USER_NAME . " AS managerName,
-                    COUNT(a." . self::APP_PK . ") AS applicationCount
+                    COUNT(DISTINCT a." . self::APP_PK . ") AS applicationCount,
+                    GROUP_CONCAT(
+                        CONCAT(os.skillName, '|||', os.requiredLevel, '|||', COALESCE(os.isPrimary,0))
+                        ORDER BY os.isPrimary DESC
+                        SEPARATOR ';;;'
+                    ) AS skillsRaw
                 FROM " . self::TABLE . " o
                 LEFT JOIN " . self::TABLE_USER . " u ON o." . self::FK_MANAGER . " = u." . self::USER_PK . "
                 LEFT JOIN " . self::TABLE_APP . " a ON o." . self::PK . " = a." . self::PK . "
+                LEFT JOIN " . self::TABLE_SKILL . " os ON o." . self::PK . " = os.opportunityId
                 WHERE " . implode(' AND ', $where) . "
                 GROUP BY o." . self::PK . "
                 ORDER BY o." . self::COL_CREATED . " DESC";
@@ -86,7 +94,7 @@ class Opportunity {
         $sql = "SELECT 
                     o.*,
                     u." . self::USER_NAME . " AS managerName,
-                    COUNT(a." . self::APP_PK . ") AS applicationCount
+                    COUNT(DISTINCT a." . self::APP_PK . ") AS applicationCount
                 FROM " . self::TABLE . " o
                 LEFT JOIN " . self::TABLE_USER . " u ON o." . self::FK_MANAGER . " = u." . self::USER_PK . "
                 LEFT JOIN " . self::TABLE_APP . " a ON o." . self::PK . " = a." . self::PK . "
@@ -145,7 +153,7 @@ class Opportunity {
     public function titleExists(string $title, int $excludeId = 0): bool {
     $sql  = "SELECT COUNT(*) FROM " . self::TABLE . " 
              WHERE " . self::COL_TITLE . " = :title 
-             AND " . self::COL_PK . " != :excludeId
+             AND " . self::PK . " != :excludeId
              AND " . self::COL_STATUS . " != 'archived'";
     $stmt = $this->db->prepare($sql);
     $stmt->execute(['title' => $title, 'excludeId' => $excludeId]);

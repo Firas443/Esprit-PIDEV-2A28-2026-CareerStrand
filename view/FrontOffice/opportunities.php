@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CareerStrand | Opportunities</title>
   <link rel="stylesheet" href="assets/css/frontoffice.css" />
-  <link rel="stylesheet" href="assets/css/opportunities.css" />
+  <link rel="stylesheet" href="assets/css/opportunities.css?v=7" />
 
 </head>
 <body>
@@ -79,15 +79,23 @@
             <button class="filter-tab" data-filter="new">New <span class="tab-count">3</span></button>
             <button class="filter-tab" data-filter="closing">Closing soon <span class="tab-count">2</span></button>
             <button class="filter-tab" data-filter="applied">Applied <span class="tab-count">1</span></button>
+            <button class="filter-tab" data-filter="saved">Saved <span class="tab-count">0</span></button>
           </div>
           <div class="search-sort">
             <div class="search-box">
               <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
                 <circle cx="7" cy="7" r="4.5"/><line x1="10.2" y1="10.2" x2="13.5" y2="13.5"/>
               </svg>
-              <input type="text" id="searchInput" placeholder="Search roles or skills..." />
+              <input type="text" id="searchInput" placeholder="Search roles" />
             </div>
-            <select class="sort-select" id="sortSelect">
+            <select class="pill-select" id="typeFilter">
+              <option value="">All types</option>
+              <option value="internship">Internship</option>
+              <option value="job">Job</option>
+              <option value="freelance">Freelance</option>
+              <option value="volunteer">Volunteer</option>
+            </select>
+            <select class="pill-select" id="sortSelect">
               <option value="match">Best match</option>
               <option value="newest">Newest</option>
               <option value="deadline">Deadline</option>
@@ -95,13 +103,18 @@
           </div>
         </div>
 
-        <div class="category-filters fade-up">
-          <button class="cat-chip active" data-cat="all">All categories</button>
-          <button class="cat-chip" data-cat="technical">Technical</button>
-          <button class="cat-chip" data-cat="creativity">Creativity</button>
-          <button class="cat-chip" data-cat="business">Business</button>
-          <button class="cat-chip" data-cat="communication">Communication</button>
-          <button class="cat-chip" data-cat="leadership">Leadership</button>
+        <div class="filter-dropdown-row fade-up">
+          <select class="pill-select" id="categoryFilter">
+            <option value="all">All categories</option>
+            <option value="technical">Technical</option>
+            <option value="creativity">Creativity</option>
+            <option value="business">Business</option>
+            <option value="communication">Communication</option>
+            <option value="leadership">Leadership</option>
+          </select>
+          <select class="pill-select" id="skillFilter">
+            <option value="">All skills</option>
+          </select>
         </div>
       </div>
 
@@ -180,7 +193,7 @@
 
   <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
   <script src="assets/js/frontoffice.js"></script>
-  <script src="assets/js/opportunities.js?v=3"></script>
+  <script src="assets/js/opportunities.js?v=14"></script>
   <script src="assets/js/applications.js?v=2"></script>
 </body>
 </html>

@@ -1,5 +1,6 @@
-const MANAGER_ID    = 1;
-const API_BASE = '/Careerstrand/Controller/OpportunityController.php';
+const MANAGER_ID      = 1;
+const API_BASE        = '/Careerstrand/controller/OpportunityController.php';
+const SKILL_API_BASE  = '/Careerstrand/controller/OpportunitySkillController.php';
 let allOppos        = [];
 let filterStatus    = '';
 let pendingDeleteId = null;
@@ -152,6 +153,161 @@ async function quickToggleStatus(id, currentStatus) {
   } catch (e) { showToast('Update failed: ' + e.message, 'error'); }
 }
 
+const AVAILABLE_SKILLS = [
+  'Technical', 'Creativity', 'Business', 'Communication', 'Leadership',
+  'Figma', 'HTML/CSS', 'JavaScript', 'Python', 'React',
+  'UI/UX Design', 'Data Analysis', 'Project Management', 'Marketing', 'Copywriting'
+];
+
+// ── SKILL ROWS ──
+function clearSkillRows() {
+  const list = document.getElementById('skillsList');
+  const empty = document.getElementById('skillsEmptyMsg');
+
+  if (list) list.innerHTML = '';
+  if (empty) empty.style.display = '';
+}
+function getUsedSkills() {
+  return Array.from(document.querySelectorAll('#skillsList .skill-name-select'))
+    .map(s => s.value);
+}
+
+function addSkillRow(skill = null) {
+  const emptyMsg = document.getElementById('skillsEmptyMsg');
+if (emptyMsg) emptyMsg.style.display = 'none';
+  const usedSkills = getUsedSkills();
+  const row        = document.createElement('div');
+  row.className    = 'skill-row';
+
+  // Skill name — dropdown not free text
+  const nameSel       = document.createElement('select');
+  nameSel.className   = 'skill-name-select';
+
+  const placeholder   = document.createElement('option');
+  placeholder.value   = '';
+  placeholder.textContent = 'Choose a skill…';
+  placeholder.disabled    = true;
+  placeholder.selected    = !skill;
+  nameSel.appendChild(placeholder);
+
+  AVAILABLE_SKILLS.forEach(s => {
+    const opt         = document.createElement('option');
+    opt.value         = s;
+    opt.textContent   = s;
+    // disable already used skills (except current row's own value)
+    if (usedSkills.includes(s) && (!skill || skill.skillName !== s)) {
+      opt.disabled = true;
+    }
+    if (skill && skill.skillName === s) opt.selected = true;
+    nameSel.appendChild(opt);
+  });
+
+  // When skill is changed, refresh all rows to update disabled options
+  nameSel.addEventListener('change', () => refreshSkillSelects());
+
+  // Level dropdown
+  const levelSel      = document.createElement('select');
+  levelSel.className  = 'skill-level-select';
+  [{ v: '20', t: 'Beginner' }, { v: '50', t: 'Intermediate' }, { v: '80', t: 'Advanced' }]
+    .forEach(opt => {
+      const o       = document.createElement('option');
+      o.value       = opt.v;
+      o.textContent = opt.t;
+      if (skill && String(skill.requiredLevel) === opt.v) o.selected = true;
+      levelSel.appendChild(o);
+    });
+
+  // Primary badge
+  const primaryLabel      = document.createElement('label');
+  primaryLabel.className  = 'skill-primary-label';
+  const primaryCheck      = document.createElement('input');
+  primaryCheck.type       = 'checkbox';
+  primaryCheck.className  = 'skill-primary-check';
+  if (skill && skill.isPrimary) primaryCheck.checked = true;
+  // Only one primary allowed
+  primaryCheck.addEventListener('change', () => {
+    if (primaryCheck.checked) {
+      document.querySelectorAll('.skill-primary-check').forEach(c => {
+        if (c !== primaryCheck) c.checked = false;
+      });
+    }
+  });
+  primaryLabel.appendChild(primaryCheck);
+  primaryLabel.appendChild(document.createTextNode('Primary'));
+
+  // Remove button
+  const removeBtn         = document.createElement('button');
+  removeBtn.type          = 'button';
+  removeBtn.className     = 'btn-remove-skill';
+  removeBtn.textContent   = '×';
+  removeBtn.addEventListener('click', () => {
+    row.remove();
+    refreshSkillSelects();
+  });
+
+  row.appendChild(nameSel);
+  row.appendChild(levelSel);
+  row.appendChild(primaryLabel);
+  row.appendChild(removeBtn);
+  document.getElementById('skillsList').appendChild(row);
+}
+
+// Refresh all skill dropdowns to keep disabled options in sync
+function refreshSkillSelects() {
+  const usedSkills = getUsedSkills();
+  document.querySelectorAll('#skillsList .skill-name-select').forEach(sel => {
+    const currentVal = sel.value;
+    Array.from(sel.options).forEach(opt => {
+      if (opt.value === '') return;
+      opt.disabled = usedSkills.includes(opt.value) && opt.value !== currentVal;
+    });
+  });
+}
+
+function getSkillsFromUI() {
+  const rows = Array.from(document.querySelectorAll('#skillsList .skill-row'));
+  return rows.map(row => ({
+    skillName:     row.querySelector('.skill-name-select').value,
+    requiredLevel: parseInt(row.querySelector('.skill-level-select').value),
+    isPrimary:     row.querySelector('.skill-primary-check').checked ? 1 : 0,
+  })).filter(s => s.skillName); // remove rows with no skill selected
+}
+
+async function saveSkillsForOpportunity(oppId) {
+  // Delete existing skills first
+  await fetch(`${SKILL_API_BASE}?opportunityId=${oppId}`, { method: 'DELETE' });
+
+  const skills = getSkillsFromUI();
+
+  // Ensure at least one primary
+  const hasPrimary = skills.some(s => s.isPrimary);
+  if (!hasPrimary && skills.length > 0) skills[0].isPrimary = 1;
+
+  for (const skill of skills) {
+    await fetch(SKILL_API_BASE, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({
+        opportunityId: oppId,
+        skillName:     skill.skillName,
+        requiredLevel: skill.requiredLevel,
+        weight:        1.0,
+        isPrimary:     skill.isPrimary,
+      }),
+    });
+  }
+}
+
+async function loadSkillsForOpportunity(oppId) {
+  clearSkillRows();
+  try {
+    const res  = await fetch(`${SKILL_API_BASE}?opportunityId=${oppId}`);
+    const json = await res.json();
+    if (json.success && json.data.length) {
+      json.data.forEach(s => addSkillRow(s));
+    }
+  } catch (e) { console.error('Skills load error:', e); }
+}
 //open the create 'window' clear all fields
 function openCreateModal() {
   resetTitleValidation();
@@ -164,11 +320,12 @@ function openCreateModal() {
   document.getElementById('fLevel').value           = 'Beginner';
   document.getElementById('fDeadline').value        = '';
   document.getElementById('fStatus').value          = 'draft';
+  clearSkillRows();
   openModal('formModal');
 }
 
 //open the 'edit' window and prefill existing data
-function openEditModal(id) {
+async function openEditModal(id) {
   resetTitleValidation();
   const o = allOppos.find(x => x.opportunityId == id);
   if (!o) return;
@@ -181,6 +338,8 @@ function openEditModal(id) {
   document.getElementById('fLevel').value           = o.requiredLevel;
   document.getElementById('fDeadline').value        = o.deadline ? o.deadline.split('T')[0] : '';
   document.getElementById('fStatus').value          = o.status;
+  clearSkillRows();
+  await loadSkillsForOpportunity(id);
   openModal('formModal');
 }
 
@@ -190,34 +349,41 @@ async function saveOpportunity() {
   const description = document.getElementById('fDescription').value.trim();
   const deadline    = document.getElementById('fDeadline').value;
 
-
   if (!title) {
     document.getElementById('fTitle').classList.add('invalid');
     showToast('Title is required.', 'error');
     return;
   }
-
   if (!titleIsValid) {
     showToast('Please choose a different title — this one already exists.', 'error');
     return;
   }
-
   if (!description) {
     document.getElementById('fDescription').classList.add('invalid');
     showToast('Description is required.', 'error');
     return;
   }
-
   if (!deadline) {
     document.getElementById('fDeadline').classList.add('invalid');
     showToast('Deadline is required.', 'error');
     return;
   }
-
   const today = new Date(); today.setHours(0,0,0,0);
   if (new Date(deadline) < today) {
     document.getElementById('fDeadline').classList.add('invalid');
     showToast('Deadline must be today or in the future.', 'error');
+    return;
+  }
+
+  // ── Validate skills ──
+  const skills = getSkillsFromUI();
+  if (skills.length === 0) {
+    showToast('Please add at least one required skill.', 'error');
+    return;
+  }
+  const hasPrimary = skills.some(s => s.isPrimary);
+  if (!hasPrimary) {
+    showToast('Please mark one skill as Primary.', 'error');
     return;
   }
 
@@ -236,7 +402,11 @@ async function saveOpportunity() {
   const isEdit = !!id;
   const url    = isEdit ? `${API_BASE}?id=${id}` : API_BASE;
   try {
-    const res         = await fetch(url, { method: isEdit ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    const res         = await fetch(url, {
+      method:  isEdit ? 'PUT' : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify(body),
+    });
     const contentType = res.headers.get('content-type') || '';
     if (!contentType.includes('application/json')) {
       const raw = await res.text();
@@ -244,6 +414,10 @@ async function saveOpportunity() {
     }
     const json = await res.json();
     if (!json.success) throw new Error(json.errors ? json.errors.join('\n') : json.message);
+
+    const oppId = isEdit ? parseInt(id) : json.opportunityId;
+    await saveSkillsForOpportunity(oppId);
+
     showToast(isEdit ? 'Opportunity updated.' : 'Opportunity created.');
     closeModal('formModal');
     loadOpportunities();
@@ -270,7 +444,7 @@ async function confirmDelete() {
   } catch (e) { showToast('Delete failed: ' + e.message, 'error'); }
 }
 
-// ── EVENT LISTENERS ──
+// EVENT LISTENERS 
 document.getElementById('btnCreate').addEventListener('click', openCreateModal);
 document.getElementById('formModalSave').addEventListener('click', saveOpportunity);
 document.getElementById('formModalClose').addEventListener('click', () => closeModal('formModal'));
@@ -303,5 +477,10 @@ document.getElementById('searchInput').addEventListener('input', () => {
 });
 document.getElementById('filterCategory').addEventListener('change', loadOpportunities);
 document.getElementById('filterLevel').addEventListener('change', loadOpportunities);
+document.getElementById('btnAddSkill').addEventListener('click', () => {
+  addSkillRow();
+  // hide empty message when at least one row exists
+  document.getElementById('skillsEmptyMsg').style.display = 'none';
+});
 
 loadOpportunities();
