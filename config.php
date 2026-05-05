@@ -3,7 +3,6 @@
 class config
 {
     private static ?PDO $pdo = null;
-    private static string $huggingFaceApiKey = '';
     private static string $huggingFaceFeedbackModel = 'katanemo/Arch-Router-1.5B';
 
     public static function getConnexion(): PDO

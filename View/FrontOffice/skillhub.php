@@ -167,8 +167,8 @@ function hubCategoryKey(string $category): string
                 <section class="command-hero">
                     <div class="command-copy">
                         <div class="eyebrow">Skill Hub Command Center</div>
-                        <h1>Pick your lane, enter the hub, and turn skill practice into shipped work.</h1>
-                        <p>Every hub below is pulled from your database: joined spaces, recommended communities, live work items, and discussions ready to open.</p>
+                        <h1>Welcome to your space.</h1>
+                        <p>joined spaces, recommended communities, live work items, and discussions ready to open.</p>
                         <div class="command-actions">
                             <a class="primary-btn" href="hub.php<?= !empty($joinedHubs) ? '?groupId=' . (int) $joinedHubs[0]['groupId'] : ''; ?>">Enter current hub</a>
                             <a class="ghost-btn" href="#discoverBoard">Explore hubs</a>
