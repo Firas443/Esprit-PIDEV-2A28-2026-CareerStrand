@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <?php
 require_once __DIR__ . '/../../Controller/EventsController.php';
 require_once __DIR__ . '/../../Controller/ParticipationController.php';
@@ -643,3 +644,6 @@ $eventsJson = json_encode(array_map(function($e) use ($participationC) {
 <script src="assets/js/admin.js"></script>
 </body>
 </html>
+=======
+<?php include __DIR__ . '/assets/html/admin-feedback.html'; ?>
+>>>>>>> main
