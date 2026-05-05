@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CareerStrand | Hub</title>
+  <link rel="stylesheet" href="assets/css/hub.css" />
+</head>
+<body>
+  <div class="page-shell">
+    <div class="ambient ambient-a"></div>
+    <div class="ambient ambient-b"></div>
+
+    <div class="drawer-backdrop" id="drawerBackdrop"></div>
+    <aside class="hub-drawer" id="hubDrawer" aria-hidden="true">
+      <div class="drawer-head">
+        <div>
+          <div class="drawer-kicker">Skill hub switcher</div>
+          <h2>Communities and filters</h2>
+        </div>
+        <button class="drawer-close" id="drawerClose" aria-label="Close hub drawer">Close</button>
+      </div>
+
+      <section class="drawer-section">
+        <div class="drawer-label">My hubs</div>
+        <button class="hub-pill is-live" data-hub="all">All activity</button>
+        <button class="hub-pill" data-hub="frontend">Frontend Systems</button>
+        <button class="hub-pill" data-hub="design">UI/UX Studio</button>
+        <button class="hub-pill" data-hub="communication">Storytelling Lab</button>
+        <button class="hub-pill" data-hub="business">Startup Thinking</button>
+      </section>
+
+      <section class="drawer-section">
+        <div class="drawer-label">Your momentum</div>
+        <div class="mini-metric">
+          <strong>18</strong>
+          <span>Tasks completed</span>
+        </div>
+        <div class="mini-metric">
+          <strong>06</strong>
+          <span>Communities joined</span>
+        </div>
+        <div class="mini-metric">
+          <strong>42</strong>
+          <span>Replies and posts</span>
+        </div>
+      </section>
+
+      <section class="drawer-section">
+        <div class="drawer-label">Quick jump</div>
+        <nav class="drawer-nav">
+          <a href="#feed">Home feed</a>
+          <a href="#tasks">Task board</a>
+          <a href="#projects">Project briefs</a>
+          <a href="#people">People</a>
+        </nav>
+      </section>
+    </aside>
+
+    <header class="site-header">
+      <div class="container header-inner">
+        <a class="brand" href="index.php">
+          <div class="brand-mark">
+            <img class="brand-logo" src="images/CareerStrand_logo.png" alt="CareerStrand logo" />
+          </div>
+          <div>
+            <div class="brand-title">CareerStrand</div>
+            <div class="brand-sub">social skill space</div>
+          </div>
+        </a>
+
+        <nav class="main-nav">
+          <a href="#">Profile</a>
+          <a href="#">Education</a>
+          <a class="active" href="skillhub.php">Skill Hub</a>
+          <a href="#">Events</a>
+          <a href="#">Opportunities</a>
+        </nav>
+
+        <div class="header-actions">
+          <button class="menu-btn" id="drawerOpen">Hubs</button>
+          <button class="ghost-btn">Inbox</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="main-area">
+      <div class="container app-grid">
+        <section class="feed-column">
+          <div class="feed-shell">
+            <div class="social-topbar">
+              <div class="search-wrap">
+                <input type="text" placeholder="Search hubs, tasks, projects, discussions..." />
+              </div>
+              <div class="feed-tabs">
+                <button class="feed-tab active" data-view="all">For You</button>
+                <button class="feed-tab" data-view="tasks">Tasks</button>
+                <button class="feed-tab" data-view="projects">Projects</button>
+                <button class="feed-tab" data-view="discussions">Discussions</button>
+              </div>
+            </div>
+
+            <section class="social-strip">
+              <article class="strip-card emphasis">
+                <div class="hub-widget-top">
+                  <div>
+                    <div class="strip-kicker">Current hub</div>
+                    <h2>Frontend Systems</h2>
+                    <p class="hub-widget-copy">Your main workspace for front-end challenges, peer critique, and manager-led project briefs.</p>
+                  </div>
+                  <div class="hub-widget-badge">2.8k members</div>
+                </div>
+                <div class="hub-widget-grid">
+                  <div class="hub-widget-stat">
+                    <span class="hub-stat-label">Open now</span>
+                    <strong>03</strong>
+                    <span class="hub-stat-copy">tasks worth doing this week</span>
+                  </div>
+                  <div class="hub-widget-stat">
+                    <span class="hub-stat-label">Your pace</span>
+                    <strong>81%</strong>
+                    <span class="hub-stat-copy">of your target streak this cycle</span>
+                  </div>
+                  <div class="hub-widget-stat">
+                    <span class="hub-stat-label">Next review</span>
+                    <strong>Today</strong>
+                    <span class="hub-stat-copy">Maya reviews saved hero submissions</span>
+                  </div>
+                </div>
+                <div class="hub-widget-focus">
+                  <div class="hub-focus-copy">
+                    <span class="hub-stat-label">Best next move</span>
+                    <strong>Finish the premium hero rebuild and post one progress note before review closes.</strong>
+                  </div>
+                  <div class="hub-widget-actions">
+                    <button class="primary-btn" data-open-thread-view="overview">Open task</button>
+                    <button class="ghost-btn" id="openCalendarView" type="button">View hub calendar</button>
+                  </div>
+                </div>
+              </article>
+
+              <article class="strip-card compact">
+                <div class="strip-kicker">Active task board</div>
+                <div class="queue-empty compact-empty" id="pinnedBoardEmpty">
+                  Pin saved work from `My tasks &amp; projects` and it will appear here.
+                </div>
+                <div class="queue-list compact-queue-list" id="pinnedBoardList"></div>
+              </article>
+            </section>
+
+            <section class="feed-switcher" aria-label="Feed switcher">
+              <div class="feed-mode-toggle" role="tablist" aria-label="Feed mode">
+                <button class="mode-chip active" type="button" data-mode="hub">
+                  <span class="mode-chip-label">Current hub</span>
+                  <span class="mode-chip-subtitle">Live community stream</span>
+                </button>
+                <button class="mode-chip" type="button" data-mode="saved">
+                  <span class="mode-chip-label">My tasks &amp; projects</span>
+                  <span class="mode-chip-subtitle">Saved work and quick return</span>
+                </button>
+                <button class="mode-chip" type="button" data-mode="calendar">
+                  <span class="mode-chip-label">Hub calendar</span>
+                  <span class="mode-chip-subtitle">Deadlines, reviews, workshops</span>
+                </button>
+              </div>
+            </section>
+
+            <section class="composer" id="hubComposer">
+              <div class="composer-avatar">AY</div>
+              <div class="composer-body">
+                <div class="composer-head">
+                  <div>
+                    <div class="composer-title">Post to Frontend Systems</div>
+                    <div class="composer-subtitle">Visible to 2.8k members in this hub</div>
+                  </div>
+                  <div class="composer-visibility">Public to hub</div>
+                </div>
+                <div class="composer-box" id="openPostComposer" role="button" tabindex="0" aria-label="Open post composer">
+                  
+                  <span>Open a discussion, ask a question, or share a useful resource with the forum you are currently in.</span>
+                </div>
+                <div class="composer-actions">
+                  <button class="action-chip active" type="button" data-post-type-trigger="discussion">Discussion</button>
+                  <button class="action-chip" type="button" data-post-type-trigger="question">Question</button>
+                  <button class="action-chip" type="button" data-post-type-trigger="resource">Resource</button>
+                </div>
+                <div class="composer-tools">
+                  <button class="tool-chip" type="button" data-open-post-modal="discussion">Add image</button>
+                  <button class="tool-chip" type="button" data-open-post-modal="question">Ask for feedback</button>
+                  <button class="tool-chip" type="button" data-open-post-modal="discussion">Start thread</button>
+                </div>
+              </div>
+            </section>
+
+            <section class="feed" id="feed">
+              <article class="feed-card interactive-card" data-type="tasks" data-hub="frontend">
+                <div class="card-head">
+                  <div class="author-line">
+                    <div class="avatar manager">MN</div>
+                    <div>
+                      <div class="author-name">Maya Nwosu</div>
+                      <div class="author-meta">Frontend Systems - 12 min ago</div>
+                    </div>
+                  </div>
+                  <span class="content-tag task">Task Brief</span>
+                </div>
+                <h3>Rebuild a premium hero section from a reference and explain every design decision.</h3>
+                <p>
+                  Submit the front-end implementation, a short reasoning note, and one improvement you would still make with more time. This task is designed for users moving from passive learning into stronger proof.
+                </p>
+                <div class="content-meta">
+                  <span>Difficulty: Intermediate</span>
+                  <span>Expected time: 3 hours</span>
+                  <span>ADN impact: High</span>
+                </div>
+                <div class="card-actions slim">
+                  <button class="link-btn" data-open-thread-view="overview">Start task</button>
+                  <button class="link-btn" data-save-btn="true">Save</button>
+                  <button class="link-btn" data-open-thread-view="discussion">Open discussion</button>
+                </div>
+                <div class="hover-tray">
+                  <div class="hover-tray-meta">
+                    <span>Difficulty: Intermediate</span>
+                    <span>Expected time: 3 hours</span>
+                    <span>ADN impact: High</span>
+                  </div>
+                  <div class="card-actions hover-cta">
+                    <button class="primary-btn" data-open-thread-view="overview">Start task</button>
+                    <button class="ghost-btn" data-save-btn="true">Save</button>
+                    <button class="ghost-btn" data-open-thread-view="discussion">Open discussion</button>
+                  </div>
+                </div>
+              </article>
+
+              <article class="feed-card" data-type="discussions" data-hub="design">
+                <div class="card-head">
+                  <div class="author-line">
+                    <div class="avatar user">FK</div>
+                    <div>
+                      <div class="author-name">Fatima Kone</div>
+                      <div class="author-meta">UI/UX Studio - 31 min ago</div>
+                    </div>
+                  </div>
+                  <span class="content-tag discussion">Discussion</span>
+                </div>
+                <h3>What makes a beginner portfolio piece feel credible instead of decorative?</h3>
+                <p>
+                  I feel like many early projects look polished but still do not convince people that real thinking happened. What signals make a piece feel serious to you?
+                </p>
+                <div class="engagement-row">
+                  <span>28 replies</span>
+                  <span>91 reactions</span>
+                  <span>Saved by 14 users</span>
+                </div>
+                <div class="card-actions slim">
+                  <button class="link-btn">Reply</button>
+                  <button class="link-btn">Save</button>
+                  <button class="link-btn">Share</button>
+                </div>
+              </article>
+
+              <article class="feed-card interactive-card" data-type="projects" data-hub="business">
+                <div class="card-head">
+                  <div class="author-line">
+                    <div class="avatar admin">CS</div>
+                    <div>
+                      <div class="author-name">CareerStrand Admin</div>
+                      <div class="author-meta">Startup Thinking - 1 hour ago</div>
+                    </div>
+                  </div>
+                  <span class="content-tag project">Project Brief</span>
+                </div>
+                <h3>Design a lightweight startup validation board for beginners with zero research budget.</h3>
+                <p>
+                  Build a practical board that helps users test assumptions, collect signals, and explain next steps. This brief rewards clarity, usefulness, and execution quality over visual excess.
+                </p>
+                <div class="content-meta">
+                  <span>5 day sprint</span>
+                  <span>Collaboration allowed</span>
+                  <span>Showcase eligible</span>
+                </div>
+                <div class="card-actions slim">
+                  <button class="link-btn">Join project</button>
+                  <button class="link-btn">View brief</button>
+                  <button class="link-btn" data-save-btn="true">Save</button>
+                </div>
+                <div class="hover-tray">
+                  <div class="hover-tray-meta">
+                    <span>Beginner friendly</span>
+                    <span>Manager feedback included</span>
+                    <span>ADN proof: Strong</span>
+                  </div>
+                  <div class="card-actions hover-cta">
+                    <button class="primary-btn" data-open-thread-view="overview">Join project</button>
+                    <button class="ghost-btn" data-save-btn="true">Save</button>
+                    <button class="ghost-btn" data-open-thread-view="discussion">Open discussion</button>
+                  </div>
+                </div>
+              </article>
+
+              <article class="feed-card interactive-card" data-type="tasks" data-hub="communication">
+                <div class="card-head">
+                  <div class="author-line">
+                    <div class="avatar manager">OD</div>
+                    <div>
+                      <div class="author-name">Ola Dairo</div>
+                      <div class="author-meta">Storytelling Lab - 2 hours ago</div>
+                    </div>
+                  </div>
+                  <span class="content-tag task">Micro Task</span>
+                </div>
+                <h3>Write a launch post that makes a community challenge feel exciting and clear.</h3>
+                <p>
+                  Your job is to announce the challenge, explain what success looks like, and motivate new users to participate without sounding generic.
+                </p>
+                <div class="engagement-row">
+                  <span>13 submissions</span>
+                  <span>7 comments</span>
+                  <span>Due in 2 days</span>
+                </div>
+                <div class="card-actions slim">
+                  <button class="link-btn">Submit</button>
+                  <button class="link-btn">Comment</button>
+                  <button class="link-btn" data-save-btn="true">Save</button>
+                </div>
+                <div class="hover-tray">
+                  <div class="hover-tray-meta">
+                    <span>Estimated time: 25 min</span>
+                    <span>Review queue open</span>
+                    <span>ADN impact: Medium</span>
+                  </div>
+                  <div class="card-actions hover-cta">
+                    <button class="primary-btn" data-open-thread-view="overview">Start task</button>
+                    <button class="ghost-btn" data-save-btn="true">Save</button>
+                    <button class="ghost-btn" data-open-thread-view="discussion">Open discussion</button>
+                  </div>
+                </div>
+              </article>
+
+              <article class="feed-card" data-type="discussions" data-hub="frontend">
+                <div class="card-head">
+                  <div class="author-line">
+                    <div class="avatar user">SB</div>
+                    <div>
+                      <div class="author-name">Samuel Bassey</div>
+                      <div class="author-meta">Frontend Systems - 3 hours ago</div>
+                    </div>
+                  </div>
+                  <span class="content-tag discussion">Pinned Thread</span>
+                </div>
+                <h3>Share one front-end habit that improved your code quality fast.</h3>
+                <p>
+                  Looking for small habits that made a real difference, especially for beginners moving from tutorials into independent work.
+                </p>
+                <div class="engagement-row">
+                  <span>44 replies</span>
+                  <span>126 reactions</span>
+                  <span>Moderator pinned</span>
+                </div>
+                <div class="card-actions slim">
+                  <button class="link-btn">Reply</button>
+                  <button class="link-btn">Follow</button>
+                  <button class="link-btn">Open</button>
+                </div>
+              </article>
+            </section>
+
+            <section class="saved-feed is-hidden" id="savedFeed">
+              <article class="saved-feed-hero">
+                <div class="strip-kicker">My workspace</div>
+                <h2>Your saved tasks and projects live here.</h2>
+                <p>Use this view to jump back into work you pinned from the hub feed without mixing it into the public discussion stream.</p>
+              </article>
+              <div class="saved-feed-empty" id="savedFeedEmpty">
+                No saved work yet. Save a task or project from the hub feed and it will appear here.
+              </div>
+              <div class="saved-feed-list" id="savedFeedList"></div>
+            </section>
+
+            <section class="calendar-feed is-hidden" id="calendarFeed">
+              <article class="calendar-hero">
+                <div>
+                  <div class="strip-kicker">Hub calendar</div>
+                  <h2>Track the full Frontend Systems calendar.</h2>
+                  <p>See deadlines, reviews, workshops, and community moments across the month without leaving the hub.</p>
+                </div>
+                <div class="calendar-hero-badge">This week · 7 scheduled items</div>
+              </article>
+
+              <div class="calendar-summary">
+                <div class="calendar-summary-card">
+                  <span class="hub-stat-label">Next deadline</span>
+                  <strong>Today · 6:00 PM</strong>
+                  <span class="hub-stat-copy">Premium hero rebuild review closes</span>
+                </div>
+                <div class="calendar-summary-card">
+                  <span class="hub-stat-label">Next live session</span>
+                  <strong>Tomorrow · 11:00 AM</strong>
+                  <span class="hub-stat-copy">UI architecture office hours with Maya</span>
+                </div>
+                <div class="calendar-summary-card">
+                  <span class="hub-stat-label">This week</span>
+                  <strong>12 events</strong>
+                  <span class="hub-stat-copy">reviews, workshops, office hours, and sprint deadlines</span>
+                </div>
+              </div>
+
+              <div class="calendar-layout">
+                <article class="calendar-board">
+                  <div class="calendar-board-head">
+                    <div>
+                      <div class="strip-kicker">April 2026</div>
+                      <strong>Month view</strong>
+                    </div>
+                    <div class="calendar-filters">
+                      <span class="calendar-filter is-live">All</span>
+                      <span class="calendar-filter">Tasks</span>
+                      <span class="calendar-filter">Projects</span>
+                      <span class="calendar-filter">Events</span>
+                    </div>
+                  </div>
+
+                  <div class="calendar-weekdays">
+                    <span>Mon</span>
+                    <span>Tue</span>
+                    <span>Wed</span>
+                    <span>Thu</span>
+                    <span>Fri</span>
+                    <span>Sat</span>
+                    <span>Sun</span>
+                  </div>
+
+                  <div class="calendar-grid month-grid">
+                    <div class="calendar-day is-faded"><strong>30</strong></div>
+                    <div class="calendar-day is-faded"><strong>31</strong></div>
+                    <div class="calendar-day"><strong>1</strong></div>
+                    <div class="calendar-day"><strong>2</strong></div>
+                    <div class="calendar-day has-event"><strong>3</strong><small>Open lab</small></div>
+                    <div class="calendar-day is-soft"><strong>4</strong></div>
+                    <div class="calendar-day is-soft"><strong>5</strong></div>
+
+                    <div class="calendar-day"><strong>6</strong></div>
+                    <div class="calendar-day is-live"><strong>7</strong><small>Hero review</small></div>
+                    <div class="calendar-day has-event"><strong>8</strong><small>Workshop</small></div>
+                    <div class="calendar-day"><strong>9</strong><small>Check-in</small></div>
+                    <div class="calendar-day has-event"><strong>10</strong><small>Sprint</small></div>
+                    <div class="calendar-day is-soft"><strong>11</strong></div>
+                    <div class="calendar-day is-soft"><strong>12</strong></div>
+
+                    <div class="calendar-day"><strong>13</strong></div>
+                    <div class="calendar-day has-event"><strong>14</strong><small>Critique</small></div>
+                    <div class="calendar-day"><strong>15</strong></div>
+                    <div class="calendar-day has-event"><strong>16</strong><small>Office hours</small></div>
+                    <div class="calendar-day"><strong>17</strong></div>
+                    <div class="calendar-day is-soft"><strong>18</strong></div>
+                    <div class="calendar-day is-soft"><strong>19</strong></div>
+
+                    <div class="calendar-day"><strong>20</strong></div>
+                    <div class="calendar-day"><strong>21</strong></div>
+                    <div class="calendar-day has-event"><strong>22</strong><small>Resource sprint</small></div>
+                    <div class="calendar-day"><strong>23</strong></div>
+                    <div class="calendar-day is-live"><strong>24</strong><small>Review day</small></div>
+                    <div class="calendar-day is-soft"><strong>25</strong></div>
+                    <div class="calendar-day is-soft"><strong>26</strong></div>
+
+                    <div class="calendar-day"><strong>27</strong></div>
+                    <div class="calendar-day has-event"><strong>28</strong><small>Workshop</small></div>
+                    <div class="calendar-day"><strong>29</strong></div>
+                    <div class="calendar-day"><strong>30</strong></div>
+                    <div class="calendar-day is-faded"><strong>1</strong></div>
+                    <div class="calendar-day is-faded"><strong>2</strong></div>
+                    <div class="calendar-day is-faded"><strong>3</strong></div>
+                  </div>
+
+                  <div class="calendar-timeline">
+                    <div class="calendar-slot">
+                      <span class="calendar-time">09:00</span>
+                      <div class="calendar-event event-task">
+                        <strong>Premium hero rebuild deadline</strong>
+                        <p>Submission cutoff and manager review queue opens</p>
+                      </div>
+                    </div>
+                    <div class="calendar-slot">
+                      <span class="calendar-time">11:00</span>
+                      <div class="calendar-event event-review">
+                        <strong>Maya office hours</strong>
+                        <p>Architecture questions and critique on saved hero submissions</p>
+                      </div>
+                    </div>
+                    <div class="calendar-slot">
+                      <span class="calendar-time">16:00</span>
+                      <div class="calendar-event event-workshop">
+                        <strong>Responsive systems workshop</strong>
+                        <p>Live session about layout decisions and reusable patterns</p>
+                      </div>
+                    </div>
+                  </div>
+                </article>
+
+                <article class="calendar-agenda">
+                  <div class="calendar-agenda-head">
+                    <div class="strip-kicker">Agenda</div>
+                    <strong>Selected dates and upcoming items</strong>
+                  </div>
+                  <div class="agenda-list">
+                    <div class="agenda-item">
+                      <span class="agenda-date">Today</span>
+                      <div>
+                        <strong>Hero rebuild review closes</strong>
+                        <p>6:00 PM · Submission cutoff</p>
+                      </div>
+                    </div>
+                    <div class="agenda-item">
+                      <span class="agenda-date">Wed</span>
+                      <div>
+                        <strong>UI architecture office hours</strong>
+                        <p>11:00 AM · Questions with Maya</p>
+                      </div>
+                    </div>
+                    <div class="agenda-item">
+                      <span class="agenda-date">Thu</span>
+                      <div>
+                        <strong>Landing page workshop</strong>
+                        <p>4:00 PM · Live critique and patterns</p>
+                      </div>
+                    </div>
+                    <div class="agenda-item">
+                      <span class="agenda-date">Fri</span>
+                      <div>
+                        <strong>Discussion sprint roundup</strong>
+                        <p>5:30 PM · Top threads and resources this week</p>
+                      </div>
+                    </div>
+                  </div>
+                </article>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <aside class="right-column">
+          <section class="glass-panel" id="tasks">
+            <div class="panel-title">Today</div>
+            <div class="live-list">
+              <div class="live-item">
+                <strong>14 manager prompts</strong>
+                <span>new guidance blocks opened today</span>
+              </div>
+              <div class="live-item">
+                <strong>27 projects in review</strong>
+                <span>submissions currently waiting on feedback</span>
+              </div>
+              <div class="live-item">
+                <strong>132 active learners</strong>
+                <span>members posted, saved, or replied this cycle</span>
+              </div>
+            </div>
+          </section>
+
+          <section class="glass-panel">
+            <div class="panel-title">Live now</div>
+            <div class="live-list">
+              <div class="live-item">
+                <strong>Frontend Systems</strong>
+                <span>12 new replies in task thread</span>
+              </div>
+              <div class="live-item">
+                <strong>UI/UX Studio</strong>
+                <span>Manager review session started</span>
+              </div>
+              <div class="live-item">
+                <strong>Storytelling Lab</strong>
+                <span>4 new submissions in critique queue</span>
+              </div>
+            </div>
+          </section>
+
+          <section class="glass-panel" id="projects">
+            <div class="panel-title">Project spotlight</div>
+            <div class="spotlight-card">
+              <div class="spotlight-kicker">Manager-created brief</div>
+              <h3>Hackathon event landing page</h3>
+              <p>Great for users who want a serious portfolio piece with layout, hierarchy, and storytelling built in.</p>
+              <button class="primary-btn full" data-open-thread-view="overview">Open project</button>
+            </div>
+          </section>
+
+          <section class="glass-panel" id="people">
+            <div class="panel-title">People to follow</div>
+            <div class="people-list">
+              <div class="person-row">
+                <div class="avatar manager">MN</div>
+                <div class="person-copy">
+                  <strong>Maya Nwosu</strong>
+                  <p>Frontend mentor</p>
+                </div>
+              </div>
+              <div class="person-row">
+                <div class="avatar manager">OD</div>
+                <div class="person-copy">
+                  <strong>Ola Dairo</strong>
+                  <p>Communication manager</p>
+                </div>
+              </div>
+              <div class="person-row">
+                <div class="avatar user">FK</div>
+                <div class="person-copy">
+                  <strong>Fatima Kone</strong>
+                  <p>Top community contributor</p>
+                </div>
+              </div>
+            </div>
+          </section>
+        </aside>
+      </div>
+    </main>
+  </div>
+
+  <div class="post-modal-backdrop" id="postModalBackdrop"></div>
+  <section class="post-modal" id="postModal" aria-hidden="true" aria-label="Create post">
+    <div class="post-modal-head">
+      <div>
+        <div class="strip-kicker">New thread</div>
+        <h2>Post inside Frontend Systems</h2>
+        <p>This post will appear in the current forum only.</p>
+      </div>
+      <button class="drawer-close" id="closePostModal" type="button">Close</button>
+    </div>
+
+    <div class="post-modal-profile">
+      <div class="composer-avatar">AY</div>
+      <div>
+        <strong>Amina Yusuf</strong>
+        <p>Posting to Frontend Systems · Visible to 2.8k members</p>
+      </div>
+    </div>
+
+    <div class="post-type-grid" role="tablist" aria-label="Post type">
+      <button class="post-type-card active" type="button" data-post-type="discussion">
+        <span class="post-type-title">Discussion</span>
+        <span class="post-type-copy">Start a conversation with the hub and invite replies.</span>
+      </button>
+      <button class="post-type-card" type="button" data-post-type="question">
+        <span class="post-type-title">Question</span>
+        <span class="post-type-copy">Ask for help, clarity, or feedback from the community.</span>
+      </button>
+      <button class="post-type-card" type="button" data-post-type="resource">
+        <span class="post-type-title">Resource</span>
+        <span class="post-type-copy">Share a tool, tutorial, or useful reference with context.</span>
+      </button>
+    </div>
+
+    <div class="post-form-grid">
+      <label class="post-field">
+        <span class="post-field-label">Title</span>
+        <input class="post-input" id="postTitleInput" type="text" placeholder="Write a clear title for your post" />
+      </label>
+
+      <label class="post-field">
+        <span class="post-field-label">Body</span>
+        <textarea class="post-textarea" rows="7" placeholder="Explain what you are sharing, what kind of feedback you want, or what others should do next."></textarea>
+      </label>
+
+      <div class="post-guidelines">
+        <span class="post-field-label">Forum notes</span>
+        <ul class="post-guidelines-list">
+          <li>Project-specific posts belong inside the project discussion.</li>
+          <li>Task-specific updates belong inside the task discussion.</li>
+          <li>Use this composer for hub-wide threads, questions, and resources.</li>
+        </ul>
+      </div>
+
+      <div class="post-utility-row">
+        <button class="tool-chip" type="button">Add image</button>
+        <button class="tool-chip" type="button">Add tags</button>
+        <button class="tool-chip" type="button">Save draft</button>
+      </div>
+    </div>
+
+    <div class="post-modal-footer">
+      <div class="composer-visibility">Public to hub</div>
+      <div class="post-modal-actions">
+        <button class="ghost-btn" id="cancelPostModal" type="button">Cancel</button>
+        <button class="primary-btn" type="button">Publish post</button>
+      </div>
+    </div>
+  </section>
+
+  <script src="assets/js/hub.js"></script>
+</body>
+</html>
