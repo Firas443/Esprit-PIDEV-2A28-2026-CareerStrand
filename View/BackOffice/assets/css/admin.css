@@ -1,4 +1,8 @@
+<<<<<<< HEAD
+:root {
+=======
 ﻿:root {
+>>>>>>> main
   --bg: #040816;
   --bg-2: #071126;
   --bg-3: #0d1631;
@@ -643,7 +647,10 @@ td strong {
 .field {
   display: grid;
   gap: 8px;
+<<<<<<< HEAD
+=======
   position: relative;
+>>>>>>> main
 }
 
 .field label {
@@ -664,6 +671,8 @@ td strong {
   outline: none;
 }
 
+<<<<<<< HEAD
+=======
 .field select {
   appearance: none;
   -webkit-appearance: none;
@@ -710,11 +719,14 @@ select option:hover {
   box-shadow: 0 0 0 4px rgba(255, 110, 69, 0.08);
 }
 
+>>>>>>> main
 .field textarea {
   min-height: 120px;
   resize: vertical;
 }
 
+<<<<<<< HEAD
+=======
 .field-error {
   min-height: 18px;
   color: var(--red);
@@ -835,6 +847,7 @@ form.table-toolbar .toolbar-actions {
   color: var(--muted);
 }
 
+>>>>>>> main
 .footer-note {
   margin-top: 26px;
   color: var(--muted-2);
@@ -842,6 +855,8 @@ form.table-toolbar .toolbar-actions {
   text-align: center;
 }
 
+<<<<<<< HEAD
+=======
 .review-workbench {
   display: grid;
   grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
@@ -1050,14 +1065,19 @@ form.table-toolbar .toolbar-actions {
   line-height: 1.6;
 }
 
+>>>>>>> main
 @media (max-width: 1400px) {
   .detail-grid,
   .hero-grid,
   .split-grid,
   .chart-grid,
+<<<<<<< HEAD
+  .donut-layout {
+=======
   .donut-layout,
   .review-workbench,
   .review-detail-grid {
+>>>>>>> main
     grid-template-columns: 1fr;
   }
 
@@ -1102,6 +1122,9 @@ form.table-toolbar .toolbar-actions {
 
   .searchbar {
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
+<<<<<<< HEAD
+    min-width: 100%;
+=======
       min-width: 100%;
   }
 
@@ -1113,6 +1136,7 @@ form.table-toolbar .toolbar-actions {
 
   .review-archive-row .filters {
     justify-content: flex-start;
+>>>>>>> main
   }
 }
 
@@ -1128,3 +1152,7 @@ form.table-toolbar .toolbar-actions {
   box-shadow: 0 10px 24px rgba(255, 110, 69, 0.12);
 }
 
+<<<<<<< HEAD
+
+=======
+>>>>>>> main

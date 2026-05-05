@@ -1,6 +1,9 @@
 document.addEventListener("DOMContentLoaded", () => {
   const currentPage = window.location.pathname.split("/").pop();
+<<<<<<< HEAD
+=======
   const validationEndpoint = "assets/js/validate-skillhub.php";
+>>>>>>> main
 
   document.querySelectorAll(".nav-item").forEach((link) => {
     link.classList.toggle("active", link.getAttribute("href") === currentPage);
@@ -20,6 +23,10 @@ document.addEventListener("DOMContentLoaded", () => {
     input.addEventListener("focus", () => input.closest(".searchbar")?.classList.add("is-focused"));
     input.addEventListener("blur", () => input.closest(".searchbar")?.classList.remove("is-focused"));
   });
+<<<<<<< HEAD
+});
+
+=======
 
 
   
@@ -194,3 +201,4 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 });
+>>>>>>> main
