@@ -1,0 +1,67 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CareerStrand Admin Users</title>
+  <link rel="stylesheet" href="assets/css/admin.css" />
+</head>
+<body>
+  <div class="admin-shell">
+    <aside class="admin-sidebar">
+      <div class="brand"><div class="brand-badge"></div><div><h1>CareerStrand Admin</h1><p>Back office console</p></div></div>
+      <div class="side-label">Main Menu</div>
+      <nav class="nav-list">
+        <a class="nav-item" href="admin-dashboard.html"><span>Dashboard</span><span>Home</span></a>
+        <a class="nav-item active" href="admin-users.html"><span>Users</span><span>1.2k</span></a>
+        <a class="nav-item" href="admin-profiles.html"><span>Profiles</span><span>842</span></a>
+        <a class="nav-item" href="admin-questions.html"><span>Courses</span><span>24</span></a>
+        <a class="nav-item" href="admin-skills.html"><span>Challenges</span><span>18</span></a>
+        <a class="nav-item" href="admin-opportunities.php"><span>Opportunities</span><span>36</span></a>
+        <a class="nav-item" href="admin-applications.html"><span>Applications</span><span>128</span></a>
+        <a class="nav-item" href="admin-analytics.html"><span>ADN Analytics</span><span>Live</span></a>
+        <a class="nav-item" href="admin-feedback.html"><span>Events</span><span>12</span></a>
+        <a class="nav-item" href="admin-settings.html"><span>Settings</span><span>New</span></a>
+      </nav>
+    </aside>
+    <main class="admin-main">
+      <header class="page-header">
+        <div><h2>User Management</h2><p>View all users, search accounts, inspect user details, activate or deactivate accounts, delete users, and track profile completion with ADN status.</p></div>
+        <div class="header-actions"><div class="searchbar"><span>Search</span><input type="text" placeholder="Search name or email..." /></div><button class="btn btn-soft">Active users</button><button class="btn btn-main">Export users</button></div>
+      </header>
+      <section class="detail-grid">
+        <article class="panel">
+          <div class="panel-header"><div class="panel-title"><h3>All users</h3><p>Useful columns include name, email, role, profile status, ADN generated, and account status.</p></div><div class="filters"><span class="filter">Active</span><span class="filter">ADN generated</span><span class="filter">70%+ complete</span></div></div>
+          <table>
+            <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Profile status</th><th>ADN</th><th>Account</th><th>Actions</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Amina Yusuf</strong></td><td>amina.y@careerstrand.io</td><td>Student</td><td>92% complete</td><td><span class="status-chip status-active">Generated</span></td><td><span class="status-chip status-active">Active</span></td><td class="table-actions"><span class="link-btn">View</span><span class="link-btn">Deactivate</span></td></tr>
+              <tr><td><strong>Daniel Okoye</strong></td><td>dan.okoye@mail.com</td><td>Graduate</td><td>74% complete</td><td><span class="status-chip status-review">In progress</span></td><td><span class="status-chip status-active">Active</span></td><td class="table-actions"><span class="link-btn">View</span><span class="link-btn">Remind</span></td></tr>
+              <tr><td><strong>Fatou Ndiaye</strong></td><td>fatou.nd@designlab.com</td><td>Professional</td><td>100% complete</td><td><span class="status-chip status-active">Generated</span></td><td><span class="status-chip status-inactive">Inactive</span></td><td class="table-actions"><span class="link-btn">Activate</span><span class="link-btn">Delete</span></td></tr>
+              <tr><td><strong>Samuel Bassey</strong></td><td>samuel.b@talentgrid.com</td><td>Student</td><td>61% complete</td><td><span class="status-chip status-review">Not generated</span></td><td><span class="status-chip status-active">Active</span></td><td class="table-actions"><span class="link-btn">View</span><span class="link-btn">Flag</span></td></tr>
+            </tbody>
+          </table>
+        </article>
+        <aside class="detail-card">
+          <div class="profile-top"><div class="profile-meta"><div class="avatar">AY</div><div><h4>Amina Yusuf</h4><p>Selected user detail preview</p></div></div><span class="status-chip status-active">Active</span></div>
+          <div class="info-list">
+            <div class="info-item"><span>Email</span><strong>amina.y@careerstrand.io</strong></div>
+            <div class="info-item"><span>Role</span><strong>Student</strong></div>
+            <div class="info-item"><span>Profile completion</span><strong>92%</strong></div>
+            <div class="info-item"><span>ADN status</span><strong>Generated</strong></div>
+            <div class="info-item"><span>ADN type</span><strong>Creative / Hybrid</strong></div>
+          </div>
+          <div class="action-list">
+            <div class="action-item"><span>View full profile</span><span class="tiny-chip">Open</span></div>
+            <div class="action-item"><span>Deactivate account</span><span class="tiny-chip">Admin</span></div>
+            <div class="action-item"><span>Delete user</span><span class="tiny-chip">Danger</span></div>
+          </div>
+        </aside>
+      </section>
+    </main>
+  </div>
+  <script src="assets/js/admin.js"></script>
+</body>
+</html>
+
+

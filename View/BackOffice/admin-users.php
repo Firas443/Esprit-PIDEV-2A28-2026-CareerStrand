@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <?php
 require_once __DIR__ . '/../../config.php';
 require_once __DIR__ . '/../../Controller/UserController.php';
@@ -748,3 +749,6 @@ if ($selectedUser) {
 </div>
 </body>
 </html>
+=======
+<?php include __DIR__ . '/assets/html/admin-users.html'; ?>
+>>>>>>> main

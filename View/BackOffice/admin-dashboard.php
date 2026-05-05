@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <?php
 require_once __DIR__ . '/../../config.php';
 require_once __DIR__ . '/../../Controller/UserController.php';
@@ -21,3 +22,6 @@ $controller = new UserController();
 $stats      = $controller->getStats();
 
 include __DIR__ . '/assets/html/admin-dashboard.html';
+=======
+<?php include __DIR__ . '/assets/html/admin-dashboard.html'; ?>
+>>>>>>> main

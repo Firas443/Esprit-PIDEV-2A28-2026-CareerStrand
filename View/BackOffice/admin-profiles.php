@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <?php
 require_once __DIR__ . '/../../config.php';
 require_once __DIR__ . '/../../Controller/UserController.php';
@@ -608,3 +609,6 @@ $adminUserObj = $userController->getById((int)($user['userId'] ?? 0));
   <script src="../js/admin.js"></script>
 </body>
 </html>
+=======
+<?php include __DIR__ . '/assets/html/admin-profiles.html'; ?>
+>>>>>>> main
