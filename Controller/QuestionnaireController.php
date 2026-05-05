@@ -2,6 +2,7 @@
 
 require_once __DIR__ . '/../Model/UserQuestionnaire.php';
 require_once __DIR__ . '/../Controller/ProfileController.php';
+require_once __DIR__ . '/../utils/AiProfileService.php';
 
 class QuestionnaireController
 {
@@ -45,6 +46,15 @@ class QuestionnaireController
 
     public function generateBio(array $answers, string $role = 'user', string $fullName = 'This member'): string
     {
+        try {
+            return (new AiProfileService())->generateBio($answers, $role, $fullName);
+        } catch (Throwable $e) {
+            if (!empty($answers['aiBio'])) {
+                $bio = trim((string) $answers['aiBio']);
+                return function_exists('mb_substr') ? mb_substr($bio, 0, 255) : substr($bio, 0, 255);
+            }
+        }
+
         $name = trim($fullName) !== '' ? trim($fullName) : 'This member';
         $firstName = explode(' ', $name)[0] ?? $name;
 

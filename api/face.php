@@ -1,12 +1,10 @@
 <?php
 // =============================================
 // api/face.php
-// Place this file at: CareerStrand-template/api/face.php
-// Called by JavaScript via fetch() — returns JSON
-// =============================================
 
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../Controller/UserController.php';
+require_once __DIR__ . '/../utils/AuthRedirect.php';
 
 session_start();
 
@@ -118,9 +116,7 @@ if ($action === 'login') {
     ];
 
     // Return role so JS can redirect to the right page
-    $redirect = ($user->getRole() === 'admin')
-        ? '/CareerStrand-template/View/BackOffice/admin-dashboard.php'
-        : '/CareerStrand-template/View/FrontOffice/profile.php';
+    $redirect = redirectForRole($user->getRole(), true);
 
     jsonOut([
         'success'  => true,

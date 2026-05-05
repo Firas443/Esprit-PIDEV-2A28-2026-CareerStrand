@@ -1,14 +1,13 @@
 <?php
 require_once __DIR__ . '/../../config.php';
 require_once __DIR__ . '/../../Controller/UserController.php';
+require_once __DIR__ . '/../../utils/AuthRedirect.php';
 
 session_start();
 
-if (isset($_SESSION['user'])) {
+if ($_SERVER['REQUEST_METHOD'] !== 'POST' && isset($_SESSION['user'])) {
     $user = $_SESSION['user'];
-    header(($user['role'] ?? '') === 'admin'
-        ? 'Location: ../BackOffice/admin-dashboard.php'
-        : 'Location: profile.php');
+    header('Location: ' . redirectForRole($user['role'] ?? ''));
     exit;
 }
 
@@ -19,6 +18,8 @@ if (isset($_GET['msg']) && $_GET['msg'] === 'pending') {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    unset($_SESSION['user'], $_SESSION['userId'], $_SESSION['temp_user_id']);
+
     $controller = new UserController();
     $user       = $controller->authenticate(
         trim($_POST['email']    ?? ''),
@@ -45,9 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'faceEnabled' => $user->getFaceEnabled(),
                 'approvalStatus' => $user->getApprovalStatus(),
             ];
-            header($user->getRole() === 'admin'
-                ? 'Location: ../BackOffice/admin-dashboard.php'
-                : 'Location: profile.php');
+            header('Location: ' . redirectForRole($user->getRole()));
             exit;
         }
     } else {

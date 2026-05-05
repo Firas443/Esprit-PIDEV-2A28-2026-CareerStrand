@@ -42,6 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'aiAnswer2'   => trim($_POST['aiAnswer2'] ?? ''),
         'aiQuestion3' => trim($_POST['aiQuestion3'] ?? ''),
         'aiAnswer3'   => trim($_POST['aiAnswer3'] ?? ''),
+        'aiBio'       => trim($_POST['aiBio'] ?? ''),
     ];
 
     foreach (['field','experience','skills','workStyle','goal','aiAnswer1','aiAnswer2','aiAnswer3'] as $required) {
@@ -480,6 +481,14 @@ $roleLabel = ucwords($role);
       line-height:1.5;
     }
 
+    .ai-status{
+      margin-top:12px;
+      min-height:18px;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.5;
+    }
+
     .preview{
       margin-top:18px;
       padding:20px;
@@ -587,6 +596,7 @@ $roleLabel = ucwords($role);
     <div class="error-global" id="errorBox">Please answer this question before continuing.</div>
 
     <form method="POST" id="questionForm">
+      <input type="hidden" name="aiBio" id="aiBio">
       <div class="question active" data-step="0" data-required="field">
         <div class="q-badge">Question 1</div>
         <h3 class="q-title">What field are you interested in?</h3>
@@ -670,6 +680,7 @@ $roleLabel = ucwords($role);
         <div class="answer-card">
           <label>Generated question</label>
           <div class="ai-question-box" id="aiQuestionBox1"></div>
+          <div class="ai-status" id="aiStatus1"></div>
           <input type="hidden" name="aiQuestion1" id="aiQuestion1">
           <label style="margin-top:16px">Your answer</label>
           <textarea name="aiAnswer1" placeholder="Answer the first AI question..."></textarea>
@@ -684,6 +695,7 @@ $roleLabel = ucwords($role);
         <div class="answer-card">
           <label>Generated question</label>
           <div class="ai-question-box" id="aiQuestionBox2"></div>
+          <div class="ai-status" id="aiStatus2"></div>
           <input type="hidden" name="aiQuestion2" id="aiQuestion2">
           <label style="margin-top:16px">Your answer</label>
           <textarea name="aiAnswer2" placeholder="Answer the second AI question..."></textarea>
@@ -698,6 +710,7 @@ $roleLabel = ucwords($role);
         <div class="answer-card">
           <label>Generated question</label>
           <div class="ai-question-box" id="aiQuestionBox3"></div>
+          <div class="ai-status" id="aiStatus3"></div>
           <input type="hidden" name="aiQuestion3" id="aiQuestion3">
           <label style="margin-top:16px">Your answer</label>
           <textarea name="aiAnswer3" placeholder="Answer the third AI question..."></textarea>
@@ -713,9 +726,9 @@ $roleLabel = ucwords($role);
       </div>
 
       <div class="nav-actions">
-        <button type="button" class="btn btn-ghost" id="prevBtn">← Back</button>
-        <button type="button" class="btn btn-main" id="nextBtn">Next →</button>
-        <button type="submit" class="btn btn-main" id="submitBtn" style="display:none;">Finish & Save →</button>
+        <button type="button" class="btn btn-ghost" id="prevBtn">&larr; Back</button>
+        <button type="button" class="btn btn-main" id="nextBtn">Next &rarr;</button>
+        <button type="submit" class="btn btn-main" id="submitBtn" style="display:none;">Finish &amp; Save &rarr;</button>
       </div>
     </form>
   </section>
@@ -736,6 +749,11 @@ const barFill = document.getElementById('barFill');
 const stepText = document.getElementById('stepText');
 const percentText = document.getElementById('percentText');
 const fieldSelect = document.getElementById('field');
+const aiEndpoint = '../../api/questionnaire_ai.php';
+let aiQuestions = [];
+let aiQuestionsSignature = '';
+let aiBioSignature = '';
+let aiBusy = false;
 
 function getValue(name) {
   const checked = document.querySelector(`[name="${name}"]:checked`);
@@ -745,106 +763,42 @@ function getValue(name) {
   return input ? input.value.trim() : '';
 }
 
-function getDynamicQuestions() {
-  const field = getValue('field');
-
-  if (role === 'manager recruiter') {
-    if (field === 'Human Resources') {
-      return [
-        'What type of candidates are you looking for, and how do you evaluate them?',
-        'Which soft skills are most important for the roles you recruit for?',
-        'How do you build trust with candidates and verify their information?'
-      ];
-    }
-
-    if (field === 'Web Development' || field === 'Data / AI') {
-      return [
-        'What technical profiles or skills are most important for your company?',
-        'How do you evaluate technical candidates before accepting them?',
-        'What type of opportunities can your company offer to strong candidates?'
-      ];
-    }
-
-    return [
-      'What opportunities does your company offer, and what makes your recruitment process trustworthy?',
-      'What qualities do you search for when reviewing candidates?',
-      'How will you help CareerStrand users grow professionally?'
-    ];
-  }
-
-  if (role === 'manager') {
-    if (field === 'Education') {
-      return [
-        'What type of learning activities or events do you want to organize?',
-        'How do you evaluate if members are progressing?',
-        'What kind of community impact do you want to create?'
-      ];
-    }
-
-    if (field === 'Web Development' || field === 'Data / AI') {
-      return [
-        'What kind of projects or challenges would you like your community to build?',
-        'How do you support members when they are blocked?',
-        'What skills should members improve to succeed in your organization?'
-      ];
-    }
-
-    return [
-      'How do you want to help members grow inside your organization or community?',
-      'What type of activities do you organize best?',
-      'What makes your management style different?'
-    ];
-  }
-
-  if (field === 'Web Development') {
-    return [
-      'Do you prefer frontend, backend, or full-stack development, and why?',
-      'What kind of web projects do you enjoy building?',
-      'Which technology do you want to improve next?'
-    ];
-  }
-
-  if (field === 'UI/UX Design') {
-    return [
-      'What type of user experience problems do you enjoy solving?',
-      'How do you understand user needs before designing?',
-      'What design tool or method do you want to improve?'
-    ];
-  }
-
-  if (field === 'Data / AI') {
-    return [
-      'What kind of data or AI projects would you like to work on?',
-      'How would you explain a complex AI result to a non-technical person?',
-      'Which AI or data skill do you want to develop next?'
-    ];
-  }
-
-  if (field === 'Marketing') {
-    return [
-      'What type of audience or campaigns do you enjoy working with?',
-      'How do you measure if a campaign is successful?',
-      'What brand or communication skill do you want to improve?'
-    ];
-  }
-
-  if (field === 'Business') {
-    return [
-      'What business problem would you like to solve in the future?',
-      'How do you make decisions when you have limited information?',
-      'What kind of project or startup idea interests you?'
-    ];
-  }
-
-  return [
-    'What makes your profile unique compared to others?',
-    'What is one strength people usually notice in you?',
-    'What kind of opportunity would help you grow the most?'
-  ];
+function collectAnswers() {
+  return {
+    field: getValue('field'),
+    experience: getValue('experience'),
+    skills: getValue('skills'),
+    workStyle: getValue('workStyle'),
+    goal: getValue('goal'),
+    aiQuestion1: getValue('aiQuestion1'),
+    aiAnswer1: getValue('aiAnswer1'),
+    aiQuestion2: getValue('aiQuestion2'),
+    aiAnswer2: getValue('aiAnswer2'),
+    aiQuestion3: getValue('aiQuestion3'),
+    aiAnswer3: getValue('aiAnswer3')
+  };
 }
 
-function updateDynamicQuestions() {
-  const qs = getDynamicQuestions();
+function signature(keys) {
+  const answers = collectAnswers();
+  return JSON.stringify(keys.reduce((acc, key) => {
+    acc[key] = answers[key] || '';
+    return acc;
+  }, { role }));
+}
+
+function setAiStatus(text, isError = false) {
+  [1, 2, 3].forEach(i => {
+    const el = document.getElementById(`aiStatus${i}`);
+    if (el) {
+      el.textContent = text;
+      el.style.color = isError ? '#ff987d' : 'var(--muted)';
+    }
+  });
+}
+
+function applyAiQuestions(qs) {
+  aiQuestions = qs;
 
   document.getElementById('aiQuestionBox1').textContent = qs[0];
   document.getElementById('aiQuestionBox2').textContent = qs[1];
@@ -853,27 +807,92 @@ function updateDynamicQuestions() {
   document.getElementById('aiQuestion1').value = qs[0];
   document.getElementById('aiQuestion2').value = qs[1];
   document.getElementById('aiQuestion3').value = qs[2];
+  setAiStatus('Generated by AI from your previous answers.');
+}
+
+async function callAi(action, answers) {
+  const res = await fetch(aiEndpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action, answers })
+  });
+  const data = await res.json().catch(() => null);
+  if (!res.ok || !data || !data.success) {
+    throw new Error((data && data.error) ? data.error : 'The AI request failed.');
+  }
+  return data;
+}
+
+async function ensureAiQuestions() {
+  const sig = signature(['field', 'experience', 'skills', 'workStyle', 'goal']);
+  if (aiQuestions.length === 3 && aiQuestionsSignature === sig) return true;
+
+  aiBusy = true;
+  nextBtn.disabled = true;
+  nextBtn.textContent = 'Asking AI...';
+  setAiStatus('Generating personalized AI questions...');
+
+  try {
+    const data = await callAi('questions', collectAnswers());
+    if (!Array.isArray(data.questions) || data.questions.length < 3) {
+      throw new Error('AI did not return enough questions.');
+    }
+    applyAiQuestions(data.questions.slice(0, 3));
+    aiQuestionsSignature = sig;
+    return true;
+  } catch (e) {
+    errorBox.textContent = e.message;
+    errorBox.style.display = 'block';
+    setAiStatus(e.message, true);
+    return false;
+  } finally {
+    aiBusy = false;
+    nextBtn.disabled = false;
+    nextBtn.innerHTML = 'Next &rarr;';
+  }
+}
+
+async function ensureBioPreview() {
+  const sig = signature([
+    'field', 'experience', 'skills', 'workStyle', 'goal',
+    'aiQuestion1', 'aiAnswer1', 'aiQuestion2', 'aiAnswer2', 'aiQuestion3', 'aiAnswer3'
+  ]);
+  const aiBio = document.getElementById('aiBio');
+  if (aiBio.value && aiBioSignature === sig) return true;
+
+  aiBusy = true;
+  nextBtn.disabled = true;
+  nextBtn.textContent = 'Analyzing...';
+  document.getElementById('bioPreview').textContent = 'AI is analyzing your answers and writing your bio...';
+
+  try {
+    const data = await callAi('bio', collectAnswers());
+    aiBio.value = data.bio;
+    aiBioSignature = sig;
+    buildPreview();
+    return true;
+  } catch (e) {
+    errorBox.textContent = e.message;
+    errorBox.style.display = 'block';
+    return false;
+  } finally {
+    aiBusy = false;
+    nextBtn.disabled = false;
+    nextBtn.innerHTML = 'Next &rarr;';
+  }
 }
 
 function buildPreview() {
-  const field = getValue('field');
-  const experience = getValue('experience');
-  const skills = getValue('skills');
-  const workStyle = getValue('workStyle');
-  const goal = getValue('goal');
-  const ai1 = getValue('aiAnswer1');
-  const ai2 = getValue('aiAnswer2');
-  const ai3 = getValue('aiAnswer3');
-
-  let label = 'CareerStrand member';
-  if (role === 'manager') label = 'community manager';
-  if (role === 'manager recruiter') label = 'recruiter';
-
+  const bio = document.getElementById('aiBio').value.trim();
   document.getElementById('bioPreview').innerHTML =
     `<strong>Generated profile description:</strong><br><br>` +
-    `${firstName} is a ${experience.toLowerCase()} ${label} interested in ${field}. ` +
-    `They have strengths in ${skills}. ${workStyle}, and their main goal is to ${goal}. ` +
-    `AI insights: ${ai1} ${ai2} ${ai3}`;
+    (bio ? bio.replace(/[&<>"']/g, ch => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#039;'
+    }[ch])) : 'AI bio is not generated yet.');
 }
 
 function validateStep() {
@@ -887,6 +906,7 @@ function validateStep() {
 
   if (!value) {
     if (fieldError) fieldError.style.display = 'block';
+    errorBox.textContent = 'Please answer this question before continuing.';
     errorBox.style.display = 'block';
     return false;
   }
@@ -916,13 +936,15 @@ function showStep(index) {
     submitBtn.style.display = 'none';
   }
 
-  if (index >= 5 && index <= 7) updateDynamicQuestions();
-
   errorBox.style.display = 'none';
 }
 
-nextBtn.addEventListener('click', () => {
+nextBtn.addEventListener('click', async () => {
+  if (aiBusy) return;
   if (!validateStep()) return;
+
+  if (current === 4 && !(await ensureAiQuestions())) return;
+  if (current === 7 && !(await ensureBioPreview())) return;
 
   if (current < totalSteps - 1) {
     current++;
@@ -937,10 +959,26 @@ prevBtn.addEventListener('click', () => {
   }
 });
 
-fieldSelect.addEventListener('change', updateDynamicQuestions);
+fieldSelect.addEventListener('change', () => {
+  aiQuestions = [];
+  aiQuestionsSignature = '';
+  aiBioSignature = '';
+  document.getElementById('aiBio').value = '';
+  applyAiQuestions([
+    'AI will generate this after you answer the first five questions.',
+    'AI will generate this after you answer the first five questions.',
+    'AI will generate this after you answer the first five questions.'
+  ]);
+  setAiStatus('');
+});
 
 showStep(0);
-updateDynamicQuestions();
+applyAiQuestions([
+  'AI will generate this after you answer the first five questions.',
+  'AI will generate this after you answer the first five questions.',
+  'AI will generate this after you answer the first five questions.'
+]);
+setAiStatus('');
 </script>
 </body>
 </html>
