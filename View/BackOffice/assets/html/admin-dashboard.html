@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CareerStrand Admin Dashboard</title>
+  <link rel="stylesheet" href="assets/css/admin.css" />
+</head>
+<body>
+  <div class="admin-shell">
+    <aside class="admin-sidebar">
+      <div class="brand">
+        <div class="brand-badge"></div>
+        <div>
+          <h1>CareerStrand Admin</h1>
+          <p>Back office console</p>
+        </div>
+      </div>
+
+      <div class="side-label">Main Menu</div>
+      <nav class="nav-list">
+        <a class="nav-item active" href="admin-dashboard.php"><span>Dashboard</span><span>Home</span></a>
+        <a class="nav-item" href="admin-users.php"><span>Users</span><span>1.2k</span></a>
+        <a class="nav-item" href="admin-profiles.php"><span>Profiles</span><span>842</span></a>
+        <a class="nav-item" href="admin-questions.php"><span>Courses</span><span>24</span></a>
+        <a class="nav-item" href="admin-skills.php"><span>Challenges</span><span>18</span></a>
+        <a class="nav-item" href="admin-opportunities.php"><span>Opportunities</span><span>36</span></a>
+        <a class="nav-item" href="admin-applications.php"><span>Applications</span><span>128</span></a>
+        <a class="nav-item" href="admin-analytics.php"><span>ADN Analytics</span><span>Live</span></a>
+        <a class="nav-item" href="admin-feedback.php"><span>Events</span><span>12</span></a>
+        <a class="nav-item" href="admin-settings.php"><span>Settings</span><span>New</span></a>
+      </nav>
+
+      <div class="sidebar-card">
+        <h3>Dashboard mode</h3>
+        <p>This homepage is now focused only on the executive overview, which keeps the widgets clean and avoids the cramped all-in-one feeling.</p>
+      </div>
+    </aside>
+
+    <main class="admin-main">
+      <header class="page-header">
+        <div>
+          <h2>CareerStrand Progression Dashboard</h2>
+          <p>Monitor how users move through the platform journey from profile building to learning, practice, engagement, and real opportunity access, all from one clean admin homepage.</p>
+        </div>
+        <div class="header-actions">
+          <div class="searchbar">
+            <span>Search</span>
+            <input type="text" placeholder="Search users, opportunities, metrics..." />
+          </div>
+          <button class="btn btn-soft">Filter center</button>
+          <button class="btn btn-main">Create report</button>
+        </div>
+      </header>
+
+      <section class="hero-panel">
+        <div class="hero-grid">
+          <div class="hero-copy">
+            <div class="eyebrow">Dashboard overview</div>
+          <h3>See the full progression path from identity to real opportunity.</h3>
+          <p>The homepage is now centered on the platform journey: profile completion, course engagement, challenge activity, events participation, and readiness for internships and junior roles.</p>
+          </div>
+
+          <div class="detail-card">
+            <div class="panel-title">
+              <h3>Platform pulse</h3>
+              <p>Current system status at a glance</p>
+            </div>
+            <div class="list" style="margin-top: 18px;">
+              <div class="list-item"><strong>Most active stage</strong><p class="subtle">Practice and challenges</p></div>
+              <div class="list-item"><strong>Strongest conversion point</strong><p class="subtle">Course to challenge enrollment</p></div>
+              <div class="list-item"><strong>Applications needing review</strong><p class="subtle">22 today</p></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="tile-grid" style="margin-top: 24px;">
+        <article class="metric-tile">
+          <div class="metric-label">Total Users</div>
+          <div class="metric-value">1,284</div>
+          <div class="metric-sub">+8.4% this month</div>
+        </article>
+        <article class="metric-tile">
+          <div class="metric-label">Profiles Ready</div>
+          <div class="metric-value">842</div>
+          <div class="metric-sub">Completed ADN foundations</div>
+        </article>
+        <article class="metric-tile">
+          <div class="metric-label">Active Courses</div>
+          <div class="metric-value">24</div>
+          <div class="metric-sub">Learning paths live</div>
+        </article>
+        <article class="metric-tile">
+          <div class="metric-label">Live Opportunities</div>
+          <div class="metric-value">36</div>
+          <div class="metric-sub">Internships and junior roles</div>
+        </article>
+      </section>
+
+      <section class="chart-grid" style="margin-top: 24px;">
+        <article class="panel">
+          <div class="panel-header">
+            <div class="panel-title">
+              <h3>Progression by platform stage</h3>
+              <p>How users are advancing through the ecosystem</p>
+            </div>
+            <div class="filters">
+              <span class="filter">All users</span>
+              <span class="filter">Last 30 days</span>
+            </div>
+          </div>
+
+          <div class="bars">
+            <div class="bar-row"><span>Profile complete</span><div class="bar-track"><div class="bar-fill" style="width: 84%;"></div></div><strong>84%</strong></div>
+            <div class="bar-row"><span>Learning active</span><div class="bar-track"><div class="bar-fill" style="width: 73%;"></div></div><strong>73%</strong></div>
+            <div class="bar-row"><span>Challenges submitted</span><div class="bar-track"><div class="bar-fill" style="width: 61%;"></div></div><strong>61%</strong></div>
+            <div class="bar-row"><span>Community engaged</span><div class="bar-track"><div class="bar-fill" style="width: 49%;"></div></div><strong>49%</strong></div>
+            <div class="bar-row"><span>Applied to opportunity</span><div class="bar-track"><div class="bar-fill" style="width: 34%;"></div></div><strong>34%</strong></div>
+          </div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-header">
+            <div class="panel-title">
+              <h3>Applications by status</h3>
+              <p>Current moderation pipeline</p>
+            </div>
+          </div>
+          <div class="donut-layout">
+            <div class="donut">
+              <div class="donut-center">
+                <strong>128</strong>
+                <span>applications</span>
+              </div>
+            </div>
+            <div class="legend">
+              <div class="legend-item"><span><i class="dot" style="background: var(--red);"></i>Pending</span><strong>28%</strong></div>
+              <div class="legend-item"><span><i class="dot" style="background: var(--yellow);"></i>Reviewing</span><strong>25%</strong></div>
+              <div class="legend-item"><span><i class="dot" style="background: var(--green);"></i>Accepted</span><strong>25%</strong></div>
+              <div class="legend-item"><span><i class="dot" style="background: var(--blue);"></i>Rejected</span><strong>22%</strong></div>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <section class="split-grid" style="margin-top: 24px;">
+        <article class="panel">
+          <div class="panel-header">
+            <div class="panel-title">
+              <h3>Latest users</h3>
+              <p>Most recent registrations and ADN states</p>
+            </div>
+            <a class="link-btn" href="admin-users.php">Open users page</a>
+          </div>
+          <table>
+            <thead>
+              <tr><th>Name</th><th>Role</th><th>Profile</th><th>ADN</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>Amina Yusuf</strong></td><td>Student</td><td>92%</td><td><span class="status-chip status-active">Generated</span></td></tr>
+              <tr><td><strong>Daniel Okoye</strong></td><td>Graduate</td><td>74%</td><td><span class="status-chip status-review">In progress</span></td></tr>
+              <tr><td><strong>Samuel Bassey</strong></td><td>Student</td><td>61%</td><td><span class="status-chip status-review">Not generated</span></td></tr>
+            </tbody>
+          </table>
+        </article>
+
+        <article class="panel">
+          <div class="panel-header">
+            <div class="panel-title">
+              <h3>Latest platform activity</h3>
+              <p>Recent movement across courses, challenges, and opportunities</p>
+            </div>
+            <a class="link-btn" href="admin-opportunities.php">Open opportunities page</a>
+          </div>
+          <table>
+            <thead>
+              <tr><th>Activity</th><th>Module</th><th>Status</th><th>Focus</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>Portfolio Foundations</strong></td><td>Course</td><td><span class="status-chip status-published">Live</span></td><td>Identity</td></tr>
+              <tr><td><strong>Landing Page Build Sprint</strong></td><td>Challenge</td><td><span class="status-chip status-published">Open</span></td><td>Practice</td></tr>
+              <tr><td><strong>Frontend Intern</strong></td><td>Opportunity</td><td><span class="status-chip status-published">Published</span></td><td>Access</td></tr>
+            </tbody>
+          </table>
+        </article>
+      </section>
+
+      <div class="footer-note">Dashboard home separated from the other admin areas so each section now feels cleaner and more premium.</div>
+    </main>
+  </div>
+  <script src="assets/js/admin.js"></script>
+</body>
+</html>
+
+
+

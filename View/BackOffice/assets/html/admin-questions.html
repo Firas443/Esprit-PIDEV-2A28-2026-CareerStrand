@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CareerStrand Admin Courses</title>
+  <link rel="stylesheet" href="assets/css/admin.css" />
+</head>
+<body>
+  <div class="admin-shell">
+    <aside class="admin-sidebar">
+      <div class="brand"><div class="brand-badge"></div><div><h1>CareerStrand Admin</h1><p>Back office console</p></div></div>
+      <div class="side-label">Main Menu</div>
+      <nav class="nav-list">
+        <a class="nav-item" href="admin-dashboard.php"><span>Dashboard</span><span>Home</span></a>
+        <a class="nav-item" href="admin-users.php"><span>Users</span><span>1.2k</span></a>
+        <a class="nav-item" href="admin-profiles.php"><span>Profiles</span><span>842</span></a>
+        <a class="nav-item active" href="admin-questions.php"><span>Courses</span><span>24</span></a>
+        <a class="nav-item" href="admin-skills.php"><span>Challenges</span><span>18</span></a>
+        <a class="nav-item" href="admin-opportunities.php"><span>Opportunities</span><span>36</span></a>
+        <a class="nav-item" href="admin-applications.php"><span>Applications</span><span>128</span></a>
+        <a class="nav-item" href="admin-analytics.php"><span>ADN Analytics</span><span>Live</span></a>
+        <a class="nav-item" href="admin-feedback.php"><span>Events</span><span>12</span></a>
+        <a class="nav-item" href="admin-settings.php"><span>Settings</span><span>New</span></a>
+      </nav>
+    </aside>
+    <main class="admin-main">
+      <header class="page-header">
+        <div><h2>Courses Management</h2><p>Manage the education module by creating courses, tracking enrollments, and shaping the learning stage of the CareerStrand progression journey.</p></div>
+        <div class="header-actions"><button class="btn btn-soft">Enrollment view</button><button class="btn btn-main">Add course</button></div>
+      </header>
+      <section class="detail-grid">
+        <article class="panel">
+          <div class="panel-header"><div class="panel-title"><h3>Course catalog</h3><p>Educational content that strengthens users before they move into practical stages.</p></div><div class="filters"><span class="filter">Beginner</span><span class="filter">In progress</span><span class="filter">Completed</span></div></div>
+          <table>
+            <thead><tr><th>Course</th><th>Track</th><th>Enrollments</th><th>Progress signal</th><th>Actions</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Portfolio Foundations</strong></td><td><span class="category-chip">Identity</span></td><td>312</td><td>74% avg completion</td><td class="table-actions"><span class="link-btn">Edit</span><span class="link-btn">Archive</span></td></tr>
+              <tr><td><strong>Intro to Digital Workflows</strong></td><td><span class="category-chip">Learning</span></td><td>261</td><td>68% avg completion</td><td class="table-actions"><span class="link-btn">Edit</span><span class="link-btn">Archive</span></td></tr>
+              <tr><td><strong>Career Readiness Sprint</strong></td><td><span class="category-chip">Opportunity</span></td><td>189</td><td>57% avg completion</td><td class="table-actions"><span class="link-btn">Edit</span><span class="link-btn">Archive</span></td></tr>
+            </tbody>
+          </table>
+        </article>
+        <aside class="detail-card">
+          <h4>Create new course</h4>
+          <div class="field-grid">
+            <div class="field"><label>Course title</label><input type="text" placeholder="Enter course title" /></div>
+            <div class="field"><label>Track</label><select><option>Identity</option><option>Learning</option><option>Career readiness</option></select></div>
+            <div class="field"><label>Level</label><select><option>Beginner</option><option>Intermediate</option></select></div>
+            <div class="field"><label>Duration</label><input type="text" placeholder="e.g. 4 weeks" /></div>
+          </div>
+        </aside>
+      </section>
+    </main>
+  </div>
+  <script src="assets/js/admin.js"></script>
+</body>
+</html>
+
+
+

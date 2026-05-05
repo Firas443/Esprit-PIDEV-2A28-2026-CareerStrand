@@ -1,30 +1,41 @@
 <?php
 
-class Database {
-    private string $host     = 'localhost';
-    private string $dbName   = 'careerstrand';
-    private string $username = 'root';
-    private string $password = '';
-    private ?PDO $conn       = null;
+class config
+{
+    private static ?PDO $pdo = null;
+    private static string $huggingFaceFeedbackModel = 'katanemo/Arch-Router-1.5B';
 
-    public function connect(): PDO {
-        if ($this->conn !== null) {
-            return $this->conn;
+    public static function getConnexion(): PDO
+    {
+        if (self::$pdo === null) {
+            $host = "localhost";
+            $dbName = "careerstrand";
+            $username = "root";
+            $password = "";
+
+            self::$pdo = new PDO(
+                "mysql:host=$host;dbname=$dbName;charset=utf8mb4",
+                $username,
+                $password,
+                [
+                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                ]
+            );
         }
 
-        $dsn = "mysql:host={$this->host};dbname={$this->dbName};charset=utf8mb4";
+        return self::$pdo;
+    }
 
-        try {
-            $this->conn = new PDO($dsn, $this->username, $this->password, [
-                PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                PDO::ATTR_EMULATE_PREPARES   => false,
-            ]);
-        } catch (PDOException $e) {
-            http_response_code(500);
-            die(json_encode(['success' => false, 'message' => 'Database connection failed: ' . $e->getMessage()]));
-        }
+    public static function getHuggingFaceApiKey(): string
+    {
+        return trim(self::$huggingFaceApiKey);
+    }
 
-        return $this->conn;
+    public static function getHuggingFaceFeedbackModel(): string
+    {
+        $model = trim(self::$huggingFaceFeedbackModel);
+        return $model !== '' ? $model : 'katanemo/Arch-Router-1.5B';
+
     }
 }

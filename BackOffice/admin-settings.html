@@ -1,0 +1,56 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CareerStrand Admin Settings</title>
+  <link rel="stylesheet" href="assets/css/admin.css" />
+</head>
+<body>
+  <div class="admin-shell">
+    <aside class="admin-sidebar">
+      <div class="brand"><div class="brand-badge"></div><div><h1>CareerStrand Admin</h1><p>Back office console</p></div></div>
+      <div class="side-label">Main Menu</div>
+      <nav class="nav-list">
+        <a class="nav-item" href="admin-dashboard.html"><span>Dashboard</span><span>Home</span></a>
+        <a class="nav-item" href="admin-users.html"><span>Users</span><span>1.2k</span></a>
+        <a class="nav-item" href="admin-profiles.html"><span>Profiles</span><span>842</span></a>
+        <a class="nav-item" href="admin-questions.html"><span>Courses</span><span>24</span></a>
+        <a class="nav-item" href="admin-skills.html"><span>Challenges</span><span>18</span></a>
+        <a class="nav-item" href="admin-opportunities.html"><span>Opportunities</span><span>36</span></a>
+        <a class="nav-item" href="admin-applications.html"><span>Applications</span><span>128</span></a>
+        <a class="nav-item" href="admin-analytics.html"><span>ADN Analytics</span><span>Live</span></a>
+        <a class="nav-item" href="admin-feedback.html"><span>Events</span><span>12</span></a>
+        <a class="nav-item active" href="admin-settings.html"><span>Settings</span><span>New</span></a>
+      </nav>
+    </aside>
+    <main class="admin-main">
+      <header class="page-header">
+        <div><h2>Settings</h2><p>UI-level configuration for admin preferences, dashboard behavior, moderation defaults, and system presentation settings.</p></div>
+        <div class="header-actions"><button class="btn btn-main">Save settings</button></div>
+      </header>
+      <section class="split-grid">
+        <article class="detail-card">
+          <h4>Admin preferences</h4>
+          <div class="field-grid">
+            <div class="field"><label>Default landing page</label><select><option>Dashboard</option><option>Users</option><option>Applications</option></select></div>
+            <div class="field"><label>Moderation mode</label><select><option>Manual review</option><option>Priority queue</option></select></div>
+            <div class="field"><label>Notification email</label><input type="text" placeholder="admin@careerstrand.io" /></div>
+          </div>
+        </article>
+        <article class="detail-card">
+          <h4>Presentation settings</h4>
+          <div class="field-grid">
+            <div class="field"><label>Default report range</label><select><option>Last 30 days</option><option>Last quarter</option><option>All time</option></select></div>
+            <div class="field"><label>Dashboard highlight</label><select><option>ADN coverage</option><option>Application pressure</option><option>Opportunity activity</option></select></div>
+            <div class="field"><label>Notes</label><textarea placeholder="Internal configuration notes..."></textarea></div>
+          </div>
+        </article>
+      </section>
+    </main>
+  </div>
+  <script src="assets/js/admin.js"></script>
+</body>
+</html>
+
+
