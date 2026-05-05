@@ -15,7 +15,7 @@ header('Access-Control-Allow-Headers: Content-Type');
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { ob_end_clean(); http_response_code(200); exit; }
 
-require_once __DIR__ . '/../config/Database.php';
+require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../model/OpportunitySkill.php';
 
 class OpportunitySkillController {
