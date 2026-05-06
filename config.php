@@ -1,5 +1,7 @@
 <?php
 
+
+
 class config
 {
     private static ?PDO $pdo = null;
