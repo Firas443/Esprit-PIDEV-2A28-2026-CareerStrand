@@ -1,7 +1,9 @@
 <?php 
     include "C:/xampp/htdocs/Careerstrand/Controller/ControlCourses.php";
+    include "C:/xampp/htdocs/Careerstrand/Controller/ControlCourseVideos.php";
 
     $controlC = new ControlCourses();
+    $controlV = new ControlCourseVideos();
 
     $editCourse = null;
     $viewCourse = null;
@@ -17,9 +19,8 @@
         $mode = 'view';
     }
 
+    // ── Ajout / Mise à jour du cours ──
     if (isset($_POST['Title'])) {
-        // upload_video est géré dans ControlCourses::handleVideoUpload()
-        // on ne le passe plus dans le constructeur
         $c = new Courses(
             $_POST['Title'],
             $_POST['Description'],
@@ -29,12 +30,39 @@
             (int)$_POST['Duration'],
             $_POST['Statut'],
             new DateTime($_POST['Published_AT'])
-            // pas de 9e argument — handleVideoUpload lit $_FILES directement
         );
-        if (!empty($_POST['CourseID']))
+
+        if (!empty($_POST['CourseID'])) {
             $controlC->updateCourse($c, $_GET['update']);
-        else
+            $savedCourseId = (int)$_POST['CourseID'];
+        } else {
             $controlC->addCourse($c);
+            // Récupère l'ID du cours qu'on vient de créer
+            $savedCourseId = (int)$controlC->getLastInsertedId();
+        }
+
+        // ── Multi-upload vidéos ──
+        // Les fichiers arrivent sous le nom video_files[] avec leurs titres video_titles[]
+        if (!empty($_FILES['video_files']['name'][0])) {
+            $titles = $_POST['video_titles'] ?? [];
+            $count  = count($_FILES['video_files']['name']);
+
+            for ($i = 0; $i < $count; $i++) {
+                if ($_FILES['video_files']['error'][$i] === UPLOAD_ERR_OK) {
+                    // Reconstruit un $_FILES compatible avec addVideo()
+                    $_FILES['_single_video'] = [
+                        'name'     => $_FILES['video_files']['name'][$i],
+                        'type'     => $_FILES['video_files']['type'][$i],
+                        'tmp_name' => $_FILES['video_files']['tmp_name'][$i],
+                        'error'    => $_FILES['video_files']['error'][$i],
+                        'size'     => $_FILES['video_files']['size'][$i],
+                    ];
+                    $title = trim($titles[$i] ?? '') ?: 'Chapitre ' . ($i + 1);
+                    $controlV->addVideo($savedCourseId, $title, '_single_video');
+                }
+            }
+        }
+
         header("Location: admin-courses.php");
         exit;
     }
@@ -66,6 +94,13 @@
         }
     });
 
+    // Compte les vidéos par cours
+    $videoCountByCourse = [];
+    foreach ($allCourses as $row) {
+        $vids = $controlV->getVideosByCourse($row['CourseID']);
+        $videoCountByCourse[$row['CourseID']] = count($vids);
+    }
+
     $panelData  = $editCourse ?? $viewCourse ?? null;
 
     $sortLabels = [
@@ -88,28 +123,16 @@
     .view-mode textarea,
     .view-mode select,
     .view-mode input[type="file"] {
-      pointer-events: none;
-      opacity: 0.75;
+      pointer-events: none; opacity: 0.75;
       border-color: rgba(126,159,228,0.15) !important;
       background: rgba(255,255,255,0.02) !important;
       cursor: default;
     }
-    .view-badge {
-      display: inline-block;
-      font-size: 11px; font-weight: 700;
-      letter-spacing: 0.14em; text-transform: uppercase;
-      padding: 4px 12px; border-radius: 999px;
-      background: rgba(111,143,216,0.14);
-      color: #95abeb;
-      border: 1px solid rgba(111,143,216,0.25);
-      margin-bottom: 14px;
-    }
-    .link-btn.view {
-      background: rgba(111,143,216,0.12);
-      border-color: rgba(111,143,216,0.3);
-      color: #95abeb;
-    }
-    .link-btn.view:hover { background: rgba(111,143,216,0.25); }
+    .view-badge { display:inline-block; font-size:11px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; padding:4px 12px; border-radius:999px; background:rgba(111,143,216,0.14); color:#95abeb; border:1px solid rgba(111,143,216,0.25); margin-bottom:14px; }
+    .link-btn.view { background:rgba(111,143,216,0.12); border-color:rgba(111,143,216,0.3); color:#95abeb; }
+    .link-btn.view:hover { background:rgba(111,143,216,0.25); }
+    .link-btn.videos { background:rgba(34,211,130,0.08); border-color:rgba(34,211,130,0.25); color:#4ade80; }
+    .link-btn.videos:hover { background:rgba(34,211,130,0.18); }
     .toolbar { display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-top:4px; }
     .search-form { display:flex; align-items:center; flex:1; min-width:200px; }
     .search-form input[type="text"] { flex:1; }
@@ -126,6 +149,22 @@
     .field video { max-width:100%; border-radius:12px; margin-top:8px; }
     .field a { color:#95abeb; text-decoration:none; }
     .field a:hover { text-decoration:underline; }
+
+    /* ── Multi-video upload ── */
+    .video-upload-zone { border:1px dashed rgba(111,143,216,0.3); border-radius:14px; padding:16px; background:rgba(111,143,216,0.04); }
+    .video-upload-zone label { font-size:12px; color:rgba(255,255,255,0.5); margin-bottom:8px; display:block; }
+    .video-row { display:flex; gap:8px; align-items:center; margin-bottom:8px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:10px; padding:10px 12px; }
+    .video-row input[type="text"] { flex:1; font-size:13px; padding:6px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.05); color:#f5f3ee; font-family:inherit; }
+    .video-row input[type="text"]::placeholder { color:rgba(255,255,255,0.3); }
+    .video-row input[type="file"] { flex:1.5; font-size:12px; }
+    .video-row-num { font-size:11px; font-weight:800; color:#95abeb; min-width:20px; }
+    .btn-remove-video { background:rgba(255,100,69,0.1); border:1px solid rgba(255,100,69,0.2); color:#ff8564; border-radius:8px; padding:4px 10px; font-size:12px; cursor:pointer; font-family:inherit; transition:0.2s; white-space:nowrap; }
+    .btn-remove-video:hover { background:rgba(255,100,69,0.2); }
+    .btn-add-video-row { display:flex; align-items:center; gap:6px; font-size:13px; font-weight:700; color:#95abeb; background:rgba(111,143,216,0.08); border:1px solid rgba(111,143,216,0.2); border-radius:999px; padding:7px 16px; cursor:pointer; font-family:inherit; transition:0.2s; margin-top:8px; }
+    .btn-add-video-row:hover { background:rgba(111,143,216,0.18); }
+    .php-limits { font-size:11px; color:rgba(255,255,255,0.3); margin-top:6px; }
+    .php-limits code { background:rgba(255,255,255,0.06); padding:1px 5px; border-radius:4px; }
+    .video-count-badge { display:inline-flex; align-items:center; gap:4px; font-size:11px; padding:2px 8px; border-radius:999px; background:rgba(34,211,130,0.1); color:#4ade80; border:1px solid rgba(34,211,130,0.2); margin-left:6px; }
   </style>
 </head>
 <body>
@@ -138,6 +177,7 @@
         <a class="nav-item" href="admin-users.html"><span>Users</span><span>1.2k</span></a>
         <a class="nav-item" href="admin-profiles.html"><span>Profiles</span><span>842</span></a>
         <a class="nav-item active" href="admin-courses.php"><span>Courses</span><span>24</span></a>
+        <a class="nav-item" href="admin-course-videos.php"><span>Course Videos</span><span>New</span></a>
         <a class="nav-item" href="admin-skills.html"><span>Challenges</span><span>18</span></a>
         <a class="nav-item" href="admin-opportunities.html"><span>Opportunities</span><span>36</span></a>
         <a class="nav-item" href="admin-applications.html"><span>Applications</span><span>128</span></a>
@@ -164,7 +204,6 @@
             </div>
             <div class="filters">
               <div class="toolbar">
-                <!-- Recherche -->
                 <form method="GET" action="admin-courses.php" class="search-form">
                   <?php if ($sortBy !== 'default'): ?>
                     <input type="hidden" name="sort" value="<?= htmlspecialchars($sortBy) ?>">
@@ -178,7 +217,6 @@
                     <a href="admin-courses.php" class="clear-btn">✕ Reset</a>
                   <?php endif; ?>
                 </form>
-                <!-- Tri -->
                 <form method="GET" action="admin-courses.php" class="sort-form">
                   <?php if ($searchQuery !== ''): ?>
                     <input type="hidden" name="search" value="<?= htmlspecialchars($searchQuery) ?>">
@@ -221,9 +259,16 @@
                   </td>
                 </tr>
               <?php else: ?>
-                <?php foreach ($allCourses as $row): ?>
+                <?php foreach ($allCourses as $row):
+                    $nbVideos = $videoCountByCourse[$row['CourseID']] ?? 0;
+                ?>
                 <tr>
-                  <td><strong><?= htmlspecialchars($row['Title']) ?></strong></td>
+                  <td>
+                    <strong><?= htmlspecialchars($row['Title']) ?></strong>
+                    <?php if ($nbVideos > 0): ?>
+                      <span class="video-count-badge">🎬 <?= $nbVideos ?></span>
+                    <?php endif; ?>
+                  </td>
                   <td><span class="category-chip"><?= htmlspecialchars($row['Difficulty']) ?></span></td>
                   <td><?= htmlspecialchars($row['Duration']) ?></td>
                   <td><?= htmlspecialchars($row['Categorie']) ?></td>
@@ -231,9 +276,7 @@
                     <a class="link-btn view" href="admin-courses.php?view=<?= (int)$row['CourseID'] ?>">View</a>
                     <a class="link-btn" href="admin-courses.php?update=<?= (int)$row['CourseID'] ?>" onclick="return confirm('Update this course?')">Edit</a>
                     <a class="link-btn" href="admin-courses.php?delete=<?= (int)$row['CourseID'] ?>" onclick="return confirm('Delete this course?')">Delete</a>
-                    <?php if (!empty($row['upload_video'])): ?>
-                      <a class="link-btn" href="<?= htmlspecialchars($row['upload_video']) ?>" target="_blank">🎥 Vidéo</a>
-                    <?php endif; ?>
+                    <a class="link-btn videos" href="admin-course-videos.php?course_id=<?= (int)$row['CourseID'] ?>">🎬 Vidéos (<?= $nbVideos ?>)</a>
                   </td>
                 </tr>
                 <?php endforeach; ?>
@@ -323,19 +366,63 @@
                   value="<?= htmlspecialchars(!empty($panelData['Published_AT']) ? date('Y-m-d', strtotime($panelData['Published_AT'])) : '') ?>" />
               </div>
 
-              <!-- Upload vidéo -->
+              <!-- ── Multi-upload vidéos ── -->
               <div class="field">
-                <label>Upload vidéo (MP4, WebM, max 50MB)</label>
-                <input type="file" name="upload_video" accept="video/mp4,video/webm,video/ogg" />
-                <?php if (!empty($panelData['upload_video'])): ?>
-                  <div style="margin-top:8px;">
-                    <a href="<?= htmlspecialchars($panelData['upload_video']) ?>" target="_blank">📹 Voir la vidéo actuelle</a>
-                    <?php if ($mode === 'view'): ?>
-                      <video width="200" controls style="display:block;margin-top:6px;border-radius:8px;">
-                        <source src="<?= htmlspecialchars($panelData['upload_video']) ?>" type="video/mp4">
-                      </video>
-                    <?php endif; ?>
+                <label style="margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;">
+                  <span>🎬 Vidéos du cours</span>
+                  <?php if ($mode !== 'add' && !empty($panelData['CourseID'])): ?>
+                    <a href="admin-course-videos.php?course_id=<?= (int)$panelData['CourseID'] ?>"
+                       style="font-size:12px;color:#4ade80;text-decoration:none;border:1px solid rgba(34,211,130,0.25);padding:3px 10px;border-radius:999px;">
+                       Gérer les vidéos →
+                    </a>
+                  <?php endif; ?>
+                </label>
+
+                <?php
+                // En mode view/edit, affiche les vidéos existantes
+                if ($mode !== 'add' && !empty($panelData['CourseID'])):
+                    $existingVideos = $controlV->getVideosByCourse($panelData['CourseID']);
+                    if (!empty($existingVideos)):
+                ?>
+                  <div style="margin-bottom:12px;">
+                    <?php foreach ($existingVideos as $i => $ev):
+                        $evpath = $ev['video_path'];
+                        $evpath = ltrim($evpath, '/');
+                        if (stripos($evpath, 'careerstrand/') === 0) $evpath = substr($evpath, strlen('careerstrand/'));
+                    ?>
+                      <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:10px;margin-bottom:6px;">
+                        <span style="font-size:11px;font-weight:800;color:#95abeb;min-width:20px;">#<?= $i+1 ?></span>
+                        <span style="font-size:13px;color:#f5f3ee;flex:1;"><?= htmlspecialchars($ev['title']) ?></span>
+                        <video style="height:36px;border-radius:6px;background:#000;" preload="none">
+                          <source src="/careerstrand/<?= htmlspecialchars($evpath) ?>" type="video/mp4">
+                        </video>
+                        <?php if ((int)$ev['video_id'] > 0): ?>
+                          <a href="admin-course-videos.php?delete_video=<?= (int)$ev['video_id'] ?>&course_id=<?= (int)$panelData['CourseID'] ?>"
+                             onclick="return confirm('Supprimer cette vidéo ?')"
+                             style="font-size:11px;color:#ff8564;text-decoration:none;border:1px solid rgba(255,110,69,0.2);padding:3px 8px;border-radius:6px;">🗑</a>
+                        <?php endif; ?>
+                      </div>
+                    <?php endforeach; ?>
                   </div>
+                <?php endif; ?>
+                <?php endif; ?>
+
+                <?php if ($mode !== 'view'): ?>
+                <div class="video-upload-zone">
+                  <label>Ajouter une ou plusieurs vidéos :</label>
+                  <div id="video-rows">
+                    <div class="video-row" data-index="0">
+                      <span class="video-row-num">1</span>
+                      <input type="text" name="video_titles[]" placeholder="Titre (ex: Introduction)">
+                      <input type="file" name="video_files[]" accept="video/mp4,video/webm,video/ogg">
+                      <button type="button" class="btn-remove-video" onclick="removeVideoRow(this)" style="display:none;">✕</button>
+                    </div>
+                  </div>
+                  <button type="button" class="btn-add-video-row" onclick="addVideoRow()">+ Ajouter une autre vidéo</button>
+                  <div class="php-limits">
+                    Limite PHP : <code><?= ini_get('upload_max_filesize') ?></code> par fichier · <code><?= ini_get('post_max_size') ?></code> total
+                  </div>
+                </div>
                 <?php endif; ?>
               </div>
 
@@ -360,5 +447,46 @@
 
   <script src="assets/js/admin.js"></script>
   <script src="./assets/js/courses.js"></script>
+  <script>
+  // ── Gestion des lignes multi-vidéo ──
+  var videoRowCount = 1;
+
+  function addVideoRow() {
+    videoRowCount++;
+    var container = document.getElementById('video-rows');
+    var div = document.createElement('div');
+    div.className = 'video-row';
+    div.setAttribute('data-index', videoRowCount - 1);
+    div.innerHTML =
+      '<span class="video-row-num">' + videoRowCount + '</span>' +
+      '<input type="text" name="video_titles[]" placeholder="Titre (ex: Chapitre ' + videoRowCount + ')">' +
+      '<input type="file" name="video_files[]" accept="video/mp4,video/webm,video/ogg">' +
+      '<button type="button" class="btn-remove-video" onclick="removeVideoRow(this)">✕</button>';
+    container.appendChild(div);
+
+    // Affiche le bouton ✕ sur la première ligne si plusieurs lignes
+    updateRemoveButtons();
+  }
+
+  function removeVideoRow(btn) {
+    var row = btn.closest('.video-row');
+    row.remove();
+    // Renumérote
+    var rows = document.querySelectorAll('#video-rows .video-row');
+    rows.forEach(function(r, i) {
+      r.querySelector('.video-row-num').textContent = i + 1;
+    });
+    videoRowCount = rows.length;
+    updateRemoveButtons();
+  }
+
+  function updateRemoveButtons() {
+    var rows = document.querySelectorAll('#video-rows .video-row');
+    rows.forEach(function(r, i) {
+      var btn = r.querySelector('.btn-remove-video');
+      btn.style.display = rows.length > 1 ? 'inline-block' : 'none';
+    });
+  }
+  </script>
 </body>
 </html>

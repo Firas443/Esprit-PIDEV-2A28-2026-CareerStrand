@@ -123,5 +123,9 @@ class ControlCourses {
         $query->execute([$id]);
         return $query->fetch();
     }
+    public function getLastInsertedId() {
+    $db = config::getConnexion();
+    return $db->lastInsertId();
+}
 }
 ?>
