@@ -22,8 +22,13 @@ $defaultUserId = (int) $frontUser['userId'];
 $allHubs = $coreController->getAllSkillHubs();
 $groupId = isset($_GET['groupId']) ? (int) $_GET['groupId'] : (!empty($allHubs) ? (int) $allHubs[0]['groupId'] : 0);
 $selectedPostId = isset($_GET['postId']) ? (int) $_GET['postId'] : 0;
+$commentSort = strtolower(trim((string) ($_GET['commentSort'] ?? 'newest')));
+$allowedCommentSorts = ['newest', 'oldest'];
+if (!in_array($commentSort, $allowedCommentSorts, true)) {
+    $commentSort = 'newest';
+}
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && $defaultUserId !== null) {
+if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && $defaultUserId !== null) {
     $action = $_POST['action'] ?? '';
 
     if ($action === 'create_comment') {
@@ -44,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $defaultUserId !== null) {
                     'active'
                 )
             );
-            header('Location: forum.php?groupId=' . $targetGroupId . '&postId=' . $postId);
+            header('Location: forum.php?groupId=' . $targetGroupId . '&postId=' . $postId . '&commentSort=' . rawurlencode($commentSort));
             exit;
         }
     }
@@ -91,6 +96,22 @@ $comments = array_map(static function (array $comment) use ($userMap): array {
     $comment['role'] = $user['role'];
     return $comment;
 }, $comments);
+
+usort($comments, static function (array $left, array $right) use ($commentSort): int {
+    $leftTime = strtotime((string) ($left['createdAt'] ?? '')) ?: 0;
+    $rightTime = strtotime((string) ($right['createdAt'] ?? '')) ?: 0;
+
+    if ($commentSort === 'oldest') {
+        return $leftTime <=> $rightTime;
+    }
+
+    return $rightTime <=> $leftTime;
+});
+
+$commentSortLabels = [
+    'newest' => 'Newest',
+    'oldest' => 'Oldest',
+];
 
 function h(?string $value): string
 {
@@ -171,16 +192,36 @@ function avatarClass(?string $role): string
                         </form>
 
                         <div class="conversation-tools">
-                            <div class="sort-copy">Sort by: <strong>Best</strong></div>
-                            <div class="search-comments">Search comments</div>
+                            <form method="GET" class="forum-sort-form" aria-label="Sort comments">
+                                <input type="hidden" name="groupId" value="<?= (int) $groupId; ?>">
+                                <input type="hidden" name="postId" value="<?= (int) $selectedPost['postId']; ?>">
+                                <span class="sort-copy">Sort by</span>
+                                <div class="forum-sort-options">
+                                    <?php foreach ($commentSortLabels as $sortValue => $sortLabel) { ?>
+                                        <button
+                                            class="forum-sort-option<?= $commentSort === $sortValue ? ' is-active' : ''; ?>"
+                                            type="submit"
+                                            name="commentSort"
+                                            value="<?= h($sortValue); ?>"
+                                        >
+                                            <?= h($sortLabel); ?>
+                                        </button>
+                                    <?php } ?>
+                                </div>
+                            </form>
+                            <div class="search-comments">
+                                <span>Search</span>
+                                <input id="forumCommentSearch" type="search" autocomplete="off" placeholder="Author, content, or date" aria-label="Search comments">
+                                <button class="forum-search-clear" id="forumSearchClear" type="button" aria-label="Clear comment search">Clear</button>
+                            </div>
                         </div>
 
-                        <div class="comment-thread">
+                        <div class="comment-thread" id="forumCommentThread">
                             <?php if (empty($comments)) { ?>
                                 <div class="empty-state">No comments yet. Start the first reply in this hub thread.</div>
                             <?php } ?>
                             <?php foreach ($comments as $comment) { ?>
-                                <article class="comment-node">
+                                <article class="comment-node" data-comment-search="<?= h(strtolower(($comment['fullName'] ?? '') . ' ' . ($comment['content'] ?? '') . ' ' . ($comment['createdAt'] ?? ''))); ?>">
                                     <div class="thread-line">
                                         <span class="thread-dot"></span>
                                     </div>
@@ -196,6 +237,7 @@ function avatarClass(?string $role): string
                                     </div>
                                 </article>
                             <?php } ?>
+                            <div class="empty-state forum-search-empty" id="forumSearchEmpty">No comments match your search.</div>
                         </div>
                     </section>
                 <?php } else { ?>
@@ -209,25 +251,62 @@ function avatarClass(?string $role): string
         const form = document.getElementById('forumCommentForm');
         const input = document.getElementById('forumCommentInput');
         const error = document.getElementById('forumCommentError');
-        if (!form || !input || !error) return;
 
-        const validate = () => {
-            const message = input.value.trim() ? '' : (input.dataset.requiredMessage || 'Comment is required.');
-            error.textContent = message;
-            input.classList.toggle('is-invalid', Boolean(message));
-            input.dataset.invalid = message ? 'true' : 'false';
-            return !message;
-        };
+        if (form && input && error) {
+            const validate = () => {
+                const message = input.value.trim() ? '' : (input.dataset.requiredMessage || 'Comment is required.');
+                error.textContent = message;
+                input.classList.toggle('is-invalid', Boolean(message));
+                input.dataset.invalid = message ? 'true' : 'false';
+                return !message;
+            };
 
-        input.addEventListener('input', validate);
-        input.addEventListener('blur', validate);
+            input.addEventListener('input', validate);
+            input.addEventListener('blur', validate);
 
-        form.addEventListener('submit', function (event) {
-            if (!validate()) {
-                event.preventDefault();
-                input.focus();
+            form.addEventListener('submit', function (event) {
+                if (!validate()) {
+                    event.preventDefault();
+                    input.focus();
+                }
+            });
+        }
+
+        const searchInput = document.getElementById('forumCommentSearch');
+        const searchEmpty = document.getElementById('forumSearchEmpty');
+        const searchClear = document.getElementById('forumSearchClear');
+        const commentNodes = Array.from(document.querySelectorAll('.comment-node'));
+
+        if (searchInput && searchEmpty && commentNodes.length > 0) {
+            const filterComments = () => {
+                const query = searchInput.value.trim().toLowerCase();
+                let visibleCount = 0;
+
+                commentNodes.forEach((node) => {
+                    const matches = query === '' || (node.dataset.commentSearch || '').includes(query);
+                    node.classList.toggle('is-hidden', !matches);
+                    if (matches) {
+                        visibleCount += 1;
+                    }
+                });
+
+                searchEmpty.classList.toggle('is-visible', query !== '' && visibleCount === 0);
+                if (searchClear) {
+                    searchClear.classList.toggle('is-visible', query !== '');
+                }
+            };
+
+            searchInput.addEventListener('input', filterComments);
+            if (searchClear) {
+                searchClear.addEventListener('click', () => {
+                    searchInput.value = '';
+                    filterComments();
+                    searchInput.focus();
+                });
             }
-        });
+
+            filterComments();
+        }
     });
     </script>
 </body>

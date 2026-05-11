@@ -10,6 +10,45 @@ class SkillHubEngagementController
     public function __construct()
     {
         $this->pdo = config::getConnexion();
+        $this->ensureSkillHubEngagementSchema();
+    }
+
+    private function ensureSkillHubEngagementSchema(): void
+    {
+        $this->ensureAutoIncrementPrimaryKey('Post', 'postId');
+        $this->ensureAutoIncrementPrimaryKey('Comments', 'commentId');
+        $this->ensureAutoIncrementPrimaryKey('Submission', 'submissionId');
+    }
+
+    private function ensureAutoIncrementPrimaryKey(string $table, string $primaryKey): void
+    {
+        try {
+            $tableExists = $this->pdo->prepare(
+                'SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?'
+            );
+            $tableExists->execute([$table]);
+            if ((int) $tableExists->fetchColumn() < 1) {
+                return;
+            }
+
+            $column = $this->pdo->query("SHOW COLUMNS FROM `$table` LIKE " . $this->pdo->quote($primaryKey))->fetch();
+            if (!$column) {
+                return;
+            }
+
+            $hasPrimary = strtoupper((string) ($column['Key'] ?? '')) === 'PRI';
+            $hasAutoIncrement = stripos((string) ($column['Extra'] ?? ''), 'auto_increment') !== false;
+
+            if (!$hasPrimary) {
+                $this->pdo->exec("ALTER TABLE `$table` ADD PRIMARY KEY (`$primaryKey`)");
+            }
+
+            if (!$hasAutoIncrement) {
+                $this->pdo->exec("ALTER TABLE `$table` MODIFY `$primaryKey` int(11) NOT NULL AUTO_INCREMENT");
+            }
+        } catch (Throwable $exception) {
+            // Keep the controller usable even if the database user cannot alter schema.
+        }
     }
 
     private function normalizeDate(?string $value): ?string
@@ -19,6 +58,11 @@ class SkillHubEngagementController
         }
 
         return substr(str_replace('T', ' ', trim($value)), 0, 19);
+    }
+
+    private function isPendingSubmissionStatus(?string $status): bool
+    {
+        return in_array(strtolower(trim((string) $status)), ['submitted', 'pending', 'draft'], true);
     }
 
     private function extractResponseText(array $payload): string
@@ -211,7 +255,10 @@ class SkillHubEngagementController
              LEFT JOIN Challenge c ON c.challengeId = s.challengeId
              WHERE s.challengeId = :challengeId
              ORDER BY
-                CASE WHEN s.score IS NULL THEN 1 ELSE 0 END ASC,
+                CASE
+                    WHEN s.score IS NULL OR LOWER(COALESCE(s.status, '')) IN ('submitted', 'pending', 'draft') THEN 1
+                    ELSE 0
+                END ASC,
                 s.score DESC,
                 s.submittedAt DESC,
                 s.submissionId DESC"
@@ -244,6 +291,7 @@ class SkillHubEngagementController
             "SELECT challengeId, COUNT(*) AS pendingCount
              FROM Submission
              WHERE score IS NULL
+                OR LOWER(COALESCE(status, '')) IN ('submitted', 'pending', 'draft')
              GROUP BY challengeId"
         );
 
@@ -320,16 +368,22 @@ class SkillHubEngagementController
 
     public function evaluateSubmission(int $submissionId, int $score, string $status): bool
     {
+        $status = trim($status);
+        $isPendingAgain = $this->isPendingSubmissionStatus($status);
+        $savedScore = $isPendingAgain ? null : $score;
+
         $query = $this->pdo->prepare(
             "UPDATE Submission
              SET score = :score,
+                 submissionRank = CASE WHEN :clearRank = 1 THEN NULL ELSE submissionRank END,
                  status = :status
              WHERE submissionId = :submissionId"
         );
 
         $updated = $query->execute([
             'submissionId' => $submissionId,
-            'score' => $score,
+            'score' => $savedScore,
+            'clearRank' => $isPendingAgain ? 1 : 0,
             'status' => $status,
         ]);
 

@@ -75,6 +75,7 @@ a {
 }
 
 button,
+input,
 textarea {
   font: inherit;
 }
@@ -196,16 +197,14 @@ textarea::placeholder {
 .primary-btn,
 .ghost-btn,
 .back-btn,
-.action-pill,
-.search-comments {
+.action-pill {
   border: none;
   cursor: pointer;
   transition: 0.22s ease;
 }
 
 .ghost-btn,
-.action-pill,
-.search-comments {
+.action-pill {
   color: var(--text);
   padding: 12px 18px;
   border-radius: 999px;
@@ -327,10 +326,140 @@ textarea::placeholder {
 .conversation-tools {
   margin-top: 22px;
   margin-bottom: 20px;
+  align-items: stretch;
+  padding: 14px;
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.forum-sort-form {
+  flex: 1 1 340px;
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  min-height: 64px;
+  padding: 10px 12px 10px 20px;
+  border-radius: 26px;
+  color: var(--text);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.025));
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.forum-sort-options {
+  display: inline-flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.forum-sort-option {
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.045);
+  color: var(--text);
+  cursor: pointer;
+  font-weight: 800;
+  transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+
+.forum-sort-option:hover,
+.forum-sort-option.is-active {
+  background: linear-gradient(90deg, rgba(111, 143, 216, 0.28), rgba(255, 110, 69, 0.2));
+  border-color: rgba(149, 171, 235, 0.34);
+  transform: translateY(-1px);
+}
+
+.forum-sort-option:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(111, 143, 216, 0.12);
 }
 
 .search-comments {
-  min-width: 240px;
+  flex: 1 1 360px;
+  width: min(520px, 100%);
+  min-height: 64px;
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0 14px 0 22px;
+  border-radius: 26px;
+  color: var(--text);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.025));
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.search-comments span {
+  color: var(--muted);
+  white-space: nowrap;
+  font-weight: 800;
+}
+
+.search-comments input {
+  width: 100%;
+  min-width: 80px;
+  height: 42px;
+  border: none;
+  outline: none;
+  background: rgba(4, 8, 22, 0.82) !important;
+  color: var(--text);
+  font: inherit;
+  border-radius: 999px;
+  padding: 0 16px;
+  box-shadow: none;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.search-comments input::placeholder {
+  color: rgba(245, 243, 238, 0.44);
+}
+
+.search-comments input::-webkit-search-decoration,
+.search-comments input::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+}
+
+.forum-search-clear {
+  display: none;
+  min-height: 40px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 999px;
+  color: var(--text);
+  background: rgba(255, 110, 69, 0.16);
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.forum-search-clear.is-visible {
+  display: inline-flex;
+  align-items: center;
+}
+
+.search-comments:focus-within,
+.forum-sort-form:focus-within {
+  border-color: rgba(149, 171, 235, 0.42);
+  box-shadow: 0 0 0 4px rgba(111, 143, 216, 0.08);
+}
+
+.comment-node.is-hidden {
+  display: none;
+}
+
+.forum-search-empty {
+  display: none !important;
+}
+
+.forum-search-empty.is-visible {
+  display: block !important;
 }
 
 .comment-thread {
@@ -372,7 +501,21 @@ textarea::placeholder {
 }
 
 .comment-card {
-  padding: 10px 0 22px;
+  padding: 18px;
+  margin-bottom: 14px;
+  border-radius: 24px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.022));
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.16);
+  transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+
+.comment-card:hover {
+  transform: translateY(-1px);
+  border-color: rgba(149, 171, 235, 0.18);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.028));
 }
 
 .comment-head {

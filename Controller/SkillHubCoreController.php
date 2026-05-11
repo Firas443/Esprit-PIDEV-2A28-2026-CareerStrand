@@ -10,6 +10,45 @@ class SkillHubCoreController
     public function __construct()
     {
         $this->pdo = config::getConnexion();
+        $this->ensureSkillHubCoreSchema();
+    }
+
+    private function ensureSkillHubCoreSchema(): void
+    {
+        $this->ensureAutoIncrementPrimaryKey('SkillHub', 'groupId');
+        $this->ensureAutoIncrementPrimaryKey('GroupMember', 'groupMemberId');
+        $this->ensureAutoIncrementPrimaryKey('Challenge', 'challengeId');
+    }
+
+    private function ensureAutoIncrementPrimaryKey(string $table, string $primaryKey): void
+    {
+        try {
+            $tableExists = $this->pdo->prepare(
+                'SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?'
+            );
+            $tableExists->execute([$table]);
+            if ((int) $tableExists->fetchColumn() < 1) {
+                return;
+            }
+
+            $column = $this->pdo->query("SHOW COLUMNS FROM `$table` LIKE " . $this->pdo->quote($primaryKey))->fetch();
+            if (!$column) {
+                return;
+            }
+
+            $hasPrimary = strtoupper((string) ($column['Key'] ?? '')) === 'PRI';
+            $hasAutoIncrement = stripos((string) ($column['Extra'] ?? ''), 'auto_increment') !== false;
+
+            if (!$hasPrimary) {
+                $this->pdo->exec("ALTER TABLE `$table` ADD PRIMARY KEY (`$primaryKey`)");
+            }
+
+            if (!$hasAutoIncrement) {
+                $this->pdo->exec("ALTER TABLE `$table` MODIFY `$primaryKey` int(11) NOT NULL AUTO_INCREMENT");
+            }
+        } catch (Throwable $exception) {
+            // Keep the controller usable even if the database user cannot alter schema.
+        }
     }
 
     private function normalizeDate(?string $value): ?string

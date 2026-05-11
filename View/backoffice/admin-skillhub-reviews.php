@@ -29,6 +29,12 @@ function h(?string $value): string
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 }
 
+function isPendingSubmission(array $submission): bool
+{
+    $status = strtolower(trim((string) ($submission['status'] ?? '')));
+    return $submission['score'] === null || in_array($status, ['submitted', 'pending', 'draft'], true);
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'evaluate_submission') {
     $challengeId = (int) ($_POST['challengeId'] ?? $challengeId);
     $submissionId = (int) ($_POST['submissionId'] ?? 0);
@@ -77,9 +83,9 @@ foreach ($users as $user) {
 
 $submissions = $challengeId > 0 ? $engagementController->getSubmissionsByChallenge($challengeId) : [];
 $managerName = $challenge !== null ? ($userMap[(int) ($challenge['managerId'] ?? 0)]['fullName'] ?? 'Unknown manager') : 'Unknown manager';
-$reviewedCount = count(array_filter($submissions, static fn(array $submission): bool => $submission['score'] !== null));
-$pendingSubmissions = array_values(array_filter($submissions, static fn(array $submission): bool => $submission['score'] === null));
-$reviewedSubmissions = array_values(array_filter($submissions, static fn(array $submission): bool => $submission['score'] !== null));
+$pendingSubmissions = array_values(array_filter($submissions, 'isPendingSubmission'));
+$reviewedSubmissions = array_values(array_filter($submissions, static fn(array $submission): bool => !isPendingSubmission($submission)));
+$reviewedCount = count($reviewedSubmissions);
 
 $postedSubmissionId = isset($_POST['submissionId']) ? (int) $_POST['submissionId'] : 0;
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $postedSubmissionId > 0) {
@@ -88,7 +94,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $postedSubmissionId > 0) {
             continue;
         }
 
-        if ($submission['score'] === null) {
+        if (isPendingSubmission($submission)) {
             $reviewSubmissionId = $postedSubmissionId;
             $editingSubmissionId = 0;
         } else {
@@ -150,7 +156,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'gener
         foreach ($submissions as $submission) {
             if ((int) $submission['submissionId'] === $submissionId) {
                 $activeSubmission = $submission;
-                $isEditingReviewed = $submission['score'] !== null;
+                $isEditingReviewed = !isPendingSubmission($submission);
                 break;
             }
         }
