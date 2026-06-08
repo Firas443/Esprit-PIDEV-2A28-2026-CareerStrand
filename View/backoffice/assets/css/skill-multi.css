@@ -1,0 +1,133 @@
+﻿.skill-multi {
+  display: grid;
+  gap: 10px;
+}
+.skill-multi-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.75);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.skill-multi-list {
+  display: grid;
+  gap: 10px;
+}
+.skill-multi-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 10px 12px;
+  border: 1px solid rgba(126,159,228,0.18);
+  border-radius: 14px;
+  background: rgba(255,255,255,0.03);
+}
+.skill-multi-input {
+  flex: 1 1 220px;
+  min-width: 0;
+  min-height: 44px;
+  border: 1px solid rgba(126,159,228,0.22);
+  background: rgba(255,255,255,0.04);
+  color: #f5f3ee;
+  border-radius: 12px;
+  padding: 11px 14px;
+  font: inherit;
+  outline: none;
+}
+.skill-multi-input:focus {
+  border-color: #95abeb;
+  box-shadow: 0 0 0 3px rgba(111,143,216,0.12);
+}
+.skill-multi-level {
+  flex: 0 0 180px;
+  min-width: 160px;
+  min-height: 44px;
+  padding: 11px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(126,159,228,0.22);
+  background: rgba(255,255,255,0.04);
+  color: #f5f3ee;
+  font: inherit;
+  font-size: 13px;
+  outline: none;
+}
+.skill-multi-level:focus {
+  border-color: #95abeb;
+  box-shadow: 0 0 0 3px rgba(111,143,216,0.12);
+}
+.skill-multi-level option {
+  background: #071126;
+}
+.skill-multi-primary-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 11px;
+  border-radius: 999px;
+  border: 1px solid rgba(89,211,155,0.18);
+  background: rgba(89,211,155,0.07);
+  font-size: 12px;
+  font-weight: 700;
+  color: #59d39b;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.skill-multi-primary {
+  accent-color: #59d39b;
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+}
+.skill-multi-remove {
+  flex: 0 0 auto;
+  border: 1px solid rgba(255,110,69,0.22);
+  background: rgba(255,110,69,0.08);
+  color: #ff9a7d;
+  border-radius: 999px;
+  padding: 9px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.skill-multi-remove:hover {
+  background: rgba(255,110,69,0.16);
+}
+.skill-multi-add {
+  width: fit-content;
+}
+.skill-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.skill-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(149,171,235,0.22);
+  background: rgba(149,171,235,0.1);
+  color: #d8e3ff;
+  font-size: 12px;
+  font-weight: 600;
+}
+.skill-chip.is-muted {
+  color: rgba(255,255,255,0.45);
+  background: rgba(255,255,255,0.04);
+  border-color: rgba(255,255,255,0.08);
+}
+.skill-helper {
+  font-size: 12px;
+  color: rgba(255,255,255,0.5);
+  line-height: 1.5;
+}
+@media (max-width: 760px) {
+  .skill-multi-level,
+  .skill-multi-primary-label,
+  .skill-multi-remove {
+    width: 100%;
+    flex: 1 1 100%;
+  }
+}

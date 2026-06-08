@@ -1,0 +1,25 @@
+# XAMPP
+xampp/
+
+# PHP Sessions
+sess_*
+
+# Environment files
+.env
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Composer
+vendor/
+
+# Node
+node_modules/

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CareerStrand Admin Profiles</title>
+  <link rel="stylesheet" href="assets/css/admin.css" />
+</head>
+<body>
+  <div class="admin-shell">
+    <?php include dirname(__DIR__, 2) . '/partials/admin-sidebar.php'; ?>
+    <main class="admin-main">
+      <header class="page-header">
+        <div><h2>Profiles</h2><p>Inspect how complete user profiles are, which sections are missing, and how profile readiness affects ADN generation and opportunity matching.</p></div>
+        <div class="header-actions"><button class="btn btn-soft">Completion audit</button><button class="btn btn-main">Send reminder batch</button></div>
+      </header>
+      <section class="split-grid">
+        <article class="panel">
+          <div class="panel-header"><div class="panel-title"><h3>Profile readiness tiers</h3><p>Track how close users are to ADN eligibility.</p></div></div>
+          <div class="bars">
+            <div class="bar-row"><span>90-100%</span><div class="bar-track"><div class="bar-fill" style="width: 46%;"></div></div><strong>312</strong></div>
+            <div class="bar-row"><span>70-89%</span><div class="bar-track"><div class="bar-fill" style="width: 62%;"></div></div><strong>401</strong></div>
+            <div class="bar-row"><span>40-69%</span><div class="bar-track"><div class="bar-fill" style="width: 38%;"></div></div><strong>291</strong></div>
+            <div class="bar-row"><span>Below 40%</span><div class="bar-track"><div class="bar-fill" style="width: 18%;"></div></div><strong>280</strong></div>
+          </div>
+        </article>
+        <article class="panel">
+          <div class="panel-header"><div class="panel-title"><h3>Missing sections</h3><p>Where users drop off most often.</p></div></div>
+          <div class="list">
+            <div class="list-item"><strong>Skills mapping</strong><p class="subtle">31% of incomplete users have not finished their skills library section.</p></div>
+            <div class="list-item"><strong>Preferences</strong><p class="subtle">22% have no work-style preferences selected yet.</p></div>
+            <div class="list-item"><strong>Experience history</strong><p class="subtle">18% are missing projects, internships, or learning proof.</p></div>
+          </div>
+        </article>
+      </section>
+    </main>
+  </div>
+  <script src="assets/js/admin.js"></script>
+</body>
+</html>
+
+
+
